@@ -22,12 +22,12 @@ public class Main {
         while(true){
             System.out.print("JottQL $ ");
             String input = "";
-            while(!input.endsWith( "; " ) && !input.equals( "<quit>" ) ) {
+            while(!input.endsWith( "; " ) && !input.equals( "<quit> " ) ) {
                 //needs to do this to ensure spacing is correct when inputting multiline commands.
                 input += scanner.next().trim() + " ";
             }
 
-            if(input.equals( "<quit>" )){
+            if(input.equals( "<quit> " )){
                 System.out.println("Exiting the database...");
                 break;
             }
