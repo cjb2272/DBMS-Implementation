@@ -1,5 +1,7 @@
-import java.util.ArrayList;
-import java.util.Arrays;
+/**
+ * This file handles the parsing of different SQL queries
+ * @author Duncan Small
+ */
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -136,29 +138,21 @@ class QueryParser{
 
 
     public Query CommandParse(String input){
-        Query result = new Query();
         String[] temp = input.split(" ", 2);
-
         String command = temp[0].toLowerCase( Locale.ROOT );
 
         switch (command){
             case "select":
-                result = ParseSelect( input );
-                break;
+                return ParseSelect( input );
             case "insert":
-                result = ParseInsert( input );
-                break;
+                return ParseInsert( input );
             case "create":
-                result = ParseCreate( input );
-                break;
+                return ParseCreate( input );
             case "display":
-                result = ParseDisplay( input );
-                break;
+                return ParseDisplay( input );
             default:
                 System.out.println("Error, command not recognized. Recieved: " + command);
-                break;
+                return null;
         }
-
-        return result;
     }
 }

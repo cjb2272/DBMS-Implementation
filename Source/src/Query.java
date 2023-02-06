@@ -1,4 +1,7 @@
-import java.util.ArrayList;
+/**
+ * This holds the different types of queries that can be made.
+ * @author Duncan Small
+ */
 import java.util.HashMap;
 
 public class Query {
