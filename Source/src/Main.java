@@ -11,7 +11,7 @@ public class Main {
         }
 
         QueryParser pas = new QueryParser();
-        ArrayList<String> commands = new ArrayList<>(Arrays.asList( "display adsfschema;" , "SELECT * FROM table1;", "display info tabl2;", "display schema;"));
+        ArrayList<String> commands = new ArrayList<>(Arrays.asList( "display adsfschema;" , "SELECT * FROM table1;", "display info tabl2;", "display schema;", "create table foo( age char(10), num integer primarykey, thing integer );"));
         for(String s : commands){
             System.out.println(s);
             pas.CommandParse( s );

@@ -1,3 +1,6 @@
+import java.util.ArrayList;
+import java.util.HashMap;
+
 public class Query {
 
 }
@@ -24,9 +27,11 @@ class InsertQuery extends Query{
 
 class CreateQuery extends Query{
     String table;
+    HashMap<String, String> columns;
 
-    public CreateQuery(String table){
+    public CreateQuery(String table, HashMap<String, String> col){
         this.table = table;
+        this.columns = col;
     }
 }
 

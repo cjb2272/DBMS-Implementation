@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Locale;
 
 class QueryParser{
@@ -9,7 +10,7 @@ class QueryParser{
 
     //display info <table>;
     //display schema;
-    public static DisplayQuery ParseDisplay(String input){
+    public DisplayQuery ParseDisplay(String input){
         String[] tokens = input.split( " " );
 
         switch (tokens.length){
@@ -42,7 +43,7 @@ class QueryParser{
     }
 
     //SELECT * FROM <table>;
-    public static SelectQuery ParseSelect(String input){
+    public SelectQuery ParseSelect(String input){
         String[] tokens = input.split( " " );
         if(tokens.length < 4){
             System.out.println("Error in command: not long enough.");
@@ -61,21 +62,80 @@ class QueryParser{
     }
 
     //INSERT INTO <table> values <tuple>;
-    public static InsertQuery ParseInsert(String input){
+    public InsertQuery ParseInsert(String input){
 
         return null;
     }
 
     //CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,
     //      <attr_name2> <attr_type2>, <attr_nameN> <attr_typeN>);
-    public static CreateQuery ParseCreate(String input){
+    public CreateQuery ParseCreate(String input){
+        String[] chunks = input.split( "[(]", 2 );
+        if(chunks.length < 2){
+            System.out.println("Error in formatting.");
+            return null;
+        }
 
-        return null;
+        String[] keywords = chunks[0].split( " " );
+
+        if(keywords.length < 3){
+            System.out.println("Missing arguments for CREATE command.");
+            return null;
+        }
+        if(!keywords[1].toLowerCase( Locale.ROOT ).equals( "table" )){
+            System.out.println("Improper use of CREATE command.");
+            return null;
+        }
+
+        String[] attributes = chunks[1].split( "," );
+
+        if(attributes[attributes.length - 1].endsWith( ");" )) {
+            attributes[attributes.length - 1] = attributes[attributes.length - 1].replace( ");", "" );
+        } else{
+            System.out.println("Error: Formatting issue");
+            return null;
+        }
+
+        HashMap<String,String> columns = new HashMap<>();
+        String pk = null;
+
+        for ( String attr : attributes ) {
+            attr = attr.strip();
+            String[] temp = attr.split( " "  );
+            switch (temp.length){
+                case 2:
+                    //not primary key
+                    columns.put( temp[0], temp[1] ); //make the pairing for name of attribute and the type of attr
+                    break;
+                case 3:
+                    //Primary key
+                    if(temp[2].equals( "primarykey" )){
+                        if(pk == null){
+                            pk = temp[0];
+                            columns.put( temp[0],temp[1] );
+                            break;
+                        } else{
+                            System.out.println("Primary key already exists, it was named: " + pk);
+                            return null;
+                        }
+
+                    }else{
+                        System.out.println("Error, expected primary key, got: " + temp[2]);
+                        return null;
+                    }
+                default:
+                    System.out.println("Please ensure that attributes are in the following format <name> <type>.");
+                    return null;
+
+
+            }
+        }
+        return new CreateQuery( keywords[2], columns );
     }
 
 
 
-    public static Query CommandParse(String input){
+    public Query CommandParse(String input){
         Query result = new Query();
         String[] temp = input.split(" ", 2);
 
