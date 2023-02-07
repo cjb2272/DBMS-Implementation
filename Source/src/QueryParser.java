@@ -1,7 +1,8 @@
-/**
+/*
  * This file handles the parsing of different SQL queries
  * @author Duncan Small
  */
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -28,7 +29,7 @@ class QueryParser{
                 break;
             case 3:
                 if(!tokens[2].endsWith( ";")){
-                    System.out.printf( "Missing Semicolon." );
+                    System.out.println( "Missing Semicolon." );
                     return null;
                 }
                 if(tokens[1].toLowerCase( Locale.ROOT ).equals( "info" )){
@@ -64,9 +65,71 @@ class QueryParser{
     }
 
     //INSERT INTO <table> values <tuple>;
+    //insert into foo values (1 "foo bar" true 2.1),
+    //(3"baz" true 4.14),
+    //(2"bar" false 5.2),
+    //(5 "true" true null);
     public InsertQuery ParseInsert(String input){
+        String[] seperate = input.split( "values" );
+        if(seperate.length != 2 ){
+            System.out.println("Missing values keyword.");
+            return null;
+        }
 
-        return null;
+        String[] keywords = seperate[0].split( " "  );
+        if(keywords.length != 3){
+            System.out.println("Error in formatting: " + seperate[0]);
+            return null;
+        }
+
+        if(!keywords[1].toLowerCase( Locale.ROOT ).equals( "into" )){
+            System.out.println("Missing into keyword.");
+            return null;
+        }
+
+        String tableName = keywords[2];
+
+        String[] tuples = seperate[1].split( "," );
+        ArrayList<ArrayList<String>> formattedTuples = new ArrayList<>();
+        for(String s : tuples){
+            s = s.replaceAll( "[();]","" );
+            ArrayList<String> values = new ArrayList<>();
+            if(s.contains( "\"" )){
+                //Strings in values, so there might be spaces
+                String remaining = s;
+
+                Boolean open = true;
+                while(remaining.contains( "\"" )){
+                    String[] temp = remaining.split( "\"", 2 );
+                    remaining = temp.length == 2 ? temp[1] : "";
+                    open = !open;
+                    if(open){
+                        //whole chunk is string
+                        values.add( temp[0] );
+                    } else{
+                        //Chunk is other values
+                        String[] nonStringVals = temp[0].split( " " );
+                        for(String val : nonStringVals){
+                            if(val.equals( " " ) || val.equals( "" )) {
+                                continue;
+                            }
+                            values.add( val );
+                        }
+                    }
+                }
+            } else{
+                //No Strings in values
+                for(String val : s.split( " " )){
+                    if(val.equals( "" )) {
+                        continue;
+                    }
+                    values.add( val );
+                }
+            }
+            formattedTuples.add( values );
+        }
+
+        return new InsertQuery( tableName, formattedTuples );
     }
 
     //CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,

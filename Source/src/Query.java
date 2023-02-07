@@ -1,7 +1,8 @@
-/**
+/*
  * This holds the different types of queries that can be made.
  * @author Duncan Small
  */
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Query {
@@ -19,11 +20,11 @@ class SelectQuery extends Query{
 }
 
 class InsertQuery extends Query{
-    //ArrayList<Record> values = new ArrayList<>();
+    ArrayList<ArrayList<String>> values = new ArrayList<>();
     String table;
 
-    public InsertQuery(String table){
-        //this.values = values;
+    public InsertQuery(String table, ArrayList<ArrayList<String>> val){
+        this.values = val;
         this.table = table;
     }
 }

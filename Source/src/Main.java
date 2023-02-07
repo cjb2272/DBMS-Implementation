@@ -1,4 +1,4 @@
-/**
+/*
  * This is the main entry to our program that will be a database manager.
  * @author Duncan Small
  */
@@ -8,7 +8,7 @@ import java.util.*;
 public class Main {
     //java Main <db loc> <page size> <buffer size>
     public static void main(String[] args) {
-        if(args.length < 3){
+        if(args.length != 3){
             System.out.println("Usage is java Main <db loc> <page size> <buffer size>");
             System.out.println(args.length);
             return;
