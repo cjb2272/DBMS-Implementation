@@ -7,7 +7,7 @@ import java.util.*;
 
 public class Main {
 
-    public static int pageSize;
+    public static int pageSize; //these values should be final
     public static int bufferSizeLimit;
     //java Main <db loc> <page size> <buffer size>
     public static void main(String[] args) {

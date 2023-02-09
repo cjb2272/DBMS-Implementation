@@ -4,6 +4,10 @@
  * @author(s) Charlie Baker
  */
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.*;
 
 /**
@@ -37,10 +41,12 @@ public class StorageManager {
 
         /**
          * request this page by this table and page number
+         * IOException can probably be removed
+         *
          * @param tableNumber table num (table is file on disk)
          * @param pageNumber page num
          */
-        public void GetPage(int tableNumber, int pageNumber) {
+        public void GetPage(int tableNumber, int pageNumber) throws IOException {
             ArrayList<Page> pageBuffer = GetPageBuffer();
             int maxBufferSize = Main.bufferSizeLimit;
             //if block is present in ArrayList already (iterate)
@@ -56,7 +62,7 @@ public class StorageManager {
             //At beginning of program buffer will not be at capacity,
             //so we call read immediately
             if (pageBuffer.size() < maxBufferSize) {
-                Page newlyReadPage = ReadPageFromDisk();
+                Page newlyReadPage = ReadPageFromDisk(tableNumber, pageNumber);
                 newlyReadPage.setLruLongValue(counterForLRU);
                 counterForLRU++;
                 pageBuffer.add(newlyReadPage);
@@ -77,7 +83,7 @@ public class StorageManager {
                 WritePageToDisk(pageBuffer.get(indexOfLRU));
 
                 //read new from hardware into buffer
-                Page newlyReadPage = ReadPageFromDisk();
+                Page newlyReadPage = ReadPageFromDisk(tableNumber, pageNumber);
                 newlyReadPage.setLruLongValue(counterForLRU);
                 counterForLRU++;
                 pageBuffer.add(indexOfLRU, newlyReadPage);
@@ -85,21 +91,37 @@ public class StorageManager {
 
         }
 
-        /* NEED TO KNOW DATA TYPES FOR parsing
-           READING and WRITING data to hardware,
-           will grab these data types from catalog
-
-
-         */
-
         /**
          *
          */
-        private Page ReadPageFromDisk() {
+        private Page ReadPageFromDisk(int tableNum, int pageNum) throws IOException {
             Page readPage = new Page();
 
+            /* NEED TO KNOW DATA TYPES FOR parsing
+                READING and WRITING data to hardware,
+               will grab these data types from catalog
+               will individual page know the table scheme for which it belongs too?
+            */
+
             //seek through table file to memory you want and read in page size
-            //byte array byte array byte arrays
+            //2D byte array representing records,
+            RandomAccessFile file = new RandomAccessFile("filepath TODO", "r");
+            byte[][] pageRecords = new byte[0][0];
+            //each row in pageRecords represents a record
+
+            file.seek(pageNum * Main.pageSize); //probably will not bring to exact location
+
+            //translate the page into this 2D byte array
+            //and then we use that byte array to process each record
+            // Loop in the order of data types expected - only will work if i know the order expected
+            // of attributes and their types from catalog for a given relation/table/page
+                //read int for example
+                //read Boolean
+                //read char(x)
+                    //file.read() method takes can take 3 params and returns next byte of data
+                    //file.read(byte[] b, int offset, int length)
+                //file also has readInt() readDouble() readBoolean()
+
 
 
             //remove padding for Char(x), stand string type
