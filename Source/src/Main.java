@@ -6,6 +6,9 @@
 import java.util.*;
 
 public class Main {
+
+    public static int pageSize;
+    public static int bufferSizeLimit;
     //java Main <db loc> <page size> <buffer size>
     public static void main(String[] args) {
         if(args.length != 3){
@@ -13,6 +16,9 @@ public class Main {
             System.out.println(args.length);
             return;
         }
+
+        pageSize = Integer.parseInt(args[1]);
+        bufferSizeLimit = Integer.parseInt(args[2]);
 
         System.out.println("\nPlease enter commands, enter <quit> to shutdown the db.\n");
 

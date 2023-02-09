@@ -7,18 +7,17 @@
 import java.util.*;
 
 /**
- * Main Phase 1 Class, Storage Manager
+ * Storage Manager class responsible for all communication and
+ * direct access to hardware
  */
 public class StorageManager {
-
-
-    // Decide upon max buffer size and set here? todo
 
 
 
     /**
      * The Buffer Manager
      * Has Two Public Methods, GetPage() and PurgeBuffer()
+     * The Buffer is in place to ideally reduce read/writes to file system
      */
     public class BufferManager {
 
@@ -38,50 +37,72 @@ public class StorageManager {
 
         /**
          * request this page by this table and page number
-         * @param tableNumber table num
+         * @param tableNumber table num (table is file on disk)
          * @param pageNumber page num
          */
         public void GetPage(int tableNumber, int pageNumber) {
             ArrayList<Page> pageBuffer = GetPageBuffer();
-            int bufferSize = pageBuffer.size();
+            int maxBufferSize = Main.bufferSizeLimit;
             //if block is present in ArrayList already (iterate)
-                //update count and increment counterForLRU
-                //hand page off, we do not need to read from
-                //disk since already in buffer
-            //else
-                //At beginning of program buffer will not be at capacity,
-                //so we call read immediately
-                //if bufferSize < MAXSIZE
-                    // newlyReadPage = ReadPageFromDisk()
-                    // newlyReadPage.lruLongValue = counterForLRU;
-                    // counterForLRU++;
-                    // pageBuffer.add(newlyReadPage);
-                //else
-                    // int indexOfLRU;
-                    //int tempLRUCountVal = POSITIVE INFINITY
-                    //for (int curPageIndex = 0; pageIndex < size; pageIndex++) {
-                        //int lruCountVal = pageBuffer.get(curPageIndex).lruLongValue;
-                        //if (lruCountVal < tempLRUCountVal) {
-                            //tempLRUCountVal = lruCountVal;
-                            //indexOfLRU = curPageIndex;
-                        //}
-                    //}
+            for (Page page : pageBuffer) {
+                if (true) { //todo if page we are looking for
+                    page.setLruLongValue(counterForLRU); //update count and increment counterForLRU
+                    counterForLRU++;
+                    //hand page off, we do not need to read from
+                    //disk since already in buffer
+                    return;
+                }
+            }
+            //At beginning of program buffer will not be at capacity,
+            //so we call read immediately
+            if (pageBuffer.size() < maxBufferSize) {
+                Page newlyReadPage = ReadPageFromDisk();
+                newlyReadPage.setLruLongValue(counterForLRU);
+                counterForLRU++;
+                pageBuffer.add(newlyReadPage);
+            }
+            else {
+                int indexOfLRU = 0;
+                long tempLRUCountVal = Long.MAX_VALUE;
+                //find the LRU page
+                for (int curPageIndex = 0; curPageIndex <= maxBufferSize; curPageIndex++) {
+                    long lruCountVal = pageBuffer.get(curPageIndex).getLruLongValue();
+                    if (lruCountVal < tempLRUCountVal) {
+                        tempLRUCountVal = lruCountVal;
+                        indexOfLRU = curPageIndex;
+                    }
+                }
 
-                    // call WritePageToDisk(pageBuffer.get(indexOfLRU))
+                //write the LRU page to hardware
+                WritePageToDisk(pageBuffer.get(indexOfLRU));
 
-                    // newlyReadPage = ReadPageFromDisk()
-                    // newlyReadPage.lruLongValue = counterForLRU;
-                    // counterForLRU++;
-                    // pageBuffer.add(indexOfLRU, newlyReadPage);
-
+                //read new from hardware into buffer
+                Page newlyReadPage = ReadPageFromDisk();
+                newlyReadPage.setLruLongValue(counterForLRU);
+                counterForLRU++;
+                pageBuffer.add(indexOfLRU, newlyReadPage);
+            }
 
         }
+
+        /* NEED TO KNOW DATA TYPES FOR parsing
+           READING and WRITING data to hardware,
+           will grab these data types from catalog
+
+
+         */
 
         /**
          *
          */
         private Page ReadPageFromDisk() {
             Page readPage = new Page();
+
+            //seek through table file to memory you want and read in page size
+            //byte array byte array byte arrays
+
+
+            //remove padding for Char(x), stand string type
 
             return readPage;
         }
@@ -91,6 +112,10 @@ public class StorageManager {
          * @param pageToWrite the page being written to hardware
          */
         private void WritePageToDisk(Page pageToWrite) {
+
+
+
+            //need to add padding to Char(x)'s to maintain fixed array length
 
         }
 
@@ -110,10 +135,13 @@ public class StorageManager {
          */
         public void PurgeBuffer() {
             ArrayList<Page> buffer = GetPageBuffer();
-            //Loop through buffer
-                //grab currentPage
-                //if currentPage.isModified == true
-                    //call WritePageToDisk()
+            for (Page page : buffer) {
+                if (page.getisModified()) {
+                    //
+                    WritePageToDisk(page);
+                }
+            }
+
         }
 
     }
