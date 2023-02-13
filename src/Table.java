@@ -1,5 +1,6 @@
 package src;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /*
@@ -16,15 +17,17 @@ public class Table {
     private String name;
 
     // maps each attribute (column) name to its type
-    private HashMap<String, String> attributes;
+    private ArrayList<String> columnNames;
+    private ArrayList<Integer> dataTypes;
 
     // the number of pages currently held in this table file
     private int numPages;
 
-    public Table(int id, String name, HashMap<String, String> attributes) {
+    public Table( int id, String name, ArrayList<String> columnNames, ArrayList<Integer> dataTypes) {
         this.id = id;
         this.name = name;
-        this.attributes = attributes;
+        this.columnNames = columnNames;
+        this.dataTypes = dataTypes;
         this.numPages = 0;
     }
 

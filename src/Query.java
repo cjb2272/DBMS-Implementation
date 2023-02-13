@@ -62,17 +62,19 @@ class InsertQuery extends Query{
 class CreateQuery extends Query{
 
     String tableName;
-    HashMap<String, String> columns; // name and type of attributes
+    ArrayList<String> columnNames; // name of attributes
+    ArrayList<Integer> dataTypes;
 
-    public CreateQuery(StorageManager storageManager, SchemaManager schemaManager, String table, HashMap<String, String> col) {
+    public CreateQuery(StorageManager storageManager, SchemaManager schemaManager, String table, ArrayList<String> colNames, ArrayList<Integer> dt) {
         super(storageManager, schemaManager);
         this.tableName = table;
-        this.columns = col;
+        this.columnNames = colNames;
+        this.dataTypes = dt;
     }
     @Override
     public void execute() {
         int availableId = schemaManager.getNextAvailableTableID();
-        storageManager.createTable(availableId, tableName, columns);
+        storageManager.createTable(availableId, tableName, columnNames, dataTypes);
     }
 
 

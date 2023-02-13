@@ -27,7 +27,7 @@ public class StorageManager {
     The Table object is returned as a convenience, but since everything is page-based (and the Table object is never
     directly in the buffer), this isn't strictly needed.
      */
-    public Table createTable(int ID, String name, HashMap<String, String> attributes) {
+    public Table createTable(int ID, String name, ArrayList<String> columnNames, ArrayList<Integer> dataTypes) {
 
         // creation of a new table never involves the buffer (there are no pages to start), so the file is created here.
         DataOutputStream output=null;
@@ -42,7 +42,7 @@ public class StorageManager {
             output.flush();
             output.close();
 
-            return new Table(ID, name, attributes);
+            return new Table(ID, name, columnNames, dataTypes);
 
 
         } catch (Exception e) {

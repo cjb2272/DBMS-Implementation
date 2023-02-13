@@ -198,11 +198,11 @@ class QueryParser{
             return true;
         }
 
-        System.out.println("Error! Variable entered was " + dataTypeCodeMatching( code ) + ", Expected " + dataTypeCodeMatching( expected ));
+        System.out.println("Error! Variable entered was " + CodeToString( code ) + ", Expected " + CodeToString( expected ));
         return false;
     }
 
-    public String dataTypeCodeMatching(Integer code){
+    public String CodeToString(Integer code){
         return switch (code) {
             case 1 -> "Integer";
             case 2 -> "Double";
@@ -210,6 +210,19 @@ class QueryParser{
             case 4 -> "Char(x)";
             case 5 -> "VarChar(x)";
             default -> "Error, code out of bounds";
+        };
+    }
+
+    public Integer StringToCode(String str){
+        String[] temp = str.split( "[(]" );
+
+        return switch (temp[0].toLowerCase( Locale.ROOT )) {
+            case "integer" -> 1;
+            case "double" -> 2;
+            case "boolean" -> 3;
+            case "char" -> 4;
+            case "varchar" -> 5;
+            default -> -1;
         };
     }
 
@@ -242,7 +255,8 @@ class QueryParser{
             return null;
         }
 
-        HashMap<String,String> columns = new HashMap<>();
+        ArrayList<String> columnNames = new ArrayList<>();
+        ArrayList<Integer> dataTypes = new ArrayList<>();
         String pk = null;
 
         for ( String attr : attributes ) {
@@ -251,14 +265,16 @@ class QueryParser{
             switch (temp.length){
                 case 2:
                     //not primary key
-                    columns.put( temp[0], temp[1] ); //make the pairing for name of attribute and the type of attr
+                    columnNames.add( temp[0]);
+                    dataTypes.add( StringToCode( temp[1]) ); //make the pairing for name of attribute and the type of attr
                     break;
                 case 3:
                     //Primary key
                     if(temp[2].equals( "primarykey" )){
                         if(pk == null){
                             pk = temp[0];
-                            columns.put( temp[0],temp[1] );
+                            columnNames.add( temp[0]);
+                            dataTypes.add( StringToCode( temp[1]) );
                             break;
                         } else{
                             System.out.println("Primary key already exists, it was named: " + pk);
@@ -276,7 +292,7 @@ class QueryParser{
 
             }
         }
-        return new CreateQuery(storageManager, schemaManager, keywords[2], columns );
+        return new CreateQuery(storageManager, schemaManager, keywords[2], columnNames, dataTypes );
     }
 
     public List<Object> TypeCast(String input){
