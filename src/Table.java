@@ -1,4 +1,4 @@
-package Source.src;
+package src;
 
 import java.util.HashMap;
 
@@ -21,7 +21,12 @@ public class Table {
     // the number of pages currently held in this table file
     private int numPages;
 
-
+    public Table(int id, String name, HashMap<String, String> attributes) {
+        this.id = id;
+        this.name = name;
+        this.attributes = attributes;
+        this.numPages = 0;
+    }
 
 
     public String getName() {

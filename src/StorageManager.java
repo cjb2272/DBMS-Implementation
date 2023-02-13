@@ -1,10 +1,8 @@
-package Source.src;/*
+package src;/*
  * This file represents the Storage Manager as Whole,
  * Which includes the Buffer Manager within
  * @author(s) Charlie Baker
  */
-
-import Source.src.Table;
 
 import java.io.*;
 import java.util.*;
@@ -17,6 +15,7 @@ public class StorageManager {
 
     private String rootPath;
 
+    // todo: take in SchemaManager here too
     public StorageManager(String rootPath) {
         this.rootPath = rootPath;
     }
@@ -25,19 +24,30 @@ public class StorageManager {
     Called by the SQL parser to create a new table file on disk.
     The SQL parser should have already verified that the table doesn't already exist (and has valid attributes)
     by asking the schema.
+    The Table object is returned as a convenience, but since everything is page-based (and the Table object is never
+    directly in the buffer), this isn't strictly needed.
      */
-    public void createTable(Table table) {
+    public Table createTable(String name, HashMap<String, String> attributes) {
 
         // creation of a new table never involves the buffer (there are no pages to start), so the file is created here.
-
         DataOutputStream output=null;
         try {
-            output = new DataOutputStream(new FileOutputStream(rootPath + table.getName()));
+            output = new DataOutputStream(new FileOutputStream(rootPath + name));
+
             // no pages in a new table file, so write 0
             output.writeInt(0);
 
+            // write out the ID of this tale
+
+
             output.flush();
             output.close();
+
+            int newId = 0; // todo: ask SchemaManager what ID is available for this new table
+
+            return new Table(newId, name, attributes);
+
+
         } catch (Exception e) {
             System.err.println(e.getMessage());
         } finally{
@@ -48,7 +58,7 @@ public class StorageManager {
             }
         }
 
-
+        return null;
     }
 
 

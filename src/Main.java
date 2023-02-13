@@ -1,4 +1,4 @@
-package Source.src;/*
+package src;/*
  * This is the main entry to our program that will be a database manager.
  * @author Duncan Small
  */
@@ -26,7 +26,7 @@ public class Main {
 
         Scanner scanner = new Scanner( System.in );
 
-        QueryParser parser = new QueryParser();
+        QueryParser parser = new QueryParser(storageManager);
         while(true){
             System.out.print("JottQL $ ");
             String input = "";

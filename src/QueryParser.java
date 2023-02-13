@@ -1,14 +1,18 @@
-/*
+package src;/*
  * This file handles the parsing of different SQL queries
  * @author Duncan Small
  */
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 
 class QueryParser{
-    public QueryParser(){
 
+    private StorageManager storageManager;
+
+    public QueryParser(StorageManager storageManager){
+        this.storageManager = storageManager;
     }
 
     //display info <table>;
@@ -23,7 +27,7 @@ class QueryParser{
                     return null;
                 }
                 if(tokens[1].toLowerCase( Locale.ROOT ).equals( "schema;" )){
-                    return new DisplayQuery();
+                    return new DisplayQuery(storageManager);
                 }
                 System.out.println("Error in display format.");
                 break;
@@ -33,7 +37,7 @@ class QueryParser{
                     return null;
                 }
                 if(tokens[1].toLowerCase( Locale.ROOT ).equals( "info" )){
-                    return new DisplayQuery(tokens[2].replace( ";", "" ));
+                    return new DisplayQuery(storageManager, tokens[2].replace( ";", "" ));
                 }
                 System.out.println("Error in display format.");
                 break;
@@ -61,7 +65,7 @@ class QueryParser{
             return null;
         }
 
-        return new SelectQuery( tokens[1],tokens[3].replace( ";", "" ) );
+        return new SelectQuery( storageManager, tokens[1],tokens[3].replace( ";", "" ) );
     }
 
     //INSERT INTO <table> values <tuple>;
@@ -129,7 +133,7 @@ class QueryParser{
             formattedTuples.add( values );
         }
 
-        return new InsertQuery( tableName, formattedTuples );
+        return new InsertQuery( storageManager, tableName, formattedTuples );
     }
 
     //CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,
@@ -195,7 +199,7 @@ class QueryParser{
 
             }
         }
-        return new CreateQuery( keywords[2], columns );
+        return new CreateQuery(storageManager, keywords[2], columns );
     }
 
 

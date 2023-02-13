@@ -1,8 +1,7 @@
-package Source.src;/*
+package src;/*
  * This holds the different types of queries that can be made.
  * @author Duncan Small
  */
-import Source.src.StorageManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,9 +23,15 @@ class SelectQuery extends Query{
     String clause;
     String table;
 
-    public SelectQuery(String clause, String table){
+    public SelectQuery(StorageManager storageManager, String clause, String table){
+        super(storageManager);
         this.clause = clause;
         this.table = table;
+    }
+
+    @Override
+    public void execute() {
+
     }
 }
 
@@ -34,9 +39,15 @@ class InsertQuery extends Query{
     ArrayList<ArrayList<String>> values = new ArrayList<>();
     String table;
 
-    public InsertQuery(String table, ArrayList<ArrayList<String>> val){
+    public InsertQuery(StorageManager storageManager, String table, ArrayList<ArrayList<String>> val){
+        super(storageManager);
         this.values = val;
         this.table = table;
+    }
+
+    @Override
+    public void execute() {
+
     }
 }
 
@@ -50,9 +61,9 @@ class CreateQuery extends Query{
         this.tableName = table;
         this.columns = col;
     }
-
+    @Override
     public void execute() {
-
+        storageManager.createTable(tableName, columns);
     }
 
 
@@ -63,10 +74,18 @@ class DisplayQuery extends Query{
     //  else it is a display info <table> command
     String table = null;
 
-    public DisplayQuery() { }
+    public DisplayQuery(StorageManager storageManager) {
+        super(storageManager);
+    }
 
-    public DisplayQuery(String table){
+    public DisplayQuery(StorageManager storageManager, String table){
+        super(storageManager);
         this.table = table;
+    }
+
+    @Override
+    public void execute() {
+
     }
 }
 
