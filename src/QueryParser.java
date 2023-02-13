@@ -29,7 +29,7 @@ class QueryParser{
                     return null;
                 }
                 if(tokens[1].toLowerCase( Locale.ROOT ).equals( "schema;" )){
-                    return new DisplayQuery(storageManager);
+                    return new DisplayQuery(storageManager, schemaManager);
                 }
                 System.out.println("Error in display format.");
                 break;
@@ -39,7 +39,7 @@ class QueryParser{
                     return null;
                 }
                 if(tokens[1].toLowerCase( Locale.ROOT ).equals( "info" )){
-                    return new DisplayQuery(storageManager, tokens[2].replace( ";", "" ));
+                    return new DisplayQuery(storageManager, schemaManager, tokens[2].replace( ";", "" ));
                 }
                 System.out.println("Error in display format.");
                 break;
@@ -67,7 +67,7 @@ class QueryParser{
             return null;
         }
 
-        return new SelectQuery( storageManager, tokens[1],tokens[3].replace( ";", "" ) );
+        return new SelectQuery( storageManager, schemaManager, tokens[1],tokens[3].replace( ";", "" ) );
     }
 
     //INSERT INTO <table> values <tuple>;
@@ -135,7 +135,7 @@ class QueryParser{
             formattedTuples.add( values );
         }
 
-        return new InsertQuery( storageManager, tableName, formattedTuples );
+        return new InsertQuery( storageManager, schemaManager, tableName, formattedTuples );
     }
 
     //CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,
@@ -160,7 +160,7 @@ class QueryParser{
 
         String[] attributes = chunks[1].split( "," );
 
-        if(attributes[attributes.length - 1].endsWith( ");" )) {
+        if(attributes[attributes.length - 1].endsWith( "); " )) {
             attributes[attributes.length - 1] = attributes[attributes.length - 1].replace( ");", "" );
         } else{
             System.out.println("Error: Formatting issue");
@@ -201,7 +201,7 @@ class QueryParser{
 
             }
         }
-        return new CreateQuery(storageManager, keywords[2], columns );
+        return new CreateQuery(storageManager, schemaManager, keywords[2], columns );
     }
 
 

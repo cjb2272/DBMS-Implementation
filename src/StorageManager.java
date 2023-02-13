@@ -26,25 +26,22 @@ public class StorageManager {
     The Table object is returned as a convenience, but since everything is page-based (and the Table object is never
     directly in the buffer), this isn't strictly needed.
      */
-    public Table createTable(String name, HashMap<String, String> attributes) {
+    public Table createTable(int ID, String name, HashMap<String, String> attributes) {
 
         // creation of a new table never involves the buffer (there are no pages to start), so the file is created here.
         DataOutputStream output=null;
         try {
-            output = new DataOutputStream(new FileOutputStream(rootPath + name));
+            output = new DataOutputStream(new FileOutputStream(rootPath + "\\" + name));
 
             // no pages in a new table file, so write 0
             output.writeInt(0);
 
             // write out the ID of this tale
 
-
             output.flush();
             output.close();
 
-            int newId = 0; // todo: ask SchemaManager what ID is available for this new table
-
-            return new Table(newId, name, attributes);
+            return new Table(ID, name, attributes);
 
 
         } catch (Exception e) {

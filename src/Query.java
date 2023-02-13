@@ -11,8 +11,11 @@ public abstract class Query {
     // may end up migrating this to a singleton so we can avoid passing this into all the Query objects
     protected StorageManager storageManager;
 
-    public Query(StorageManager storageManager) {
+    protected SchemaManager schemaManager;
+
+    public Query(StorageManager storageManager, SchemaManager schemaManager) {
         this.storageManager = storageManager;
+        this.schemaManager = schemaManager;
     }
 
     public abstract void execute();
@@ -23,8 +26,8 @@ class SelectQuery extends Query{
     String clause;
     String table;
 
-    public SelectQuery(StorageManager storageManager, String clause, String table){
-        super(storageManager);
+    public SelectQuery(StorageManager storageManager, SchemaManager schemaManager, String clause, String table){
+        super(storageManager, schemaManager);
         this.clause = clause;
         this.table = table;
     }
@@ -44,8 +47,8 @@ class InsertQuery extends Query{
     ArrayList<ArrayList<String>> values = new ArrayList<>();
     String table;
 
-    public InsertQuery(StorageManager storageManager, String table, ArrayList<ArrayList<String>> val){
-        super(storageManager);
+    public InsertQuery(StorageManager storageManager, SchemaManager schemaManager, String table, ArrayList<ArrayList<String>> val){
+        super(storageManager, schemaManager);
         this.values = val;
         this.table = table;
     }
@@ -61,14 +64,15 @@ class CreateQuery extends Query{
     String tableName;
     HashMap<String, String> columns; // name and type of attributes
 
-    public CreateQuery(StorageManager storageManager, String table, HashMap<String, String> col) {
-        super(storageManager);
+    public CreateQuery(StorageManager storageManager, SchemaManager schemaManager, String table, HashMap<String, String> col) {
+        super(storageManager, schemaManager);
         this.tableName = table;
         this.columns = col;
     }
     @Override
     public void execute() {
-        storageManager.createTable(tableName, columns);
+        int availableId = schemaManager.getNextAvailableTableID();
+        storageManager.createTable(availableId, tableName, columns);
     }
 
 
@@ -79,12 +83,12 @@ class DisplayQuery extends Query{
     //  else it is a display info <table> command
     String table = null;
 
-    public DisplayQuery(StorageManager storageManager) {
-        super(storageManager);
+    public DisplayQuery(StorageManager storageManager, SchemaManager schemaManager) {
+        super(storageManager, schemaManager);
     }
 
-    public DisplayQuery(StorageManager storageManager, String table){
-        super(storageManager);
+    public DisplayQuery(StorageManager storageManager, SchemaManager schemaManager, String table){
+        super(storageManager, schemaManager);
         this.table = table;
     }
 
