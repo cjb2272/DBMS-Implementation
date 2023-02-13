@@ -1,11 +1,11 @@
-package src;/*
+package src;
+
+/*
  * This file handles the parsing of different SQL queries
  * @author Duncan Small
  */
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Locale;
+import java.util.*;
 
 class QueryParser{
 
@@ -22,30 +22,28 @@ class QueryParser{
     public DisplayQuery ParseDisplay(String input){
         String[] tokens = input.split( " " );
 
-        switch (tokens.length){
-            case 2:
-                if(!tokens[1].endsWith( ";" )){
-                    System.out.println("Missing Semicolon");
+        switch (tokens.length) {
+            case 2 -> {
+                if ( !tokens[1].endsWith( ";" ) ) {
+                    System.out.println( "Missing Semicolon" );
                     return null;
                 }
-                if(tokens[1].toLowerCase( Locale.ROOT ).equals( "schema;" )){
-                    return new DisplayQuery(storageManager, schemaManager);
+                if ( tokens[1].toLowerCase( Locale.ROOT ).equals( "schema;" ) ) {
+                    return new DisplayQuery( storageManager, schemaManager );
                 }
-                System.out.println("Error in display format.");
-                break;
-            case 3:
-                if(!tokens[2].endsWith( ";")){
+                System.out.println( "Error in display format." );
+            }
+            case 3 -> {
+                if ( !tokens[2].endsWith( ";" ) ) {
                     System.out.println( "Missing Semicolon." );
                     return null;
                 }
-                if(tokens[1].toLowerCase( Locale.ROOT ).equals( "info" )){
-                    return new DisplayQuery(storageManager, schemaManager, tokens[2].replace( ";", "" ));
+                if ( tokens[1].toLowerCase( Locale.ROOT ).equals( "info" ) ) {
+                    return new DisplayQuery( storageManager, schemaManager, tokens[2].replace( ";", "" ) );
                 }
-                System.out.println("Error in display format.");
-                break;
-            default:
-                System.out.println("Usage...");
-                break;
+                System.out.println( "Error in display format." );
+            }
+            default -> System.out.println( "Usage..." );
         }
 
         return null;
@@ -76,15 +74,15 @@ class QueryParser{
     //(2"bar" false 5.2),
     //(5 "true" true null);
     public InsertQuery ParseInsert(String input){
-        String[] seperate = input.split( "values" );
-        if(seperate.length != 2 ){
+        String[] separate = input.split( "values" );
+        if(separate.length != 2 ){
             System.out.println("Missing values keyword.");
             return null;
         }
 
-        String[] keywords = seperate[0].split( " "  );
+        String[] keywords = separate[0].split( " "  );
         if(keywords.length != 3){
-            System.out.println("Error in formatting: " + seperate[0]);
+            System.out.println("Error in formatting: " + separate[0]);
             return null;
         }
 
@@ -95,11 +93,17 @@ class QueryParser{
 
         String tableName = keywords[2];
 
-        String[] tuples = seperate[1].split( "," );
-        ArrayList<ArrayList<String>> formattedTuples = new ArrayList<>();
+        //ArrayList<Integer> tableAttrList = schemaManager.getAttrList(tableName);
+        ArrayList<Integer> tableAttrList = new ArrayList<>();
+
+        String[] tuples = separate[1].split( "," );
+        ArrayList<ArrayList<Object>> formattedTuples = new ArrayList<>();
+
         for(String s : tuples){
             s = s.replaceAll( "[();]","" );
-            ArrayList<String> values = new ArrayList<>();
+            ArrayList<Object> values = new ArrayList<>();
+            ArrayList<String> strings = new ArrayList<>();
+            ArrayList<Integer> dataTypes = new ArrayList<>();
             if(s.contains( "\"" )){
                 //Strings in values, so there might be spaces
                 String remaining = s;
@@ -111,7 +115,7 @@ class QueryParser{
                     open = !open;
                     if(open){
                         //whole chunk is string
-                        values.add( temp[0] );
+                        strings.add( temp[0] );
                     } else{
                         //Chunk is other values
                         String[] nonStringVals = temp[0].split( " " );
@@ -119,9 +123,15 @@ class QueryParser{
                             if(val.equals( " " ) || val.equals( "" )) {
                                 continue;
                             }
-                            values.add( val );
+                            strings.add( val );
                         }
                     }
+                }
+                for(String val : remaining.split( " " )){
+                    if(val.equals( "" )) {
+                        continue;
+                    }
+                    strings.add( val );
                 }
             } else{
                 //No Strings in values
@@ -129,13 +139,78 @@ class QueryParser{
                     if(val.equals( "" )) {
                         continue;
                     }
-                    values.add( val );
+                    strings.add( val );
                 }
             }
-            formattedTuples.add( values );
+
+            for(String str : strings){
+                List temp = TypeCast( str );
+                int code = (int) temp.get(0);
+                dataTypes.add(code);
+                if(code == 0){
+                    dataTypes.add( str.length() );
+                }
+                values.add( temp.get( 1 ) );
+
+            }
+            if(AttributeMatch( tableAttrList, dataTypes )){
+                formattedTuples.add( values );
+            } else{
+                System.out.println("The following values were not inserted: ");
+                System.out.println(values);
+            }
         }
 
         return new InsertQuery( storageManager, schemaManager, tableName, formattedTuples );
+    }
+
+    public boolean AttributeMatch(ArrayList<Integer> tableAttrList, ArrayList<Integer> dataAttrList){
+        if(tableAttrList.size() != dataAttrList.size()) {
+            System.out.println("Error! Table and Data Attribute list do not match with length!");
+            return false;
+        }
+
+        Integer code = -1;
+        Integer expected = -1;
+
+        for ( int i = 0; i < tableAttrList.size(); i++ ) {
+            if(dataAttrList.get( i ) == 0 && (tableAttrList.get( i ) == 4 || tableAttrList.get( i ) == 5)){
+                try{
+                    if ( !dataAttrList.get( i + 1 ).equals(tableAttrList.get( i + 1 ) )) {
+                        System.out.println( "Error! Got Char with length " + dataAttrList.get( i + 1 ).toString() + ", expected Char with length " + tableAttrList.get( i + 1 ).toString() );
+                        return false;
+                    }
+                } catch (ArrayIndexOutOfBoundsException e){
+                    System.out.println("Error! Expected Char length in data type array.");
+                    return false;
+                }
+                continue;
+            }
+            if(!dataAttrList.get( i ).equals(tableAttrList.get( i ))){
+                code = dataAttrList.get( i );
+                expected = tableAttrList.get( i );
+                break;
+
+            }
+        }
+
+        if(code == -1 && expected == -1){
+            return true;
+        }
+
+        System.out.println("Error! Variable entered was " + dataTypeCodeMatching( code ) + ", Expected " + dataTypeCodeMatching( expected ));
+        return false;
+    }
+
+    public String dataTypeCodeMatching(Integer code){
+        return switch (code) {
+            case 1 -> "Integer";
+            case 2 -> "Double";
+            case 3 -> "Boolean";
+            case 4 -> "Char(x)";
+            case 5 -> "VarChar(x)";
+            default -> "Error, code out of bounds";
+        };
     }
 
     //CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,
@@ -204,7 +279,23 @@ class QueryParser{
         return new CreateQuery(storageManager, schemaManager, keywords[2], columns );
     }
 
-
+    public List<Object> TypeCast(String input){
+        try {
+            int i = Integer.parseInt(input);
+            return Arrays.asList(1, i);
+        } catch (NumberFormatException e) {
+            try {
+                double d = Double.parseDouble(input);
+                return Arrays.asList( 2, d );
+            } catch (NumberFormatException e1) {
+                if (input.equalsIgnoreCase("true") || input.equalsIgnoreCase("false")) {
+                    return Arrays.asList( 3, Boolean.parseBoolean(input) );
+                } else {
+                    return Arrays.asList( 0, input );
+                }
+            }
+        }
+    }
 
     public Query CommandParse(String input){
         String[] temp = input.split(" ", 2);

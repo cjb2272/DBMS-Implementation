@@ -44,10 +44,10 @@ class SelectQuery extends Query{
 }
 
 class InsertQuery extends Query{
-    ArrayList<ArrayList<String>> values = new ArrayList<>();
+    ArrayList<ArrayList<Object>> values = new ArrayList<>();
     String table;
 
-    public InsertQuery(StorageManager storageManager, SchemaManager schemaManager, String table, ArrayList<ArrayList<String>> val){
+    public InsertQuery(StorageManager storageManager, SchemaManager schemaManager, String table, ArrayList<ArrayList<Object>> val){
         super(storageManager, schemaManager);
         this.values = val;
         this.table = table;
