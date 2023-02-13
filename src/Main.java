@@ -16,17 +16,18 @@ public class Main {
             System.out.println(args.length);
             return;
         }
-        String db_loc = args[0]; // do we expect this to be an empty folder, or make a new empty folder within here?
+        String db_loc = args[0]; // this is expected to be a folder path. No empty folder is created.
         pageSize = Integer.parseInt(args[1]);
         bufferSizeLimit = Integer.parseInt(args[2]);
 
         StorageManager storageManager = new StorageManager(db_loc);
+        SchemaManager schemaManager = new SchemaManager(db_loc);
 
         System.out.println("\nPlease enter commands, enter <quit> to shutdown the db.\n");
 
         Scanner scanner = new Scanner( System.in );
 
-        QueryParser parser = new QueryParser(storageManager);
+        QueryParser parser = new QueryParser(storageManager, schemaManager);
         while(true){
             System.out.print("JottQL $ ");
             String input = "";
@@ -46,6 +47,10 @@ public class Main {
                 System.out.println("ERROR");
             } else{
                 System.out.println("SUCCESS");
+
+
+                // Individual query objects all have an execute method that defines what steps should be taken to execute
+                // that query. Having that logic here (switched on the query type) would be a code smell.
                 query.execute();  // where all the magic happens!
 
             }

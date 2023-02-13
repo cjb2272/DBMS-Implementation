@@ -9,10 +9,12 @@ import java.util.Locale;
 
 class QueryParser{
 
-    private StorageManager storageManager;
+    private final SchemaManager schemaManager;
+    private final StorageManager storageManager;
 
-    public QueryParser(StorageManager storageManager){
+    public QueryParser(StorageManager storageManager, SchemaManager schemaManager){
         this.storageManager = storageManager;
+        this.schemaManager = schemaManager;
     }
 
     //display info <table>;

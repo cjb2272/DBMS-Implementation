@@ -15,7 +15,6 @@ public class StorageManager {
 
     private String rootPath;
 
-    // todo: take in SchemaManager here too
     public StorageManager(String rootPath) {
         this.rootPath = rootPath;
     }
@@ -61,11 +60,21 @@ public class StorageManager {
         return null;
     }
 
+    /*
+    Returns the requested row(s) of data. The Query object calling this is expected to print it out.
+     */
+    public ArrayList<ArrayList<String>> SelectData() {
+        return null; // method stub
+    }
+
 
     /**
      * The Buffer Manager
      * Has Two Public Methods, GetPage() and PurgeBuffer()
      * The Buffer is in place to ideally reduce read/writes to file system
+     *
+     * THIS SHOULD BE COMPLETELY INVISIBLE TO THE REST OF THE PROGRAM (besides StorageManager).
+     * Everything should go through StorageManager.
      */
     public class BufferManager {
 

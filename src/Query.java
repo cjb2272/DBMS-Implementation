@@ -31,6 +31,11 @@ class SelectQuery extends Query{
 
     @Override
     public void execute() {
+        // ask the storage manager for this data. It will in turn ask the buffer first, but that's
+        // abstracted away from this point in the code
+
+
+
 
     }
 }
