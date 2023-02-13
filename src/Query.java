@@ -64,12 +64,14 @@ class CreateQuery extends Query{
     String tableName;
     ArrayList<String> columnNames; // name of attributes
     ArrayList<Integer> dataTypes;
+    String primaryKey;
 
-    public CreateQuery(StorageManager storageManager, SchemaManager schemaManager, String table, ArrayList<String> colNames, ArrayList<Integer> dt) {
+    public CreateQuery(StorageManager storageManager, SchemaManager schemaManager, String table, ArrayList<String> colNames, ArrayList<Integer> dt, String primaryKey) {
         super(storageManager, schemaManager);
         this.tableName = table;
         this.columnNames = colNames;
         this.dataTypes = dt;
+        this.primaryKey = primaryKey;
     }
     @Override
     public void execute() {

@@ -292,7 +292,7 @@ class QueryParser{
 
             }
         }
-        return new CreateQuery(storageManager, schemaManager, keywords[2], columnNames, dataTypes );
+        return new CreateQuery(storageManager, schemaManager, keywords[2], columnNames, dataTypes, pk );
     }
 
     public List<Object> TypeCast(String input){
