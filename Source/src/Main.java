@@ -1,4 +1,4 @@
-/*
+package Source.src;/*
  * This is the main entry to our program that will be a database manager.
  * @author Duncan Small
  */
@@ -16,9 +16,11 @@ public class Main {
             System.out.println(args.length);
             return;
         }
-
+        String db_loc = args[0]; // do we expect this to be an empty folder, or make a new empty folder within here?
         pageSize = Integer.parseInt(args[1]);
         bufferSizeLimit = Integer.parseInt(args[2]);
+
+        StorageManager storageManager = new StorageManager(db_loc);
 
         System.out.println("\nPlease enter commands, enter <quit> to shutdown the db.\n");
 
@@ -38,12 +40,14 @@ public class Main {
                 break;
             }
 
-            Query temp = parser.CommandParse( input );
+            Query query = parser.CommandParse( input );
 
-            if(temp == null){
+            if(query == null){
                 System.out.println("ERROR");
             } else{
                 System.out.println("SUCCESS");
+                query.execute();  // where all the magic happens!
+
             }
 
         }

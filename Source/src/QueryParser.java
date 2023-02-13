@@ -214,7 +214,7 @@ class QueryParser{
             case "display":
                 return ParseDisplay( input );
             default:
-                System.out.println("Error, command not recognized. Recieved: " + command);
+                System.out.println("Error, command not recognized. Received: " + command);
                 return null;
         }
     }

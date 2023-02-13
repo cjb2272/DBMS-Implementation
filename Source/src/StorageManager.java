@@ -1,13 +1,12 @@
-/*
+package Source.src;/*
  * This file represents the Storage Manager as Whole,
  * Which includes the Buffer Manager within
  * @author(s) Charlie Baker
  */
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import Source.src.Table;
+
+import java.io.*;
 import java.util.*;
 
 /**
@@ -16,6 +15,41 @@ import java.util.*;
  */
 public class StorageManager {
 
+    private String rootPath;
+
+    public StorageManager(String rootPath) {
+        this.rootPath = rootPath;
+    }
+
+    /*
+    Called by the SQL parser to create a new table file on disk.
+    The SQL parser should have already verified that the table doesn't already exist (and has valid attributes)
+    by asking the schema.
+     */
+    public void createTable(Table table) {
+
+        // creation of a new table never involves the buffer (there are no pages to start), so the file is created here.
+
+        DataOutputStream output=null;
+        try {
+            output = new DataOutputStream(new FileOutputStream(rootPath + table.getName()));
+            // no pages in a new table file, so write 0
+            output.writeInt(0);
+
+            output.flush();
+            output.close();
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        } finally{
+            try{
+                output.close();
+            } catch(Exception e){
+                System.err.println(e.getMessage());
+            }
+        }
+
+
+    }
 
 
     /**
