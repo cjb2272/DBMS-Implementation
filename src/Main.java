@@ -9,6 +9,7 @@ public class Main {
 
     public static int pageSize; //these values should be final
     public static int bufferSizeLimit;
+    public static String db_loc;
     //java Main <db loc> <page size> <buffer size>
     public static void main(String[] args) {
         if(args.length != 3){
@@ -16,7 +17,7 @@ public class Main {
             System.out.println(args.length);
             return;
         }
-        String db_loc = args[0]; // this is expected to be a folder path. No empty folder is created.
+        db_loc = args[0]; // this is expected to be a folder path. No empty folder is created.
         pageSize = Integer.parseInt(args[1]);
         bufferSizeLimit = Integer.parseInt(args[2]);
 

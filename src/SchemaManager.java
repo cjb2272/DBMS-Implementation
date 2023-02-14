@@ -25,7 +25,16 @@ public class SchemaManager {
     Returns the next unused table ID (int). This is used when CREATEing a new table.
      */
     public int getNextAvailableTableID() {
-        return 0; // method stub
+        String path = Main.db_loc + File.separator + "db-catalog.catalog";
+        int tableNum = 0;
+
+        int seekPos = 0;
+        try {
+            RandomAccessFile catalog = new RandomAccessFile(path, "r");
+        } catch (Exception e) {
+
+        }
+        return tableNum; // method stub
     }
 
 
@@ -49,11 +58,10 @@ public class SchemaManager {
 
     /**
      *
-     * @param fileLoc
      * @param tableName
      * @param attrArr
      */
-    protected void WriteTableSchemaToCatalogFile(String fileLoc, String tableName,  int[] attrArr)
+    protected void WriteTableSchemaToCatalogFile(String tableName,  int[] attrArr)
     {
         int nameLen = tableName.length();
         int attrNum = attrArr.length;
@@ -75,7 +83,7 @@ public class SchemaManager {
             j++;
         }
 
-        File catalog = new File(fileLoc, "db-catalog.catalog");
+        File catalog = new File(Main.db_loc, "db-catalog.catalog");
         try {
             Files.write(Path.of(catalog.getAbsolutePath()), bytes, StandardOpenOption.APPEND);
         } catch (IOException e) {
@@ -85,12 +93,12 @@ public class SchemaManager {
 
     /**
      *
-     * @param fileLoc
      * @param tableNum
+     * @param tableName
      * @return
      */
-    protected int[] ReadTableSchemaFromCatalogFile(String fileLoc, int tableNum) {
-        String path = fileLoc + File.separator + "db-catalog.catalog";
+    protected int[] ReadTableSchemaFromCatalogFile(int tableNum, String tableName) {
+        String path = Main.db_loc + File.separator + "db-catalog.catalog";
         RandomAccessFile catalog = null;
         try {
             catalog = new RandomAccessFile(path, "r");
@@ -105,13 +113,14 @@ public class SchemaManager {
         while (!tableFound) {
             try {
                 catalog.seek(pos);
-                int seekTableNum = catalog.read();
+                int seekTableNum = catalog.readInt();
                 if (seekTableNum == tableNum) {
-                    pos++;
+                    pos += 4;
                     catalog.seek(pos);
-                    int tableNameLen = catalog.read();
-                    pos += tableNameLen;
-                    int attrLen = catalog.read();
+                    int tableNameLen = catalog.readInt();
+                    pos += tableNameLen + 4;
+                    int attrLen = catalog.readInt();
+                    pos += 3;
                     attrs = new int[attrLen];
                     for (int i = 0; i < attrLen; i++) {
                         pos++;
@@ -119,12 +128,12 @@ public class SchemaManager {
                     }
                     tableFound = true;
                 } else {
-                    pos++;
+                    pos += 4;
                     catalog.seek(pos);
-                    int tableNameLen = catalog.read();
-                    pos += tableNameLen;
-                    int attrLen = catalog.read();
-                    pos += attrLen;
+                    int tableNameLen = catalog.readInt();
+                    pos += tableNameLen + 4;
+                    int attrLen = catalog.readInt();
+                    pos += attrLen + 4;
                 }
             } catch (Exception e) {
                 tableFound = true;
