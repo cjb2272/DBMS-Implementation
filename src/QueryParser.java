@@ -31,7 +31,7 @@ class QueryParser{
                 if ( tokens[1].toLowerCase( Locale.ROOT ).equals( "schema;" ) ) {
                     return new DisplayQuery( storageManager, schemaManager );
                 }
-                System.out.println( "Error in display format." );
+                System.out.println( "Expected 'schema' got: " + tokens[1] );
             }
             case 3 -> {
                 if ( !tokens[2].endsWith( ";" ) ) {
@@ -41,9 +41,9 @@ class QueryParser{
                 if ( tokens[1].toLowerCase( Locale.ROOT ).equals( "info" ) ) {
                     return new DisplayQuery( storageManager, schemaManager, tokens[2].replace( ";", "" ) );
                 }
-                System.out.println( "Error in display format." );
+                System.out.println( "Expected 'info' got: " + tokens[1] );
             }
-            default -> System.out.println( "Usage..." );
+            default -> System.out.println( "Must use either 'display info <table>;' or \n 'display schema;' command" );
         }
 
         return null;
@@ -53,15 +53,15 @@ class QueryParser{
     public SelectQuery ParseSelect(String input){
         String[] tokens = input.split( " " );
         if(tokens.length < 4){
-            System.out.println("Error in command: not long enough.");
+            System.out.println("Expected 'SELECT * FROM <table>' format.");
             return null;
         }
         if(!tokens[2].toLowerCase( Locale.ROOT ).equals( "from" )){
-            System.out.println("Error in command: Need to use From");
+            System.out.println("Missing FROM keyword.");
             return null;
         }
         if(!tokens[3].endsWith( ";" )){
-            System.out.println("Error: Missing semicolon.");
+            System.out.println("Missing semicolon.");
             return null;
         }
 
@@ -76,7 +76,7 @@ class QueryParser{
     public InsertQuery ParseInsert(String input){
         String[] separate = input.split( "values" );
         if(separate.length != 2 ){
-            System.out.println("Missing values keyword.");
+            System.out.println("Missing VALUES keyword.");
             return null;
         }
 
@@ -95,20 +95,18 @@ class QueryParser{
 
         //ArrayList<Integer> tableAttrList = schemaManager.getAttrList(tableName);
         ArrayList<Integer> tableAttrList = new ArrayList<>();
-
-        String[] tuples = separate[1].split( "," );
         ArrayList<ArrayList<Object>> formattedTuples = new ArrayList<>();
 
+        String[] tuples = separate[1].split( "," );
         for(String s : tuples){
             s = s.replaceAll( "[();]","" );
             ArrayList<Object> values = new ArrayList<>();
-            ArrayList<String> strings = new ArrayList<>();
             ArrayList<Integer> dataTypes = new ArrayList<>();
             if(s.contains( "\"" )){
                 //Strings in values, so there might be spaces
                 String remaining = s;
 
-                Boolean open = true;
+                boolean open = true;
                 while(remaining.contains( "\"" )){
                     String[] temp = remaining.split( "\"", 2 );
                     remaining = temp.length == 2 ? temp[1] : "";
@@ -196,7 +194,7 @@ class QueryParser{
             return true;
         }
 
-        System.out.println("Error! Variable entered was " + CodeToString( code ) + ", Expected " + CodeToString( expected ));
+        System.out.println("Invalid data types: expected (" + CodeToString( expected ) + ") got (" + CodeToString( code ) + ")");
         return false;
     }
 
@@ -229,7 +227,8 @@ class QueryParser{
     public CreateQuery ParseCreate(String input){
         String[] chunks = input.split( "[(]", 2 );
         if(chunks.length < 2){
-            System.out.println("Error in formatting.");
+            System.out.println("Error in formatting. Must use 'CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,\n" +
+                    " <attr_name2> <attr_type2>, <attr_nameN> <attr_typeN>);' format");
             return null;
         }
 
@@ -240,7 +239,7 @@ class QueryParser{
             return null;
         }
         if(!keywords[1].toLowerCase( Locale.ROOT ).equals( "table" )){
-            System.out.println("Improper use of CREATE command.");
+            System.out.println("Missing TABLE keyword.");
             return null;
         }
 
@@ -249,7 +248,10 @@ class QueryParser{
         if(attributes[attributes.length - 1].endsWith( "); " )) {
             attributes[attributes.length - 1] = attributes[attributes.length - 1].replace( ");", "" );
         } else{
-            System.out.println("Error: Formatting issue");
+            if(attributes[attributes.length - 1].endsWith( "; " )){
+                System.out.println("Missing closing parenthesis.");
+            }
+            System.out.println("Missing Semicolon.");
             return null;
         }
 
@@ -280,7 +282,7 @@ class QueryParser{
                         }
 
                     }else{
-                        System.out.println("Error, expected primary key, got: " + temp[2]);
+                        System.out.println("Too many arguments: Expected primary key, got: " + temp[2]);
                         return null;
                     }
                 default:
