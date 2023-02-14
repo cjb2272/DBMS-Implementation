@@ -115,7 +115,9 @@ class QueryParser{
                     open = !open;
                     if(open){
                         //whole chunk is string
-                        strings.add( temp[0] );
+                        values.add( temp[0] );
+                        dataTypes.add( 0 );
+                        dataTypes.add( temp[0].length() );
                     } else{
                         //Chunk is other values
                         String[] nonStringVals = temp[0].split( " " );
@@ -123,7 +125,9 @@ class QueryParser{
                             if(val.equals( " " ) || val.equals( "" )) {
                                 continue;
                             }
-                            strings.add( val );
+                            List types = TypeCast( val );
+                            values.add( types.get( 1 ) );
+                            dataTypes.add( (int) types.get( 0 ) );
                         }
                     }
                 }
@@ -131,7 +135,9 @@ class QueryParser{
                     if(val.equals( "" )) {
                         continue;
                     }
-                    strings.add( val );
+                    List types = TypeCast( val );
+                    values.add( types.get( 1 ) );
+                    dataTypes.add( (int) types.get( 0 ) );
                 }
             } else{
                 //No Strings in values
@@ -139,20 +145,12 @@ class QueryParser{
                     if(val.equals( "" )) {
                         continue;
                     }
-                    strings.add( val );
+                    List types = TypeCast( val );
+                    values.add( types.get( 1 ) );
+                    dataTypes.add( (int) types.get( 0 ) );
                 }
             }
 
-            for(String str : strings){
-                List temp = TypeCast( str );
-                int code = (int) temp.get(0);
-                dataTypes.add(code);
-                if(code == 0){
-                    dataTypes.add( str.length() );
-                }
-                values.add( temp.get( 1 ) );
-
-            }
             if(AttributeMatch( tableAttrList, dataTypes )){
                 formattedTuples.add( values );
             } else{
