@@ -2,7 +2,7 @@ package src;
 /*
  * This file represents the Storage Manager as Whole,
  * Which includes the Buffer Manager within
- * @author(s) Charlie Baker
+ * @author(s) Charlie Baker, Austin Cepalia
  */
 
 import java.io.*;
@@ -73,6 +73,7 @@ public class StorageManager {
      *
      * THIS SHOULD BE COMPLETELY INVISIBLE TO THE REST OF THE PROGRAM (besides StorageManager).
      * Everything should go through StorageManager.
+     * TODO MUST HANDLE FILE READ AND WRITE ERRORS
      */
     public class BufferManager {
 
@@ -91,23 +92,29 @@ public class StorageManager {
 
 
         /**
-         * request this page by this table and page number
+         * Request A page by table number id and page number
+         * If page is in buffer, no disk access needed, otherwise,
+         * ensure room in buffer, read into buffer, and pass page
          * IOException can probably be removed
+         * todo methods that make changes to pages need to update page's
+         *  isModified boolean bc not every page read to buffer will
+         *  end up being modified...
          *
          * @param tableNumber table num (table is file on disk)
          * @param pageNumber page num
          */
-        public void GetPage(int tableNumber, int pageNumber) throws IOException {
+        public Page GetPage(int tableNumber, int pageNumber) throws IOException {
             ArrayList<Page> pageBuffer = GetPageBuffer();
             int maxBufferSize = Main.bufferSizeLimit;
-            //if block is present in ArrayList already (iterate)
-            for (Page page : pageBuffer) {
-                if (true) { //todo if page we are looking for
-                    page.setLruLongValue(counterForLRU); //update count and increment counterForLRU
+            //if block is present in pageBuffer ArrayList already then return that page
+            for (Page inBufferPage : pageBuffer) {
+                if (inBufferPage.getPageNumberID() == pageNumber) {
+                    inBufferPage.setLruLongValue(counterForLRU); //update count and increment counterForLRU
                     counterForLRU++;
+                    //should this method be handling set of IsModified?
                     //hand page off, we do not need to read from
                     //disk since already in buffer
-                    return;
+                    return inBufferPage;
                 }
             }
             //At beginning of program buffer will not be at capacity,
@@ -117,6 +124,7 @@ public class StorageManager {
                 newlyReadPage.setLruLongValue(counterForLRU);
                 counterForLRU++;
                 pageBuffer.add(newlyReadPage);
+                return newlyReadPage;
             }
             else {
                 int indexOfLRU = 0;
@@ -129,21 +137,26 @@ public class StorageManager {
                         indexOfLRU = curPageIndex;
                     }
                 }
-
-                //write the LRU page to hardware
-                WritePageToDisk(pageBuffer.get(indexOfLRU));
-
-                //read new from hardware into buffer
+                // write the LRU page to hardware
+                // (if it has been modified bc if it hasn't copy on disk already same)
+                //if (pageBuffer.get(indexOfLRU).getisModified()) { todo uncomment once tested
+                    WritePageToDisk(pageBuffer.get(indexOfLRU));
+                //}
+                //read new page from hardware into buffer
                 Page newlyReadPage = ReadPageFromDisk(tableNumber, pageNumber);
                 newlyReadPage.setLruLongValue(counterForLRU);
                 counterForLRU++;
-                pageBuffer.add(indexOfLRU, newlyReadPage);
+                pageBuffer.add(indexOfLRU, newlyReadPage); //place page in buffer at location
+                return newlyReadPage;                      //we wrote out page
             }
-
         }
 
         /**
-         *
+         * This Method will
+         * @param tableNum the table number corresponding to a table/file with needed page
+         * @param pageNum the page number identifying the page needed?
+         * @return Page including attribute of its structural representation
+         * @throws IOException .
          */
         private Page ReadPageFromDisk(int tableNum, int pageNum) throws IOException {
             Page readPage = new Page();
@@ -155,41 +168,87 @@ public class StorageManager {
             */
 
             //seek through table file to memory you want and read in page size
-            //2D byte array representing records,
-            RandomAccessFile file = new RandomAccessFile("filepath TODO", "r");
-            byte[][] pageRecords = new byte[0][0];
-            //each row in pageRecords represents a record
+            //validity of file path and add proper extension todo
+            String tableFilePath = rootPath + "tables/" + tableNum + ".";
+            RandomAccessFile file = new RandomAccessFile(tableFilePath, "r");
+            //this ArrayList of Records will be the actual representation of our page data
+            ArrayList<Record> pageRecords = new ArrayList<>();
+            //probably will not bring to exact location
+            file.seek(pageNum * Main.pageSize);
+            //Read first portions of page coming before records
+            Integer pageNumber = file.readInt(); //first 4 bytes of page are its number
+            Integer numRecords = file.readInt(); //second 4 bytes of page is the num records contained
+            for (int rcrd = 0; rcrd < numRecords; rcrd++) {
+                // LOOP in the order of data types expected - data types cannot be stored in pages,
+                // MUST be stored in Catalog ONLY for a given page
+                //todo ask catalog
+                    int identifier = 1; //todo loop data type id's
+                    Record newRecord = new Record();
+                    //newActualRecord below will be initialized and empty per record constructor
+                    ArrayList<Object> newActualRecord = newRecord.getRecord();
+                    switch (identifier) {
+                        case 1: //Integer
+                            Integer intValue = file.readInt(); // READS 4 BYTES
+                            newActualRecord.add(intValue);
+                            break;
+                        case 2: //Double
+                            Double doubleValue = file.readDouble(); // READS 8 BYTES by calling readLong
+                            newActualRecord.add(doubleValue);
+                            break;
+                        case 3: //Boolean
+                            Boolean boolValue = file.readBoolean(); // READS 1 BYTE
+                            newActualRecord.add(boolValue);
+                            break;
+                        case 4: //Char(x) standard string fixed array of len x, padding needs to be removed
+                            String charXValue = "";
+                            int x = 0; //need to know x
+                            for (int ch = 0; ch < x; ch++) {
+                                char nextChar = file.readChar(); // READS 2 BYTES
+                                charXValue = charXValue + Character.toString(nextChar);
+                            }
+                            //remove padding for Char(x), stand string type
+                            charXValue.stripTrailing(); //would only work if storing white space in binary properly
+                            newActualRecord.add(charXValue);
+                            break;
+                        case 5: //Varchar(x) variable size array of max len x NOT Padded
+                            //need to know how many characters are in varchar - set to numChars
+                            //loop for that many chars, calling file.readChar()
+                            //records with var chars cause scenario of records not being same size
+                            String varCharValue = "";
+                            int numChars = 0;
+                            for (int chr = 0; chr < numChars; chr++) {
+                                char nextChar = file.readChar(); // READS 2 BYTES
+                                varCharValue = varCharValue + Character.toString(nextChar);
+                            }
+                            newActualRecord.add(varCharValue);
+                    }
+                //END LOOP
+                //Once we have created the complete record representation
+                newRecord.setRecord(newActualRecord);
+                pageRecords.add(newRecord); //add the record to our page structure
+            } //END LOOP NUM RECORDS
 
-            file.seek(pageNum * Main.pageSize); //probably will not bring to exact location
-
-            //translate the page into this 2D byte array
-            //and then we use that byte array to process each record
-            // Loop in the order of data types expected - only will work if i know the order expected
-            // of attributes and their types from catalog for a given relation/table/page
-                //read int for example
-                //read Boolean
-                //read char(x)
-                    //file.read() method takes can take 3 params and returns next byte of data
-                    //file.read(byte[] b, int offset, int length)
-                //file also has readInt() readDouble() readBoolean()
-
-
-
-            //remove padding for Char(x), stand string type
-
+            readPage.setActualPage(pageRecords);
             return readPage;
         }
 
         /**
-         *
+         * The write page to disk method is only called by the buffer manager when
+         * a page in the buffer has been modified, and thus the corresponding copy
+         * of that page on the disk is outdated.
+         * todo would this also be called when page is first created, i believe so
+         * Need to ensure beginning of page values coming before records are written
+         * properly
          * @param pageToWrite the page being written to hardware
          */
-        private void WritePageToDisk(Page pageToWrite) {
+        public void WritePageToDisk(Page pageToWrite) {
 
+            /**
+             * important to note that attribute values for a record must be stored
+             * in order they are given, no moving primary key to front, strings to end etc.
+             */
 
-
-            //need to add padding to Char(x)'s to maintain fixed array length
-
+            //need to add padding to Char(x)'s to maintain fixed array length for this standard string
         }
 
 
@@ -209,10 +268,11 @@ public class StorageManager {
         public void PurgeBuffer() {
             ArrayList<Page> buffer = GetPageBuffer();
             for (Page page : buffer) {
-                if (page.getisModified()) {
+                //when testing can start off by writing all to disk regardless of isModified
+                //if (page.getisModified()) {
                     //
                     WritePageToDisk(page);
-                }
+                //}
             }
 
         }
