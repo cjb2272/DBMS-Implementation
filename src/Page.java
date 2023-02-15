@@ -42,4 +42,19 @@ class Page {
     public ArrayList<Record> getActualPage() { return this.actualPage; }
 
 
+    /**
+     *
+     * @param tableNumber table page is a part of
+     * @param pageInBytes a page represented by a singular array of bytes
+     * @return
+     */
+    public static Page parse_bytes(int tableNumber, byte[] pageInBytes) {
+        Page returnPage = new Page();
+        //Iterate through Bytes, creating record arrays of objects
+        // and appending those records to actualPage arraylist of records for this page
+        //MAKE PARSE BYTES Method in the Record class to call for individual records!
+
+        return returnPage;
+    }
+
 }

@@ -6,6 +6,7 @@ package src;
  */
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 /**
@@ -88,7 +89,7 @@ public class StorageManager {
         //should I not be using a getter in any fashion, how should i do this structurally
         //the best way, don't want to be making copies all the time when assigning return
         // of getter to var
-        private ArrayList<Page> GetPageBuffer() { return this.PageBuffer; }
+        public ArrayList<Page> GetPageBuffer() { return this.PageBuffer; }
 
 
         /**
@@ -159,8 +160,6 @@ public class StorageManager {
          * @throws IOException .
          */
         private Page ReadPageFromDisk(int tableNum, int pageNum) throws IOException {
-            Page readPage = new Page();
-
             /* NEED TO KNOW DATA TYPES FOR parsing
                 READING and WRITING data to hardware,
                will grab these data types from catalog
@@ -171,8 +170,10 @@ public class StorageManager {
             //validity of file path and add proper extension todo
             String tableFilePath = rootPath + "tables/" + tableNum + ".";
             RandomAccessFile file = new RandomAccessFile(tableFilePath, "r");
-            //this ArrayList of Records will be the actual representation of our page data
-            ArrayList<Record> pageRecords = new ArrayList<>();
+
+            byte[] pageByteArray = new byte[0];
+            ByteBuffer byteBuffer = ByteBuffer.wrap(pageByteArray);
+
             //probably will not bring to exact location
             file.seek(pageNum * Main.pageSize);
             //Read first portions of page coming before records
@@ -181,54 +182,39 @@ public class StorageManager {
             for (int rcrd = 0; rcrd < numRecords; rcrd++) {
                 // LOOP in the order of data types expected - data types cannot be stored in pages,
                 // MUST be stored in Catalog ONLY for a given page
-                //todo ask catalog
-                    int identifier = 1; //todo loop data type id's
-                    Record newRecord = new Record();
-                    //newActualRecord below will be initialized and empty per record constructor
-                    ArrayList<Object> newActualRecord = newRecord.getRecord();
-                    switch (identifier) {
+                int[] typeIntegers = new int[0];
+                //new int[] typeIntegers = SchemaManager.ReadTableSchemaFromCatalogFile(tableNum);
+                for (int typeInt : typeIntegers) {
+                    switch (typeInt) {
                         case 1: //Integer
-                            Integer intValue = file.readInt(); // READS 4 BYTES
-                            newActualRecord.add(intValue);
                             break;
                         case 2: //Double
-                            Double doubleValue = file.readDouble(); // READS 8 BYTES by calling readLong
-                            newActualRecord.add(doubleValue);
                             break;
                         case 3: //Boolean
-                            Boolean boolValue = file.readBoolean(); // READS 1 BYTE
-                            newActualRecord.add(boolValue);
                             break;
                         case 4: //Char(x) standard string fixed array of len x, padding needs to be removed
-                            String charXValue = "";
                             int x = 0; //need to know x
                             for (int ch = 0; ch < x; ch++) {
-                                char nextChar = file.readChar(); // READS 2 BYTES
-                                charXValue = charXValue + Character.toString(nextChar);
+                                //tood
                             }
                             //remove padding for Char(x), stand string type
-                            charXValue.stripTrailing(); //would only work if storing white space in binary properly
-                            newActualRecord.add(charXValue);
                             break;
                         case 5: //Varchar(x) variable size array of max len x NOT Padded
                             //need to know how many characters are in varchar - set to numChars
                             //loop for that many chars, calling file.readChar()
                             //records with var chars cause scenario of records not being same size
-                            String varCharValue = "";
                             int numChars = 0;
                             for (int chr = 0; chr < numChars; chr++) {
-                                char nextChar = file.readChar(); // READS 2 BYTES
-                                varCharValue = varCharValue + Character.toString(nextChar);
+                                System.out.println(); //todo
                             }
-                            newActualRecord.add(varCharValue);
                     }
-                //END LOOP
-                //Once we have created the complete record representation
-                newRecord.setRecord(newActualRecord);
-                pageRecords.add(newRecord); //add the record to our page structure
+                } //END LOOP
+
+
             } //END LOOP NUM RECORDS
 
-            readPage.setActualPage(pageRecords);
+            Page readPage = Page.parse_bytes(tableNum, pageByteArray);
+
             return readPage;
         }
 
@@ -272,6 +258,7 @@ public class StorageManager {
                 //if (page.getisModified()) {
                     //
                     WritePageToDisk(page);
+                    //write each individual char like done in read instead of writeUTF
                 //}
             }
 

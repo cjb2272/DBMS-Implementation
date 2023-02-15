@@ -97,7 +97,7 @@ public class SchemaManager {
      * @param tableName
      * @return
      */
-    protected int[] ReadTableSchemaFromCatalogFile(int tableNum, String tableName) {
+    protected static int[] ReadTableSchemaFromCatalogFile(int tableNum, String tableName) {
         String path = Main.db_loc + File.separator + "db-catalog.catalog";
         RandomAccessFile catalog = null;
         try {
