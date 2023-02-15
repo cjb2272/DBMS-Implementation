@@ -99,12 +99,6 @@ public class StorageManager {
         // The Buffer Itself
         ArrayList<Page> PageBuffer= new ArrayList<Page>();
 
-        //should I not be using a getter in any fashion, how should i do this structurally
-        //the best way, don't want to be making copies all the time when assigning return
-        // of getter to var
-        public ArrayList<Page> GetPageBuffer() { return this.PageBuffer; }
-
-
         /**
          * Request A page by table number id and page number
          * If page is in buffer, no disk access needed, otherwise,
@@ -122,11 +116,10 @@ public class StorageManager {
          * @param pageNumber page num
          */
         public Page GetPage(int tableNumber, int pageNumber) throws IOException {
-            ArrayList<Page> pageBuffer = GetPageBuffer();
             int maxBufferSize = Main.bufferSizeLimit;
             //if block is present in pageBuffer ArrayList already then return that page
-            for (Page inBufferPage : pageBuffer) {
-                if (inBufferPage.getPageNumberID() == pageNumber) { //todo replace with access to P.O.
+            for (Page inBufferPage : PageBuffer) {
+                if (inBufferPage.getPageNumberOnDisk() == pageNumber) {
                     inBufferPage.setLruLongValue(counterForLRU); //update count and increment counterForLRU
                     counterForLRU++;
                     //should this method be handling set of IsModified?
@@ -147,12 +140,12 @@ public class StorageManager {
 
             //At beginning of program buffer will not be at capacity,
             //so we call read immediately
-            if (pageBuffer.size() < maxBufferSize) {
+            if (PageBuffer.size() < maxBufferSize) {
                 Page newlyReadPage = emptyPage; //next line if body overwrites this
                 if (!newEmptyPage) { newlyReadPage = ReadPageFromDisk(tableNumber, pageNumber);}
                 newlyReadPage.setLruLongValue(counterForLRU);
                 counterForLRU++;
-                pageBuffer.add(newlyReadPage);
+                PageBuffer.add(newlyReadPage);
                 return newlyReadPage;
             }
             else {
@@ -160,7 +153,7 @@ public class StorageManager {
                 long tempLRUCountVal = Long.MAX_VALUE;
                 //find the LRU page
                 for (int curPageIndex = 0; curPageIndex <= maxBufferSize; curPageIndex++) {
-                    long lruCountVal = pageBuffer.get(curPageIndex).getLruLongValue();
+                    long lruCountVal = PageBuffer.get(curPageIndex).getLruLongValue();
                     if (lruCountVal < tempLRUCountVal) {
                         tempLRUCountVal = lruCountVal;
                         indexOfLRU = curPageIndex;
@@ -169,7 +162,7 @@ public class StorageManager {
                 // write the LRU page to hardware
                 // (if it has been modified bc if it hasn't copy on disk already same)
                 //if (pageBuffer.get(indexOfLRU).getisModified()) { todo uncomment once tested
-                    WritePageToDisk(pageBuffer.get(indexOfLRU));
+                    WritePageToDisk(PageBuffer.get(indexOfLRU));
                 //}
                 Page newlyReadPage = emptyPage;
                 if (!newEmptyPage) {
@@ -178,14 +171,14 @@ public class StorageManager {
                 }
                 newlyReadPage.setLruLongValue(counterForLRU);
                 counterForLRU++;
-                pageBuffer.add(indexOfLRU, newlyReadPage); //place page in buffer at location
+                PageBuffer.add(indexOfLRU, newlyReadPage); //place page in buffer at location
                 return newlyReadPage;                      //we wrote out page
             }
         }
 
         /**
-         * Method, does i need method for this,
-         * Creates empty page to put in the buffer
+         * Method
+         * Creates empty page and puts that page in the buffer
          */
         private Page createNewPage() {
             return new Page();
@@ -207,32 +200,28 @@ public class StorageManager {
         }
 
         /**
-         * This Method will
+         * This Method will read a page from the disk into a singular Byte array,
+         * then call's page's parse_bytes method to recieve an actual page object
+         * for this page to be returns
          * @param tableNum the table number corresponding to a table/file with needed page
-         * @param pageNum the page number identifying the page needed?
-         * @return Page including attribute of its structural representation
+         * @param pageNum how many pages deep into the table file is this page,
+         *                ... where does this page lie sequentially on the disk,
+         *                ... could be 2nd page of records, but pageNum says it is the 15th
+         *                ... page written on the disk
+         * @return Page Object converted disk->byte[]->pageObj
          * @throws IOException .
          */
         private Page ReadPageFromDisk(int tableNum, int pageNum) throws IOException {
-            /* NEED TO KNOW DATA TYPES FOR parsing
-                READING and WRITING data to hardware,
-               will grab these data types from catalog
-               will individual page know the table scheme for which it belongs too?
-            */
-
-            //seek through table file to memory you want and read in page size
             //validity of file path and add proper extension todo
             String tableFilePath = rootPath + "tables/" + tableNum + ".";
             RandomAccessFile file = new RandomAccessFile(tableFilePath, "r");
-            //todo index pageNum in pageordering will give us actual page num/loc needed
+            //seek through table file to memory you want and read in page size
             file.seek(pageNum * Main.pageSize);
-            //Read first portions of page coming before records
-            int pageSize = file.readInt(); //first 4 bytes of page is the actual size of page in bytes
-            int numRecords = file.readInt(); //second 4 bytes of page is the num records contained
-            //WHERE IS POINTER for byteBuffer starting? after these first two file.readInt's?
-            byte[] pageByteArray = new byte[pageSize];
+            byte[] pageByteArray = new byte[Main.pageSize];
             ByteBuffer byteBuffer = ByteBuffer.wrap(pageByteArray);
-
+            //Read first portions of page coming before records
+            int sizeOfPageInBytes = byteBuffer.getInt(); //read first 4 bytes
+            int numRecords = byteBuffer.getInt(); //read second 4 bytes
             for (int rcrd = 0; rcrd < numRecords; rcrd++) {
                 // LOOP in the order of data types expected - data types cannot be stored in pages,
                 // MUST be stored in Catalog ONLY for a given page
@@ -276,27 +265,27 @@ public class StorageManager {
         }
 
         /**
+         * Method calls Page's ____ Method, passing in pageToWrite, returning a singular
+         * byte array representation to write out to the disk all at once.
          * The write page to disk method is only called by the buffer manager when
          * a page in the buffer has been modified, and thus the corresponding copy
          * of that page on the disk is outdated.
-         * todo would this also be called when page is first created, i believe so
-         * Need to ensure beginning of page values coming before records are written
-         * properly
-         * @param pageToWrite the page being written to hardware
+         *  would this also be called when page is first created, i believe so
+         * @param pageToWrite the page to be written to hardware once converted to byte[]
          */
-        public void WritePageToDisk(Page pageToWrite) {
+        public void WritePageToDisk(Page pageToWrite) throws IOException {
+            int tableNumber = pageToWrite.getTableNumber();
+            int pageNumber = pageToWrite.getPageNumberOnDisk();
+            //validity of file path and add proper extension todo
+            String tableFilePath = rootPath + "tables/" + tableNumber + ".";
+            RandomAccessFile file = new RandomAccessFile(tableFilePath, "rw");
+            //seek through table file to memory you want and read in page size
+            file.seek(pageNumber * Main.pageSize);
 
-            /**
-             * important to note that attribute values for a record must be stored
-             * in order they are given, no moving primary key to front, strings to end etc.
-             */
-
-            //need to add padding to Char(x)'s to maintain fixed array length for this standard string
-
-            byte[] pageByteArray = new byte[0];
+            byte[] pageByteArray = Page.parse_page(pageToWrite);
             ByteBuffer byteBuffer = ByteBuffer.wrap(pageByteArray);
-            //paste over pretty much same method as read except using puts instead of gets
 
+            //write pageByteArray to disk
         }
 
 
@@ -313,9 +302,8 @@ public class StorageManager {
          * this method is invoked when quit is typed at command line
          * (giant try catch for quit at any time?)
          */
-        public void PurgeBuffer() {
-            ArrayList<Page> buffer = GetPageBuffer();
-            for (Page page : buffer) {
+        public void PurgeBuffer() throws IOException {
+            for (Page page : PageBuffer) {
                 //when testing can start off by writing all to disk regardless of isModified
                 //if (page.getisModified()) {
                     //

@@ -4,6 +4,7 @@ package src;
  */
 
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 /**
@@ -11,11 +12,14 @@ import java.util.ArrayList;
  */
 class Page {
 
-    /*pageNumberID will be unique to each page, and will be assigned
+    /*pageNumberOnDisk will be unique to each page, and will be assigned
     * when a page is first ever created/instantiated
-    * Need to figure out exactly how this will work*/
-    //todo page ordering array replaces need for this unless we want to keep track of index here
-    public int pageNumberID;
+    * id for a page essentially
+    */
+    private int pageNumberOnDisk;
+
+    //the table a page belongs too
+    private int tableNumber;
     private long lruLongValue;
     private Boolean isModified;
 
@@ -23,21 +27,25 @@ class Page {
     // Record Instances.
     private ArrayList<Record> actualPage;
 
+
     /**
      * Page Constructor
      */
     public Page() {
         this.lruLongValue = 0;
         this.isModified = false; //could change to true for new instance
-        this.pageNumberID = 0;
+        this.pageNumberOnDisk = 0;
+        this.tableNumber = 0;
     }
 
-    public void setPageNumberID(int value) { this.pageNumberID = value; }
+    public void setPageNumberOnDisk(int value) { this.pageNumberOnDisk = value; }
+    public void setTableNumber(int value) { this.tableNumber = value; }
     public void setLruLongValue(long value) { this.lruLongValue = value; }
     public void setIsModified(Boolean value) { this.isModified = value; }
     public void setActualPage(ArrayList<Record> records) { this.actualPage = records; }
 
-    public int getPageNumberID() { return this.pageNumberID; }
+    public int getPageNumberOnDisk() { return this.pageNumberOnDisk; }
+    public int getTableNumber() { return this.tableNumber; }
     public long getLruLongValue() { return this.lruLongValue; }
     public boolean getisModified() { return this.isModified; }
     public ArrayList<Record> getActualPage() { return this.actualPage; }
@@ -60,10 +68,24 @@ class Page {
     }
 
     /**
-     * Pretty certain will need method that does the exact opposite of parse_bytes,
+     * Method that does the exact opposite of parse_bytes,
      * taking our ArrayList<Record> actualPage and converting back to a single byte array
      * to return to Buffer Managers, writepagetodisk method
+     * @param pageToConvert page object to convert
+     * @return byte array representation of the page
+     *         IMPORTANT to note that byte array returned will have:
+     *         - first 4 bytes: page size int in bytes (compute_page_size method)
+     *                          page size inclusive of these ints at front
+     *         - second 4 bytes: number of records
+     *         - all bytes for actual records
      */
+    public static byte[] parse_page(Page pageToConvert) {
+        byte[] byteArray = new byte[0];
+        ByteBuffer byteBuffer = ByteBuffer.wrap(byteArray);
+        pageToConvert.getActualPage();
 
+        //todo make use of byteBuffers put methods
 
+        return byteArray;
+    }
 }
