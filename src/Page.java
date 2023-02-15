@@ -14,6 +14,7 @@ class Page {
     /*pageNumberID will be unique to each page, and will be assigned
     * when a page is first ever created/instantiated
     * Need to figure out exactly how this will work*/
+    //todo page ordering array replaces need for this unless we want to keep track of index here
     public int pageNumberID;
     private long lruLongValue;
     private Boolean isModified;

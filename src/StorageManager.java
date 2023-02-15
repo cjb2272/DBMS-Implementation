@@ -95,7 +95,11 @@ public class StorageManager {
         /**
          * Request A page by table number id and page number
          * If page is in buffer, no disk access needed, otherwise,
-         * ensure room in buffer, read into buffer, and pass page
+         * ensure room in buffer, read into buffer, and pass page.
+         *
+         * This method is also called when a new page needs to be created for the first time,
+         * which will only happen in pageSplit, and first page for an empty table file
+         *
          * IOException can probably be removed
          * todo methods that make changes to pages need to update page's
          *  isModified boolean bc not every page read to buffer will
@@ -109,7 +113,7 @@ public class StorageManager {
             int maxBufferSize = Main.bufferSizeLimit;
             //if block is present in pageBuffer ArrayList already then return that page
             for (Page inBufferPage : pageBuffer) {
-                if (inBufferPage.getPageNumberID() == pageNumber) {
+                if (inBufferPage.getPageNumberID() == pageNumber) { //todo replace with access to P.O.
                     inBufferPage.setLruLongValue(counterForLRU); //update count and increment counterForLRU
                     counterForLRU++;
                     //should this method be handling set of IsModified?
@@ -118,10 +122,21 @@ public class StorageManager {
                     return inBufferPage;
                 }
             }
+            boolean newEmptyPage;
+            Page emptyPage = null;
+            if (false) {
+            // access schema for the table number given
+            // if pageNumber does not exist in the P.O for the table then we know we
+            // are creating that first page for a table, dont need to read from disk at all
+                emptyPage = createNewPage();
+                newEmptyPage = true;
+            } else { newEmptyPage = false; }
+
             //At beginning of program buffer will not be at capacity,
             //so we call read immediately
             if (pageBuffer.size() < maxBufferSize) {
-                Page newlyReadPage = ReadPageFromDisk(tableNumber, pageNumber);
+                Page newlyReadPage = emptyPage; //next line if body overwrites this
+                if (!newEmptyPage) { newlyReadPage = ReadPageFromDisk(tableNumber, pageNumber);}
                 newlyReadPage.setLruLongValue(counterForLRU);
                 counterForLRU++;
                 pageBuffer.add(newlyReadPage);
@@ -143,13 +158,39 @@ public class StorageManager {
                 //if (pageBuffer.get(indexOfLRU).getisModified()) { todo uncomment once tested
                     WritePageToDisk(pageBuffer.get(indexOfLRU));
                 //}
-                //read new page from hardware into buffer
-                Page newlyReadPage = ReadPageFromDisk(tableNumber, pageNumber);
+                Page newlyReadPage = emptyPage;
+                if (!newEmptyPage) {
+                    //read page from hardware into buffer
+                    newlyReadPage = ReadPageFromDisk(tableNumber, pageNumber);
+                }
                 newlyReadPage.setLruLongValue(counterForLRU);
                 counterForLRU++;
                 pageBuffer.add(indexOfLRU, newlyReadPage); //place page in buffer at location
                 return newlyReadPage;                      //we wrote out page
             }
+        }
+
+        /**
+         * Method, does i need method for this,
+         * Creates empty page to put in the buffer
+         */
+        private Page createNewPage() {
+            return new Page();
+        }
+
+        /**
+         * Method is called only by the insert record method for the time being
+         * @param overFullPage page that had a record insert causing it to be too large
+         */
+        public void pageSplit(Page overFullPage) {
+            //if choose to do split logic in getpage method
+            //calls get page which will determine we are page splitting because the param
+            //to get page will be a page number that does not yet exist in the P.O.?
+            //better approach: todo this approach
+            //create new second page in this method,
+            //copy half the records over, reuse logic in get page, SUPER redundant
+            // that will handle adding to buffer wether buffer is not full or we need to
+            //find an lru
         }
 
         /**
