@@ -22,7 +22,7 @@ public class Main {
         bufferSizeLimit = Integer.parseInt(args[2]);
 
         StorageManager storageManager = new StorageManager(db_loc);
-        SchemaManager schemaManager = new SchemaManager(db_loc);
+        SchemaManager schemaManager = new SchemaManager(db_loc, pageSize);
 
         System.out.println("\nPlease enter commands, enter <quit> to shutdown the db.\n");
 

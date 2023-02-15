@@ -7,6 +7,7 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 
 /*
 Acts as an in-memory copy of what's in the schema file.
@@ -16,38 +17,30 @@ public class SchemaManager {
 
     // directory path for the database
     private String root;
+    private Catalog catalog;
 
 
-    public SchemaManager(String root) {
+    public SchemaManager(String root, int pageSize) {
         this.root = root;
+        this.catalog = new Catalog(pageSize);
     }
 
     /*
     Returns the next unused table ID (int). This is used when CREATEing a new table.
      */
     public int getNextAvailableTableID() {
-        String path = Main.db_loc + File.separator + "db-catalog.catalog";
-        int tableNum = 0;
-
-        int seekPos = 0;
-        try {
-            RandomAccessFile catalog = new RandomAccessFile(path, "r");
-        } catch (Exception e) {
-
-        }
-        return tableNum; // method stub
+        return catalog.getTablesSize() + 1; // method stub
     }
 
 
     /**
      *
-     * @param fileLoc
      */
-    protected void CreateCatalogFile(String fileLoc)
+    protected void createCatalogFile()
     {
         try
         {
-            File catalog = new File(fileLoc, "db-catalog.catalog");
+            File catalog = new File(Main.db_loc, "db-catalog.catalog");
             boolean fileCreated = catalog.createNewFile();
         }
         catch(IOException e)
@@ -57,12 +50,16 @@ public class SchemaManager {
         }
     }
 
+    public void addTableSchema(int tableNum, String tableName, ArrayList attributeInfo) {
+        catalog.addTable(tableNum, tableName, attributeInfo);
+    }
+
     /**
      *
      * @param tableName
      * @param attrArr
      */
-    protected void WriteTableSchemaToCatalogFile(String tableName,  int[] attrArr)
+    protected void writeTableSchemaToCatalogFile(String tableName,  int[] attrArr)
     {
         int nameLen = tableName.length();
         int attrNum = attrArr.length;
