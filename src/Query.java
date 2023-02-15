@@ -1,6 +1,6 @@
 package src;/*
  * This holds the different types of queries that can be made.
- * @author Duncan Small
+ * @author Duncan Small, Austin Cepalia
  */
 
 import java.util.ArrayList;
@@ -37,6 +37,13 @@ class SelectQuery extends Query{
         // ask the storage manager for this data. It will in turn ask the buffer first, but that's
         // abstracted away from this point in the code
 
+        //int tableNum = schemaManager.getTableID(table) todo: ask schema for table id when that method is ready
+        int tableNum = 0;
+        ArrayList<Record> records = storageManager.selectData(tableNum);
+
+        for (Record record : records) {
+            System.out.println(record);
+        }
 
 
 

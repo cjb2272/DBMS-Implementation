@@ -1,6 +1,6 @@
 package src;/*
  * This is the main entry to our program that will be a database manager.
- * @author Duncan Small
+ * @author Duncan Small, Austin Cepalia
  */
 
 import java.util.*;

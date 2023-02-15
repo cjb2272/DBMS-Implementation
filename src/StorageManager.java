@@ -17,8 +17,11 @@ public class StorageManager {
 
     private String rootPath;
 
+    private BufferManager buffer;
+
     public StorageManager(String rootPath) {
         this.rootPath = rootPath;
+        this.buffer = new BufferManager();
     }
 
     /*
@@ -62,8 +65,18 @@ public class StorageManager {
     /*
     Returns the requested row(s) of data. The Query object calling this is expected to print it out.
      */
-    public ArrayList<ArrayList<String>> SelectData() {
-        return null; // method stub
+    public ArrayList<Record> selectData(int tableID) {
+        int pageNumber = 0; //stub
+        try {
+            Page page = buffer.GetPage(tableID, pageNumber); // the buffer will read from disk if it doesn't have the page
+            ArrayList<Record> records = page.getActualPage();
+            // todo: read through page records and filter out the irrelevant ones based on the select clause
+
+            return records;
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 

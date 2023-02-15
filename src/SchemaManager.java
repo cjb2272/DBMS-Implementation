@@ -10,6 +10,7 @@ import java.nio.file.StandardOpenOption;
 
 /*
 Acts as an in-memory copy of what's in the schema file.
+ * @author(s) Tristan Hoenninger, Austin Cepalia
  */
 public class SchemaManager {
 

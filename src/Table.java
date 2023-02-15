@@ -1,11 +1,11 @@
 package src;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 /*
 Represents a table file on disk. Inside a table file is a series of pages containing rows of data.
 The page represents the smallest unit of memory that can be read/written at any given time.
+@author: Austin Cepalia
  */
 public class Table {
 
