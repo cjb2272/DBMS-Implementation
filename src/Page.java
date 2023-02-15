@@ -43,7 +43,7 @@ class Page {
 
 
     /**
-     *
+     * Called by Buffer Manager when reading page into buffer
      * @param tableNumber table page is a part of
      * @param pageInBytes a page represented by a singular array of bytes
      * @return
@@ -52,9 +52,17 @@ class Page {
         Page returnPage = new Page();
         //Iterate through Bytes, creating record arrays of objects
         // and appending those records to actualPage arraylist of records for this page
-        //MAKE PARSE BYTES Method in the Record class to call for individual records!
+
+        // parse bytes Method in the Record class to call for individual records needed aswell?
 
         return returnPage;
     }
+
+    /**
+     * Pretty certain will need method that does the exact opposite of parse_bytes,
+     * taking our ArrayList<Record> actualPage and converting back to a single byte array
+     * to return to Buffer Managers, writepagetodisk method
+     */
+
 
 }

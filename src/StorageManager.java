@@ -170,15 +170,15 @@ public class StorageManager {
             //validity of file path and add proper extension todo
             String tableFilePath = rootPath + "tables/" + tableNum + ".";
             RandomAccessFile file = new RandomAccessFile(tableFilePath, "r");
-
-            byte[] pageByteArray = new byte[0];
-            ByteBuffer byteBuffer = ByteBuffer.wrap(pageByteArray);
-
-            //probably will not bring to exact location
+            //todo index pageNum in pageordering will give us actual page num/loc needed
             file.seek(pageNum * Main.pageSize);
             //Read first portions of page coming before records
-            Integer pageNumber = file.readInt(); //first 4 bytes of page are its number
-            Integer numRecords = file.readInt(); //second 4 bytes of page is the num records contained
+            int pageSize = file.readInt(); //first 4 bytes of page is the actual size of page in bytes
+            int numRecords = file.readInt(); //second 4 bytes of page is the num records contained
+            //WHERE IS POINTER for byteBuffer starting? after these first two file.readInt's?
+            byte[] pageByteArray = new byte[pageSize];
+            ByteBuffer byteBuffer = ByteBuffer.wrap(pageByteArray);
+
             for (int rcrd = 0; rcrd < numRecords; rcrd++) {
                 // LOOP in the order of data types expected - data types cannot be stored in pages,
                 // MUST be stored in Catalog ONLY for a given page
@@ -187,25 +187,28 @@ public class StorageManager {
                 for (int typeInt : typeIntegers) {
                     switch (typeInt) {
                         case 1: //Integer
+                            byteBuffer.getInt();
                             break;
                         case 2: //Double
+                            byteBuffer.getDouble();
                             break;
                         case 3: //Boolean
+                            byteBuffer.get(); //A Boolean is 1 BYTE so simple .get()
                             break;
                         case 4: //Char(x) standard string fixed array of len x, padding needs to be removed
-                            int x = 0; //need to know x
-                            for (int ch = 0; ch < x; ch++) {
-                                //tood
+                            int numCharXChars = byteBuffer.getInt();
+                            for (int ch = 0; ch < numCharXChars; ch++) {
+                                byteBuffer.getChar();
                             }
-                            //remove padding for Char(x), stand string type
+                            //remove padding for Char(x)?, stand string type
                             break;
                         case 5: //Varchar(x) variable size array of max len x NOT Padded
-                            //need to know how many characters are in varchar - set to numChars
-                            //loop for that many chars, calling file.readChar()
                             //records with var chars cause scenario of records not being same size
-                            int numChars = 0;
+                            int numChars = byteBuffer.getInt();
                             for (int chr = 0; chr < numChars; chr++) {
-                                System.out.println(); //todo
+                                byteBuffer.getChar();
+                                int x; //remove this line, only present to remove annoyance
+                                       //telling me i can merge case 4 and 5 bc they are the same rn
                             }
                     }
                 } //END LOOP
@@ -235,6 +238,11 @@ public class StorageManager {
              */
 
             //need to add padding to Char(x)'s to maintain fixed array length for this standard string
+
+            byte[] pageByteArray = new byte[0];
+            ByteBuffer byteBuffer = ByteBuffer.wrap(pageByteArray);
+            //paste over pretty much same method as read except using puts instead of gets
+
         }
 
 
