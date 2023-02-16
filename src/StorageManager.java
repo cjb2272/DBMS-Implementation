@@ -203,7 +203,7 @@ public class StorageManager {
          * @param tableNumber table number needed to get table schema
          * @return empty page that is now in the buffer
          */
-        private Page CreateNewPage(int tableNumber) throws IOException {
+        public Page CreateNewPage(int tableNumber) throws IOException {
             Page newPage = new Page();
             newPage.setTableNumber(tableNumber);
             newPage.setIsModified(true); //could alternatively change to true in constructor for
@@ -323,7 +323,7 @@ public class StorageManager {
          *  would this also be called when page is first created, I believe so
          * @param pageToWrite the page to be written to hardware once converted to byte[]
          */
-        public void WritePageToDisk(Page pageToWrite) throws IOException {
+        private void WritePageToDisk(Page pageToWrite) throws IOException {
             int tableNumber = pageToWrite.getTableNumber();
             int pageNumber = pageToWrite.getPageNumberOnDisk();
             //validity of file path and add proper extension todo
