@@ -106,9 +106,6 @@ public class StorageManager {
          * This Method is Called when getting record by primary key
          *                       when getting all records for given table num
          *                       when inserting a record
-         * todo
-         * This Method is also called when a new page needs to be created for the first time,
-         * which will only happen in pageSplit, and first page for an empty table file
          *
          * @param tableNumber table num (table is file on disk)
          * @param pageNumber how many pages deep into the table file is this page,
@@ -130,21 +127,10 @@ public class StorageManager {
                     return inBufferPage;
                 }
             }
-            boolean newEmptyPage;
-            Page emptyPage = null;
-            if (false) {
-            // access schema for the table number given
-            // if pageNumber does not exist in the P.O for the table then we know we
-            // are creating that first page for a table, dont need to read from disk at all
-                emptyPage = createNewPage();
-                newEmptyPage = true;
-            } else { newEmptyPage = false; }
-
             //At beginning of program buffer will not be at capacity,
             //so we call read immediately
             if (PageBuffer.size() < maxBufferSize) {
-                Page newlyReadPage = emptyPage; //next line if body overwrites this
-                if (!newEmptyPage) { newlyReadPage = ReadPageFromDisk(tableNumber, pageNumber);}
+                Page newlyReadPage = ReadPageFromDisk(tableNumber, pageNumber);
                 newlyReadPage.setLruLongValue(counterForLRU);
                 counterForLRU++;
                 PageBuffer.add(newlyReadPage);
@@ -163,27 +149,44 @@ public class StorageManager {
                 }
                 // write the LRU page to hardware
                 // (if it has been modified bc if it hasn't copy on disk already same)
-                //if (pageBuffer.get(indexOfLRU).getisModified()) { todo uncomment once tested
+                if (PageBuffer.get(indexOfLRU).getisModified()) {
                     WritePageToDisk(PageBuffer.get(indexOfLRU));
-                //}
-                Page newlyReadPage = emptyPage;
-                if (!newEmptyPage) {
-                    //read page from hardware into buffer
-                    newlyReadPage = ReadPageFromDisk(tableNumber, pageNumber);
                 }
+                Page newlyReadPage = ReadPageFromDisk(tableNumber, pageNumber);
                 newlyReadPage.setLruLongValue(counterForLRU);
                 counterForLRU++;
                 PageBuffer.add(indexOfLRU, newlyReadPage); //place page in buffer at location
-                return newlyReadPage;                      //we wrote out page
+                return newlyReadPage;                      //we wrote out the page
             }
+        }
+
+        /**
+         * todo
+         * pull addtoBuffer logic out of get page for, because that logic
+         * is going to be needed in create page and pageSplit, and
+         * we dont want getPage to become to bulky
+         * @return page
+         */
+        private Page addToBufferLogic() {
+            return new Page();
         }
 
         /**
          * Method
          * Creates empty page and puts that page in the buffer
+         * This Method is also called when a new page needs to be created for the first time,
+         * which will only happen in pageSplit, and first page for an empty table file, when
+         * insert method sees P.O is empty will call this
          */
         private Page createNewPage() {
-            return new Page();
+            Page newPage = new Page();
+            newPage.setIsModified(true); //could alternatively change to true in constructor for
+                                         // page instance
+            //insert page into P.O. using proper method calls
+            // set pageNumberOnDisk and tableNumber attributes
+            //add to buffer, move add to buffer logic out of get page method into own method,
+            //so code can be reused here
+            return newPage;
         }
 
         /**
@@ -191,14 +194,13 @@ public class StorageManager {
          * @param overFullPage page that had a record insert causing it to be too large
          */
         public void pageSplit(Page overFullPage) {
-            //if choose to do split logic in getpage method
-            //calls get page which will determine we are page splitting because the param
-            //to get page will be a page number that does not yet exist in the P.O.?
-            //better approach: todo this approach
-            //create new second page in this method,
-            //copy half the records over, reuse logic in get page, SUPER redundant
-            // that will handle adding to buffer wether buffer is not full or we need to
-            //find an lru
+            //create new second page in this method, by calling createNewPage
+            //copy half the records over,
+            //make sure setting ismodified for both pages
+            //
+            // use buffer logic method needed to pull from getPage
+            // that will handle adding to buffer wether buffer is not full, or we need to
+            //find a lru
         }
 
         /**
@@ -264,7 +266,7 @@ public class StorageManager {
          * The write page to disk method is only called by the buffer manager when
          * a page in the buffer has been modified, and thus the corresponding copy
          * of that page on the disk is outdated.
-         *  would this also be called when page is first created, i believe so
+         *  would this also be called when page is first created, I believe so
          * @param pageToWrite the page to be written to hardware once converted to byte[]
          */
         public void WritePageToDisk(Page pageToWrite) throws IOException {
@@ -296,11 +298,9 @@ public class StorageManager {
         public void PurgeBuffer() throws IOException {
             for (Page page : PageBuffer) {
                 //when testing can start off by writing all to disk regardless of isModified
-                //if (page.getisModified()) {
-                    //
+                if (page.getisModified()) {
                     WritePageToDisk(page);
-                    //write each individual char like done in read instead of writeUTF
-                //}
+                }
             }
 
         }
