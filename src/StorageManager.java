@@ -7,6 +7,8 @@ package src;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -16,12 +18,17 @@ import java.util.*;
 public class StorageManager {
 
     private String rootPath;
+    private String tablesRootPath;
 
     private BufferManager buffer;
 
-    public StorageManager(String rootPath) {
+    private SchemaManager schemaManager;
+
+    public StorageManager(String rootPath, SchemaManager schemaManager) {
         this.rootPath = rootPath;
+        this.tablesRootPath = Paths.get(rootPath, "tables").toString();
         this.buffer = new BufferManager();
+        this.schemaManager = schemaManager;
     }
 
     /*
@@ -33,15 +40,19 @@ public class StorageManager {
      */
     public Table createTable(int ID, String name, ArrayList<String> columnNames, ArrayList<Integer> dataTypes) {
 
+        // create the tables subdirectory if it doesn't exist.
+        File folder = new File(tablesRootPath);
+        if (!folder.exists() || !folder.isDirectory()) {
+            folder.mkdir();
+        }
+
         // creation of a new table never involves the buffer (there are no pages to start), so the file is created here.
         DataOutputStream output=null;
         try {
-            output = new DataOutputStream(new FileOutputStream(rootPath + "\\" + name));
+            output = new DataOutputStream(new FileOutputStream(Paths.get(tablesRootPath, name).toString()));
 
             // no pages in a new table file, so write 0
             output.writeInt(0);
-
-            // write out the ID of this tale
 
             output.flush();
             output.close();
@@ -75,9 +86,23 @@ public class StorageManager {
                 return records;
             }
 
-            // todo ask schema manager for col idx by passing it colNames
+            ArrayList<AttributeSchema> columns = schemaManager.getTableByTableNumber(tableID).getAttributes();
 
-            int[] colIdxs = new int[] {0, 1};
+            ArrayList<Integer> indexes = new ArrayList<>();
+            int i = 0;
+            for (AttributeSchema column : columns) {
+                if (column.getName().equals(columns.get(i).getName())) {
+                    indexes.add(i);
+                }
+                i++;
+            }
+
+            int[] colIdxs = new int[indexes.size()];
+            i = 0;
+            for (Integer index : indexes) {
+                colIdxs[i] = index;
+                i++;
+            }
 
             ArrayList<Record> results = new ArrayList<>();
             for (Record record : records) {
@@ -101,6 +126,9 @@ public class StorageManager {
         }
     }
 
+    public void insertRecords(int tableID, ArrayList<Record> records) {
+
+    }
 
     /**
      * The Buffer Manager
@@ -111,7 +139,7 @@ public class StorageManager {
      * Everything should go through StorageManager.
      * TODO MUST HANDLE FILE READ AND WRITE ERRORS
      */
-    public class BufferManager {
+    private class BufferManager {
 
 
         //will be THE NEXT value to assign when page read
@@ -269,7 +297,7 @@ public class StorageManager {
          */
         private Page ReadPageFromDisk(int tableNum, int pageNum) throws IOException {
             //validity of file path and add proper extension todo
-            String tableFilePath = rootPath + "tables/" + tableNum + ".";
+            String tableFilePath = tablesRootPath + "tables/" + tableNum + ".";
             RandomAccessFile file = new RandomAccessFile(tableFilePath, "r");
             //seek through table file to memory you want and read in page size
             file.seek((long) pageNum * Main.pageSize);
@@ -327,7 +355,7 @@ public class StorageManager {
             int tableNumber = pageToWrite.getTableNumber();
             int pageNumber = pageToWrite.getPageNumberOnDisk();
             //validity of file path and add proper extension todo
-            String tableFilePath = rootPath + "tables/" + tableNumber + ".";
+            String tableFilePath = tablesRootPath + "tables/" + tableNumber + ".";
             RandomAccessFile file = new RandomAccessFile(tableFilePath, "rw");
             //seek through table file to memory you want and read in page size
             file.seek(pageNumber * Main.pageSize);

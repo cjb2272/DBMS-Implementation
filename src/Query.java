@@ -8,9 +8,8 @@ import java.util.HashMap;
 
 public abstract class Query {
 
-    // may end up migrating this to a singleton so we can avoid passing this into all the Query objects
+    // may end up migrating these to singletons so we can avoid passing this into all the Query objects
     protected StorageManager storageManager;
-
     protected SchemaManager schemaManager;
 
     public Query(StorageManager storageManager, SchemaManager schemaManager) {
@@ -51,18 +50,24 @@ class SelectQuery extends Query{
 }
 
 class InsertQuery extends Query{
-    ArrayList<ArrayList<Object>> values = new ArrayList<>();
+    ArrayList<Record> values = new ArrayList<>();
     String table;
 
     public InsertQuery(StorageManager storageManager, SchemaManager schemaManager, String table, ArrayList<ArrayList<Object>> val){
         super(storageManager, schemaManager);
-        this.values = val;
         this.table = table;
+
+        for (ArrayList<Object> row : val) {
+            Record r = new Record();
+            r.setRecord(row);
+            values.add(r);
+        }
     }
 
     @Override
     public void execute() {
-
+        int tableID = 0;
+        storageManager.insertRecords(tableID, values);
     }
 }
 
@@ -85,8 +90,6 @@ class CreateQuery extends Query{
         int availableId = schemaManager.getNextAvailableTableID();
         storageManager.createTable(availableId, tableName, columnNames, dataTypes);
     }
-
-
 }
 
 class DisplayQuery extends Query{
@@ -105,6 +108,16 @@ class DisplayQuery extends Query{
 
     @Override
     public void execute() {
+
+        if (table == null) {
+            ArrayList<TableSchema> tableSchemas = schemaManager.getAllTables();
+            for (TableSchema schema : tableSchemas) {
+                System.out.println(schema);
+            }
+            return;
+        }
+        // todo lookup the table id from the table string name in this object when that method is ready
+        System.out.println(schemaManager.getTableByTableNumber(0));
 
     }
 }
