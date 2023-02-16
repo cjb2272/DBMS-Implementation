@@ -41,6 +41,15 @@ public class Catalog {
         return null;
     }
 
+    public int getTableIntByName(String tableName) {
+        for (TableSchema tableSchema: tableSchemas) {
+            if (tableSchema.getTableName().equals(tableName)) {
+                return tableSchema.getTableNum();
+            }
+        }
+        return -1;
+    }
+
     public ArrayList<AttributeSchema> getTableAttributeListByName(String tableName) {
         for (TableSchema tableSchema: tableSchemas) {
             if (tableSchema.getTableName().equals(tableName)) {
