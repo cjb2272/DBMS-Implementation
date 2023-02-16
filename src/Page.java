@@ -54,18 +54,20 @@ class Page {
     /**
      * Method Called by insertRecord method after making insert,
      *     or ANY Method that makes actual changes to data of page
-     * size returned INCLUDES the bytes for page size and number of records at
-     * beginning of page (fixed at 8 for two ints so add 8 to return)
-     * even though pages are stored on disk at max pageSize offset,
-     * we still need to know specific page size
+     * Size returned includes the bytes for page size and number of records
+     * at the beginning of page
      * @param page page
      * @return how many bytes does this record consist of
      *         return value used to crosscheck surpassing of max page size,
      *         indicating split needed
      */
     int compute_size_in_bytes(Page page) {
-        int sizeOfPageInBytes = 0;
+        int sizeOfPageInBytes = 8; //beginning of page (fixed at 8 for two ints)
         //call records compute size for each record that is a part of this page
+        for (Record record : page.getActualPage()) {
+            int bytesInRecord = record.compute_size();
+            sizeOfPageInBytes = sizeOfPageInBytes + bytesInRecord;
+        }
         return sizeOfPageInBytes;
     }
 

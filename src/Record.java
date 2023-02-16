@@ -33,18 +33,28 @@ public class Record {
 
 
     /**
-     * size returned INCLUDES the bytes used to represent ints telling how many
-     * chars are in a varchar or char
-     * Method Called by Page's compute_size_in_bytes, record has data at this point
-     * so simply itterating through types adding necessary size, when we
-     * reach a cahr or varchar, we add 2bytes for every character in string
+     * pre-condition: Record that we are computing size for is composed of data
+     * Method Called by Page's compute_size_in_bytes
      * Also Called by Page's parse_bytes
-     * @param record record, pre-condition: Record is composed of data
-     * @return how many bytes does this record consist of
+     * @return How many bytes this record consists of.
+     *         Size returned includes the bytes used to represent ints
+     *         telling how many chars are in a varchar or char
      */
-    int compute_size(Record record) {
+    int compute_size() {
         int sizeOfRecordInBytes = 0;
-        // size is 4 bytes for each integer that comes before char or varchar
+        for (Object obj : this.Record) {
+            //not sure if this will work todo
+            if (obj instanceof Integer) { sizeOfRecordInBytes = sizeOfRecordInBytes + 4; }
+            if (obj instanceof Double) { sizeOfRecordInBytes = sizeOfRecordInBytes + 8; }
+            if (obj instanceof Boolean) { sizeOfRecordInBytes = sizeOfRecordInBytes + 1; }
+            //case for char(x) and varchar(x), add 2 bytes for each char
+            if (obj instanceof String) {
+                sizeOfRecordInBytes = sizeOfRecordInBytes + 4; // 4 bytes for each int that comes before char or varchar
+                int numCharsInString = obj.toString().length();
+                int charBytes = numCharsInString * 2;
+                sizeOfRecordInBytes = sizeOfRecordInBytes + charBytes;
+            }
+        }
         return sizeOfRecordInBytes;
     }
 
