@@ -208,7 +208,7 @@ public class StorageManager {
             newPage.setTableNumber(tableNumber);
             newPage.setIsModified(true); //could alternatively change to true in constructor for
                                          // page instance
-            // TableSchema table = getTableSchema(tableNumber)
+            //TableSchema table = SchemaManager.getTableByTableNumber(tableNumber);
             //         insert page into P.O. using proper method calls
             //         on first page There IS NO initial page for param, could pass in useless
             //         page instance, if null doesn't work?
@@ -221,15 +221,40 @@ public class StorageManager {
          * Method is called only by the insert record method for the time being
          * @param overFullPage page that had a record insert causing it to be too large
          * @param tableNumber table number needed to get table schema
+         * No Return needed, because insertRecord method has successfully handled insert
+         *    upon end of this method
          */
-        public void PageSplit(Page overFullPage, int tableNumber) {
-            //create new second page in this method, by calling createNewPage
-            //copy half the records over,
-            //make sure setting ismodified for both pages
-            //
-            // use buffer logic method needed to pull from getPage
-            // that will handle adding to buffer wether buffer is not full, or we need to
-            //find a lru
+        public void PageSplit(Page overFullPage, int tableNumber) throws IOException {
+            overFullPage.setIsModified(true);
+            //create new page handles adding new page to buffer
+            Page newEmptyPage = CreateNewPage(tableNumber);
+            //newEmptyPage is in the buffer, now copy the records over
+            ArrayList<Record> firstPageRecords = new ArrayList<>();
+            ArrayList<Record> secondPageRecords = new ArrayList<>();
+            ArrayList<Record> overFullPageRecords = overFullPage.getActualPage();
+            int numberOfRecordsInPage = overFullPageRecords.size();
+            if ((numberOfRecordsInPage % 2) == 0) { //if even num of records
+                int numRecordsToCopy = numberOfRecordsInPage / 2;
+                for (int rec = 0; rec < numRecordsToCopy; rec++) {
+                    firstPageRecords.add(overFullPageRecords.get(rec));
+                }
+                overFullPage.setActualPage(firstPageRecords);
+                for (int r = numRecordsToCopy; r < numberOfRecordsInPage; r++) {
+                    secondPageRecords.add(overFullPageRecords.get(r));
+                }
+                newEmptyPage.setActualPage(secondPageRecords);
+            } else { //number of records is odd
+                int numRecordsForFirstPage = (int) Math.ceil(numberOfRecordsInPage / 2);
+                for (int rec = 0; rec < numRecordsForFirstPage; rec++) {
+                    firstPageRecords.add(overFullPageRecords.get(rec));
+                }
+                overFullPage.setActualPage(firstPageRecords);
+                for (int r = numRecordsForFirstPage; r < numberOfRecordsInPage; r++) {
+                    secondPageRecords.add(overFullPageRecords.get(r));
+                }
+                newEmptyPage.setActualPage(secondPageRecords);
+            }
+            //page has been split appropriately
         }
 
         /**
