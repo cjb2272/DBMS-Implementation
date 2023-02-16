@@ -30,6 +30,22 @@ public class TableSchema {
         }
     }
 
+    public String getTableName() {
+        return tableName;
+    }
+
+    public int getTableNum() {
+        return tableNum;
+    }
+
+    public ArrayList<AttributeSchema> getAttributes() {
+        return attributes;
+    }
+
+    public ArrayList<Integer> getPageOrder() {
+        return pageOrder;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == this) {

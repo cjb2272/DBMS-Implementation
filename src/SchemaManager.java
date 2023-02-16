@@ -54,6 +54,8 @@ public class SchemaManager {
         catalog.addTable(tableNum, tableName, attributeInfo);
     }
 
+
+
     /**
      *
      * @param tableName

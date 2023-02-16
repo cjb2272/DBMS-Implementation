@@ -14,4 +14,19 @@ public class AttributeSchema {
         this.isPrimaryKey = isPrimaryKey;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public int getType() {
+        return type;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public boolean isPrimaryKey() {
+        return isPrimaryKey;
+    }
 }
