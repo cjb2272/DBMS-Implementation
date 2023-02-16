@@ -2,7 +2,7 @@ package src;
 
 /*
  * This file handles the parsing of different SQL queries
- * @author Duncan Small
+ * @author Duncan Small, Austin Cepalia
  */
 
 import java.util.*;
@@ -65,7 +65,12 @@ class QueryParser{
             return null;
         }
 
-        return new SelectQuery( storageManager, schemaManager, tokens[1],tokens[3].replace( ";", "" ) );
+        // get individual column names from clause
+        String[] colNames = tokens[1].split(",");
+        for (int i = 0; i < colNames.length; i++) {
+            colNames[i] = colNames[i].trim();
+        }
+        return new SelectQuery( storageManager, schemaManager, colNames, tokens[3].replace( ";", "" ) );
     }
 
     //INSERT INTO <table> values <tuple>;

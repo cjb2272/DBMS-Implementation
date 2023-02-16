@@ -23,12 +23,12 @@ public abstract class Query {
 }
 
 class SelectQuery extends Query{
-    String clause;
+    String[] colNames;
     String table;
 
-    public SelectQuery(StorageManager storageManager, SchemaManager schemaManager, String clause, String table){
+    public SelectQuery(StorageManager storageManager, SchemaManager schemaManager, String[] colNames, String table){
         super(storageManager, schemaManager);
-        this.clause = clause;
+        this.colNames = colNames;
         this.table = table;
     }
 
@@ -39,7 +39,7 @@ class SelectQuery extends Query{
 
         //int tableNum = schemaManager.getTableID(table) todo: ask schema for table id when that method is ready
         int tableNum = 0;
-        ArrayList<Record> records = storageManager.selectData(tableNum);
+        ArrayList<Record> records = storageManager.selectData(tableNum, colNames);
 
         for (Record record : records) {
             System.out.println(record);

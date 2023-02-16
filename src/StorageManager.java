@@ -65,14 +65,31 @@ public class StorageManager {
     /*
     Returns the requested row(s) of data. The Query object calling this is expected to print it out.
      */
-    public ArrayList<Record> selectData(int tableID) {
+    public ArrayList<Record> selectData(int tableID, String[] colNames) {
         int pageNumber = 0; //stub
         try {
             Page page = buffer.GetPage(tableID, pageNumber); // the buffer will read from disk if it doesn't have the page
             ArrayList<Record> records = page.getActualPage();
-            // todo: read through page records and filter out the irrelevant ones based on the select clause
 
-            return records;
+            // todo ask schema manager for col idx by passing it colNames
+            int[] colIdxs = new int[] {0, 1};
+
+            ArrayList<Record> results = new ArrayList<>();
+            for (Record record : records) {
+
+                ArrayList<Object> originalRecordData = record.getRecord();
+
+                ArrayList<Object> filteredRecordData = new ArrayList<>();
+                for (int idx : colIdxs) {
+                    filteredRecordData.add(originalRecordData.get(idx));
+                }
+
+                Record newRecord = new Record();
+                newRecord.setRecord(filteredRecordData);
+                results.add(newRecord);
+            }
+
+            return results;
 
         } catch (IOException e) {
             throw new RuntimeException(e);
