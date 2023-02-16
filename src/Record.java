@@ -31,4 +31,37 @@ public class Record {
         return this.Record;
     }
 
+
+    /**
+     * size returned INCLUDES the bytes used to represent ints telling how many
+     * chars are in a varchar or char
+     * @param record record
+     * @return how many bytes does this record consist of
+     */
+    int compute_size(Record record) {
+        int sizeOfRecordInBytes = 0;
+        // size is 4 bytes for each char or varchar and sizes for all data type objects
+        return sizeOfRecordInBytes;
+    }
+
+    /**
+     * through schema will be able to know order of types in record
+     * before a char(x) and before a varchar(x) comes 4 bytes, being an
+     * int of the num of characters to read, number of times to loop
+     * calling getChar() for char(x) or varchar(x)
+     *
+     * @param recordInBytes a byte array of a record
+     *                      records varry in size (num bytes) on disk because
+     *                      varchars
+     * @return Record Object
+     */
+    public static Record parse_record_bytes(byte[] recordInBytes) {
+        Record returnRecord = new Record();
+        //Iterate through Bytes, getting varrying data types and appending to returnRecord
+        //DO NOT APPEND THE INT(s) telling the amount of chars in varchar or char
+
+        return returnRecord;
+    }
+
+
 }

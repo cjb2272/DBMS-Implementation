@@ -52,7 +52,26 @@ class Page {
 
 
     /**
+     * Method Called by insertRecord method after making insert,
+     *     or ANY Method that makes actual changes to data of page
+     * size returned INCLUDES the bytes for page size and number of records at
+     * beginning of page (fixed at 8 for two ints so add 8 to return)
+     * even though pages are stored on disk at max pageSize offset,
+     * we still need to know specific page size
+     * @param page page
+     * @return how many bytes does this record consist of
+     *         return value used to crosscheck surpassing of max page size,
+     *         indicating split needed
+     */
+    int compute_size_in_bytes(Page page) {
+        int sizeOfPageInBytes = 0;
+        //call records compute size for each record that is a part of this page
+        return sizeOfPageInBytes;
+    }
+
+    /**
      * Called by Buffer Manager when reading page into buffer
+     * Turns long byte array representing page into usable data
      * @param tableNumber table page is a part of
      * @param pageInBytes a page represented by a singular array of bytes
      * @return
@@ -60,9 +79,11 @@ class Page {
     public static Page parse_bytes(int tableNumber, byte[] pageInBytes) {
         Page returnPage = new Page();
         //Iterate through Bytes, creating record arrays of objects
+               //use ByteBuffers get methods to move pointer through pageInBytes
+        // MAKE USE OF Record's parse_record_bytes to get record objects to add to actualPage
+        // ????- USE Record's compute size method to determine the next number of bytes
+        //                   to be passed to parse_record_bytes
         // and appending those records to actualPage arraylist of records for this page
-
-        // parse bytes Method in the Record class to call for individual records needed aswell?
 
         return returnPage;
     }
@@ -80,11 +101,13 @@ class Page {
      *         - all bytes for actual records
      */
     public static byte[] parse_page(Page pageToConvert) {
-        byte[] byteArray = new byte[0];
+        byte[] byteArray = new byte[Main.pageSize];
         ByteBuffer byteBuffer = ByteBuffer.wrap(byteArray);
         pageToConvert.getActualPage();
 
         //todo make use of byteBuffers put methods
+        //todo can create equivalent method in Record to convert record objects
+        // back into byte strings
 
         return byteArray;
     }

@@ -96,24 +96,26 @@ public class StorageManager {
         //will increase indefinitely (long better than int...)
         private long counterForLRU = 0;
 
-        // The Buffer Itself
+        // The Program Wide Buffer Itself
         ArrayList<Page> PageBuffer= new ArrayList<Page>();
 
         /**
          * Request A page by table number id and page number
          * If page is in buffer, no disk access needed, otherwise,
          * ensure room in buffer, read into buffer, and pass page.
-         *
-         * This method is also called when a new page needs to be created for the first time,
+         * This Method is Called when getting record by primary key
+         *                       when getting all records for given table num
+         *                       when inserting a record
+         * todo
+         * This Method is also called when a new page needs to be created for the first time,
          * which will only happen in pageSplit, and first page for an empty table file
          *
-         * IOException can probably be removed
-         * todo methods that make changes to pages need to update page's
-         *  isModified boolean bc not every page read to buffer will
-         *  end up being modified...
-         *
          * @param tableNumber table num (table is file on disk)
-         * @param pageNumber page num
+         * @param pageNumber how many pages deep into the table file is this page,
+         *                ... where does this page lie sequentially on the disk,
+         *                ... could be 2nd page of records, but pageNum says it is the 15th
+         *                ... page written on the disk
+         * @return Page Object from buffer or disk
          */
         public Page GetPage(int tableNumber, int pageNumber) throws IOException {
             int maxBufferSize = Main.bufferSizeLimit;
@@ -201,13 +203,11 @@ public class StorageManager {
 
         /**
          * This Method will read a page from the disk into a singular Byte array,
-         * then call's page's parse_bytes method to recieve an actual page object
-         * for this page to be returns
+         * then call's page's parse_bytes method to receive a Page object
+         * for this page to be returned
          * @param tableNum the table number corresponding to a table/file with needed page
          * @param pageNum how many pages deep into the table file is this page,
          *                ... where does this page lie sequentially on the disk,
-         *                ... could be 2nd page of records, but pageNum says it is the 15th
-         *                ... page written on the disk
          * @return Page Object converted disk->byte[]->pageObj
          * @throws IOException .
          */
@@ -216,7 +216,7 @@ public class StorageManager {
             String tableFilePath = rootPath + "tables/" + tableNum + ".";
             RandomAccessFile file = new RandomAccessFile(tableFilePath, "r");
             //seek through table file to memory you want and read in page size
-            file.seek(pageNum * Main.pageSize);
+            file.seek((long) pageNum * Main.pageSize);
             byte[] pageByteArray = new byte[Main.pageSize];
             ByteBuffer byteBuffer = ByteBuffer.wrap(pageByteArray);
             //Read first portions of page coming before records
@@ -226,41 +226,35 @@ public class StorageManager {
                 // LOOP in the order of data types expected - data types cannot be stored in pages,
                 // MUST be stored in Catalog ONLY for a given page
                 int[] typeIntegers = new int[0];
-                //new int[] typeIntegers = SchemaManager.ReadTableSchemaFromCatalogFile(tableNum);
+                //new int[] typeIntegers = SchemaManager.ReadTableSchemaFromCatalogFile(tableNum); todo uncomment
                 for (int typeInt : typeIntegers) {
                     switch (typeInt) {
-                        case 1: //Integer
-                            byteBuffer.getInt();
-                            break;
-                        case 2: //Double
-                            byteBuffer.getDouble();
-                            break;
-                        case 3: //Boolean
-                            byteBuffer.get(); //A Boolean is 1 BYTE so simple .get()
-                            break;
-                        case 4: //Char(x) standard string fixed array of len x, padding needs to be removed
+                        case 1 -> //Integer
+                                byteBuffer.getInt(); //get next 4 BYTES
+                        case 2 -> //Double
+                                byteBuffer.getDouble(); //get next 8 BYTES
+                        case 3 -> //Boolean
+                                byteBuffer.get(); //A Boolean is 1 BYTE so simple .get()
+                        case 4 -> { //Char(x) standard string fixed array of len x
                             int numCharXChars = byteBuffer.getInt();
                             for (int ch = 0; ch < numCharXChars; ch++) {
-                                byteBuffer.getChar();
+                                byteBuffer.getChar(); //get next 2 BYTES
                             }
-                            //remove padding for Char(x)?, stand string type
-                            break;
-                        case 5: //Varchar(x) variable size array of max len x NOT Padded
+                        }
+                        case 5 -> { //Varchar(x) variable size array of max len x NOT Padded
                             //records with var chars cause scenario of records not being same size
                             int numChars = byteBuffer.getInt();
                             for (int chr = 0; chr < numChars; chr++) {
-                                byteBuffer.getChar();
+                                byteBuffer.getChar(); //get next 2 BYTES
                                 int x; //remove this line, only present to remove annoyance
-                                       //telling me i can merge case 4 and 5 bc they are the same rn
+                                //telling me I can merge case 4 and 5 bc they are the same rn
                             }
+                        }
                     }
                 } //END LOOP
-
-
             } //END LOOP NUM RECORDS
-
+            file.close();
             Page readPage = Page.parse_bytes(tableNum, pageByteArray);
-
             return readPage;
         }
 
@@ -281,17 +275,14 @@ public class StorageManager {
             RandomAccessFile file = new RandomAccessFile(tableFilePath, "rw");
             //seek through table file to memory you want and read in page size
             file.seek(pageNumber * Main.pageSize);
-
-            byte[] pageByteArray = Page.parse_page(pageToWrite);
-            ByteBuffer byteBuffer = ByteBuffer.wrap(pageByteArray);
-
             //write pageByteArray to disk
+            byte[] pageByteArray = new byte[Main.pageSize];
+            //on wrap, modifications to buffer cause pageByteArray modification and vice verse
+            ByteBuffer byteBuffer = ByteBuffer.wrap(pageByteArray);
+            byteBuffer.put(Page.parse_page(pageToWrite));
+            file.write(pageByteArray);
+            file.close();
         }
-
-
-        // NEED TO MAKE SURE QUIT IS BEING USED AT ALL TIMES, if we control C
-        // we could cause our selves issues with inconsistencies that are
-        // hard to deal w
 
         /**
          * Method iterates through entire Buffer (ArrayList<Page>)
