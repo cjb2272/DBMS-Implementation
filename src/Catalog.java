@@ -32,7 +32,7 @@ public class Catalog {
         return tableSchemas;
     }
 
-    public TableSchema getTableSchemaByName(String tableName) {
+    protected TableSchema getTableSchemaByName(String tableName) {
         for (TableSchema tableSchema: tableSchemas) {
             if (tableSchema.getTableName().equals(tableName)) {
                 return tableSchema;
@@ -41,7 +41,7 @@ public class Catalog {
         return null;
     }
 
-    public int getTableIntByName(String tableName) {
+    protected int getTableIntByName(String tableName) {
         for (TableSchema tableSchema: tableSchemas) {
             if (tableSchema.getTableName().equals(tableName)) {
                 return tableSchema.getTableNum();
@@ -50,7 +50,25 @@ public class Catalog {
         return -1;
     }
 
-    public ArrayList<AttributeSchema> getTableAttributeListByName(String tableName) {
+    protected TableSchema getTableByInt(int tableNum) {
+        for (TableSchema tableSchema: tableSchemas) {
+            if (tableSchema.getTableNum() == tableNum) {
+                return tableSchema;
+            }
+        }
+        return null;
+    }
+
+    protected TableSchema getTableByName(String tableName) {
+        for (TableSchema tableSchema: tableSchemas) {
+            if (tableSchema.getTableName().equals(tableName)) {
+                return tableSchema;
+            }
+        }
+        return null;
+    }
+
+    protected ArrayList<AttributeSchema> getTableAttributeListByName(String tableName) {
         for (TableSchema tableSchema: tableSchemas) {
             if (tableSchema.getTableName().equals(tableName)) {
                 return tableSchema.getAttributes();

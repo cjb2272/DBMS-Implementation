@@ -54,14 +54,46 @@ public class SchemaManager {
         catalog.addTable(tableNum, tableName, attributeInfo);
     }
 
+    public TableSchema getTableByTableNumber(int tableNum) {
+        return catalog.getTableByInt(tableNum);
+    }
+
+    public ArrayList<TableSchema> getAllTables() {
+        return catalog.getTableSchemas();
+    }
+
+    public ArrayList<Integer> getTableAttributeTypesByName(String tableName) {
+        ArrayList<AttributeSchema> attributes = catalog.getTableByName(tableName).getAttributes();
+        ArrayList<Integer> types = new ArrayList<>();
+        for (AttributeSchema attribute: attributes) {
+            int type = attribute.getType();
+            types.add(type);
+            if (type == 4 || type == 5) {
+                types.add(attribute.getSize());
+            }
+        }
+        return types;
+    }
+
+    public ArrayList<Integer> getTableAttributeTypes(int tableNum) {
+        ArrayList<AttributeSchema> attributes = catalog.getTableByInt(tableNum).getAttributes();
+        ArrayList<Integer> types = new ArrayList<>();
+        for (AttributeSchema attribute: attributes) {
+            int type = attribute.getType();
+            types.add(type);
+            if (type == 4 || type == 5) {
+                types.add(attribute.getSize());
+            }
+        }
+        return types;
+    }
 
 
     /**
      *
-     * @param tableName
-     * @param attrArr
      */
-    protected void writeTableSchemaToCatalogFile(String tableName,  int[] attrArr)
+    /*
+    protected void writeCatalogToFile()
     {
         int nameLen = tableName.length();
         int attrNum = attrArr.length;
@@ -90,14 +122,14 @@ public class SchemaManager {
             e.printStackTrace();
         }
     }
+     */
 
     /**
      *
-     * @param tableNum
-     * @param tableName
      * @return
      */
-    protected static int[] ReadTableSchemaFromCatalogFile(int tableNum, String tableName) {
+    /*
+    protected static int[] readCatalogFromFile() {
         String path = Main.db_loc + File.separator + "db-catalog.catalog";
         RandomAccessFile catalog = null;
         try {
@@ -141,4 +173,5 @@ public class SchemaManager {
         }
         return attrs;
     }
+     */
 }
