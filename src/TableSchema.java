@@ -38,7 +38,7 @@ public class TableSchema {
      * @return where new page is sequentially on disk in terms of how many pages into table file
      */
     public int changePageOrder(int whereInitialPageOnDisk) {
-        if (pageOrder.isEmpty()) {
+        if (pageOrder.isEmpty()) { //same as if whereInitialPageOnDisk is 0
             pageOrder.add(0); //value for first page in P.O is also 0th page sequentially
             return 0;         //written on disk
         } else {

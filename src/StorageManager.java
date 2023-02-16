@@ -225,23 +225,25 @@ public class StorageManager {
 
         /**
          * Method creates Empty page and puts that page in the buffer
-         * This Method is called when a new page needs to be created for the first time,
-         * which will only happen in pageSplit, and first page for an empty table file, when
-         * insert method sees P.O is empty will call this
+         * This Method is called when a new page needs to be created- for instance:
+         *      -table file is empty (P.O. empty) and no pages exist
+         *       (insert record method)
+         *      -page split occurring
          * @param tableNumber table number needed to get table schema
+         * @param priorPageDiskPosition if method called when...
+         *        -table file is empty, there is no prior page use '0' for param
+         *        -page splitting, use overflowPage on disk location for param
          * @return empty page that is now in the buffer
          */
-        public Page CreateNewPage(int tableNumber) throws IOException {
+        public Page CreateNewPage(int tableNumber, int priorPageDiskPosition) throws IOException {
             Page newPage = new Page();
             newPage.setTableNumber(tableNumber);
             newPage.setIsModified(true); //could alternatively change to true in constructor for
                                          // page instance
-            //TableSchema table = SchemaManager.getTableByTableNumber(tableNumber);
-            //         insert page into P.O. using proper method calls
-            //         on first page There IS NO initial page for param, could pass in useless
-            //         page instance, if null doesn't work?
-            // int locOnDisk = table.changePageOrder(null)
-            // newPage.setPageNumberOnDisk(locOnDisk);
+            TableSchema table = schemaManager.getTableByTableNumber(tableNumber);
+            // insert page into P.O. using proper method calls
+            int locOnDisk = table.changePageOrder(priorPageDiskPosition);
+            newPage.setPageNumberOnDisk(locOnDisk);
             return AddToBufferLogic(tableNumber, newPage.getPageNumberOnDisk());
         }
 
@@ -255,7 +257,7 @@ public class StorageManager {
         public void PageSplit(Page overFullPage, int tableNumber) throws IOException {
             overFullPage.setIsModified(true);
             //create new page handles adding new page to buffer
-            Page newEmptyPage = CreateNewPage(tableNumber);
+            Page newEmptyPage = CreateNewPage(tableNumber, overFullPage.getPageNumberOnDisk());
             //newEmptyPage is in the buffer, now copy the records over
             ArrayList<Record> firstPageRecords = new ArrayList<>();
             ArrayList<Record> secondPageRecords = new ArrayList<>();
@@ -302,41 +304,7 @@ public class StorageManager {
             //seek through table file to memory you want and read in page size
             file.seek((long) pageNum * Main.pageSize);
             byte[] pageByteArray = new byte[Main.pageSize];
-            ByteBuffer byteBuffer = ByteBuffer.wrap(pageByteArray);
-            //Read first portions of page coming before records
-            int sizeOfPageInBytes = byteBuffer.getInt(); //read first 4 bytes
-            int numRecords = byteBuffer.getInt(); //read second 4 bytes
-            for (int rcrd = 0; rcrd < numRecords; rcrd++) {
-                // LOOP in the order of data types expected - data types cannot be stored in pages,
-                // MUST be stored in Catalog ONLY for a given page
-                int[] typeIntegers = new int[0];
-                //new int[] typeIntegers = SchemaManager.ReadTableSchemaFromCatalogFile(tableNum); todo uncomment
-                for (int typeInt : typeIntegers) {
-                    switch (typeInt) {
-                        case 1 -> //Integer
-                                byteBuffer.getInt(); //get next 4 BYTES
-                        case 2 -> //Double
-                                byteBuffer.getDouble(); //get next 8 BYTES
-                        case 3 -> //Boolean
-                                byteBuffer.get(); //A Boolean is 1 BYTE so simple .get()
-                        case 4 -> { //Char(x) standard string fixed array of len x
-                            int numCharXChars = byteBuffer.getInt();
-                            for (int ch = 0; ch < numCharXChars; ch++) {
-                                byteBuffer.getChar(); //get next 2 BYTES
-                            }
-                        }
-                        case 5 -> { //Varchar(x) variable size array of max len x NOT Padded
-                            //records with var chars cause scenario of records not being same size
-                            int numChars = byteBuffer.getInt();
-                            for (int chr = 0; chr < numChars; chr++) {
-                                byteBuffer.getChar(); //get next 2 BYTES
-                                int x; //remove this line, only present to remove annoyance
-                                //telling me I can merge case 4 and 5 bc they are the same rn
-                            }
-                        }
-                    }
-                } //END LOOP
-            } //END LOOP NUM RECORDS
+            file.read(pageByteArray, 0, Main.pageSize);
             file.close();
             Page readPage = Page.parse_bytes(tableNum, pageByteArray);
             return readPage;
@@ -357,14 +325,9 @@ public class StorageManager {
             //validity of file path and add proper extension todo
             String tableFilePath = tablesRootPath + "tables/" + tableNumber + ".";
             RandomAccessFile file = new RandomAccessFile(tableFilePath, "rw");
-            //seek through table file to memory you want and read in page size
-            file.seek(pageNumber * Main.pageSize);
-            //write pageByteArray to disk
-            byte[] pageByteArray = new byte[Main.pageSize];
-            //on wrap, modifications to buffer cause pageByteArray modification and vice verse
-            ByteBuffer byteBuffer = ByteBuffer.wrap(pageByteArray);
-            byteBuffer.put(Page.parse_page(pageToWrite));
-            file.write(pageByteArray);
+            //seek through table file to memory you want and write out page size
+            file.seek((long) pageNumber * Main.pageSize);
+            file.write(Page.parse_page(pageToWrite)); //still need to write out page size worth of bytes
             file.close();
         }
 

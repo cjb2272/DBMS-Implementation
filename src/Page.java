@@ -93,6 +93,45 @@ class Page {
 
         return returnPage;
     }
+    /*
+    byte[] pageByteArray = new byte[Main.pageSize];
+    ByteBuffer byteBuffer = ByteBuffer.wrap(pageByteArray);
+    //Read first portions of page coming before records
+    int sizeOfPageInBytes = byteBuffer.getInt(); //read first 4 bytes
+    int numRecords = byteBuffer.getInt(); //read second 4 bytes
+    for (int rcrd = 0; rcrd < numRecords; rcrd++) {
+        // LOOP in the order of data types expected - data types cannot be stored in pages,
+        // MUST be stored in Catalog ONLY for a given page
+        int[] typeIntegers = new int[0];
+        //new int[] typeIntegers = SchemaManager.ReadTableSchemaFromCatalogFile(tableNum);
+        for (int typeInt : typeIntegers) {
+            switch (typeInt) {
+                case 1 -> //Integer
+                        byteBuffer.getInt(); //get next 4 BYTES
+                case 2 -> //Double
+                        byteBuffer.getDouble(); //get next 8 BYTES
+                case 3 -> //Boolean
+                        byteBuffer.get(); //A Boolean is 1 BYTE so simple .get()
+                case 4 -> { //Char(x) standard string fixed array of len x
+                    int numCharXChars = byteBuffer.getInt();
+                    for (int ch = 0; ch < numCharXChars; ch++) {
+                        byteBuffer.getChar(); //get next 2 BYTES
+                    }
+                }
+                case 5 -> { //Varchar(x) variable size array of max len x NOT Padded
+                    //records with var chars cause scenario of records not being same size
+                    int numChars = byteBuffer.getInt();
+                    for (int chr = 0; chr < numChars; chr++) {
+                        byteBuffer.getChar(); //get next 2 BYTES
+                        int x; //remove this line, only present to remove annoyance
+                        //telling me I can merge case 4 and 5 bc they are the same rn
+                    }
+                }
+            }
+        } //END LOOP
+    } //END LOOP NUM RECORDS
+     */
+
 
     /**
      * Method that does the exact opposite of parse_bytes,
