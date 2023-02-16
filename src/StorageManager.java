@@ -137,7 +137,6 @@ public class StorageManager {
          * @return Page Object from buffer or disk
          */
         public Page GetPage(int tableNumber, int pageNumber) throws IOException {
-            int maxBufferSize = Main.bufferSizeLimit;
             //if block is present in pageBuffer ArrayList already then return that page
             for (Page inBufferPage : PageBuffer) {
                 if (inBufferPage.getPageNumberOnDisk() == pageNumber) {
@@ -149,10 +148,24 @@ public class StorageManager {
                     return inBufferPage;
                 }
             }
+            //page is not in the buffer so call the buffer logic
+            return AddToBufferLogic(tableNumber, pageNumber);
+        }
+
+        /**
+         * This Method includes logic needed in create page and pageSplit, and
+         * we don't want getPage to become to bulky
+         * @param aTableNumber see getPage
+         * @param aPageNumber see getPage
+         * @return page added to the buffer
+         * @throws IOException exception
+         */
+        private Page AddToBufferLogic(int aTableNumber, int aPageNumber) throws IOException {
+            int maxBufferSize = Main.bufferSizeLimit;
             //At beginning of program buffer will not be at capacity,
             //so we call read immediately
             if (PageBuffer.size() < maxBufferSize) {
-                Page newlyReadPage = ReadPageFromDisk(tableNumber, pageNumber);
+                Page newlyReadPage = ReadPageFromDisk(aTableNumber, aPageNumber);
                 newlyReadPage.setLruLongValue(counterForLRU);
                 counterForLRU++;
                 PageBuffer.add(newlyReadPage);
@@ -174,7 +187,7 @@ public class StorageManager {
                 if (PageBuffer.get(indexOfLRU).getisModified()) {
                     WritePageToDisk(PageBuffer.get(indexOfLRU));
                 }
-                Page newlyReadPage = ReadPageFromDisk(tableNumber, pageNumber);
+                Page newlyReadPage = ReadPageFromDisk(aTableNumber, aPageNumber);
                 newlyReadPage.setLruLongValue(counterForLRU);
                 counterForLRU++;
                 PageBuffer.add(indexOfLRU, newlyReadPage); //place page in buffer at location
@@ -183,39 +196,33 @@ public class StorageManager {
         }
 
         /**
-         * todo
-         * pull addtoBuffer logic out of get page for, because that logic
-         * is going to be needed in create page and pageSplit, and
-         * we dont want getPage to become to bulky
-         * @return page
-         */
-        private Page addToBufferLogic() {
-            return new Page();
-        }
-
-        /**
-         * Method
-         * Creates empty page and puts that page in the buffer
-         * This Method is also called when a new page needs to be created for the first time,
+         * Method creates Empty page and puts that page in the buffer
+         * This Method is called when a new page needs to be created for the first time,
          * which will only happen in pageSplit, and first page for an empty table file, when
          * insert method sees P.O is empty will call this
+         * @param tableNumber table number needed to get table schema
+         * @return empty page that is now in the buffer
          */
-        private Page createNewPage() {
+        private Page CreateNewPage(int tableNumber) throws IOException {
             Page newPage = new Page();
+            newPage.setTableNumber(tableNumber);
             newPage.setIsModified(true); //could alternatively change to true in constructor for
                                          // page instance
-            //insert page into P.O. using proper method calls
-            // set pageNumberOnDisk and tableNumber attributes
-            //add to buffer, move add to buffer logic out of get page method into own method,
-            //so code can be reused here
-            return newPage;
+            // TableSchema table = getTableSchema(tableNumber)
+            //         insert page into P.O. using proper method calls
+            //         on first page There IS NO initial page for param, could pass in useless
+            //         page instance, if null doesn't work?
+            // int locOnDisk = table.changePageOrder(null)
+            // newPage.setPageNumberOnDisk(locOnDisk);
+            return AddToBufferLogic(tableNumber, newPage.getPageNumberOnDisk());
         }
 
         /**
          * Method is called only by the insert record method for the time being
          * @param overFullPage page that had a record insert causing it to be too large
+         * @param tableNumber table number needed to get table schema
          */
-        public void pageSplit(Page overFullPage) {
+        public void PageSplit(Page overFullPage, int tableNumber) {
             //create new second page in this method, by calling createNewPage
             //copy half the records over,
             //make sure setting ismodified for both pages

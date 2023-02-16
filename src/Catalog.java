@@ -19,9 +19,21 @@ public class Catalog {
         }
     }
 
+    /**
+     * THIS METHOD WILL NOT BE NEEDED, given new method to come that will return
+     * tableschema based on table num
+     * @param tableNum .
+     * @param tableName .
+     * @param initialPage on page split, this is the page that needs to be split
+     *                    int representation of where this page is on disk
+     * @param newPage . todo what is this page number, this shouldnt be needed
+     *                   the pageNumber is being determined depending on the change in page ordering
+     *                   and is not known before
+     */
     public void changePageOrderOfGivenTable(int tableNum, String tableName, int initialPage, int newPage) {
         TableSchema table = tableSchemas.get(tableSchemas.indexOf(new TableSchema(tableName, tableNum)));
-        table.changePageOrder(initialPage, newPage);
+        //table.changePageOrder(initialPage, newPage);
+        table.changePageOrder(initialPage);
     }
 
     public int getTablesSize() {

@@ -34,7 +34,7 @@ class Page {
     public Page() {
         this.lruLongValue = 0;
         this.isModified = false; //could change to true for new instance
-        this.pageNumberOnDisk = 0;
+        this.pageNumberOnDisk = -1; //will be set using the P.O when page is created
         this.tableNumber = 0;
     }
 
@@ -81,8 +81,14 @@ class Page {
         //Iterate through Bytes, creating record arrays of objects
                //use ByteBuffers get methods to move pointer through pageInBytes
         // MAKE USE OF Record's parse_record_bytes to get record objects to add to actualPage
-        // ????- USE Record's compute size method to determine the next number of bytes
-        //                   to be passed to parse_record_bytes
+        // ??? HOW WE Determine the next number of bytes to be passed to parse_record_bytes
+        //   order of var types for the table is known, but we dont know number of chars for a
+        //   varchar or char until we reach the 4 byte int before telling us ---
+        //   HENCE instead of passing a fixed number of bytes for next record, we pass the entire
+        //   remaining byte array, return the record, call compute_size on the record to get number
+        //   of bytes that record consists of, move our pointer in entire byte array along that many bytes
+        //   and repeat for our number of records. this approach should definitely work
+        //
         // and appending those records to actualPage arraylist of records for this page
 
         return returnPage;

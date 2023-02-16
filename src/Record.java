@@ -35,12 +35,16 @@ public class Record {
     /**
      * size returned INCLUDES the bytes used to represent ints telling how many
      * chars are in a varchar or char
-     * @param record record
+     * Method Called by Page's compute_size_in_bytes, record has data at this point
+     * so simply itterating through types adding necessary size, when we
+     * reach a cahr or varchar, we add 2bytes for every character in string
+     * Also Called by Page's parse_bytes
+     * @param record record, pre-condition: Record is composed of data
      * @return how many bytes does this record consist of
      */
     int compute_size(Record record) {
         int sizeOfRecordInBytes = 0;
-        // size is 4 bytes for each char or varchar and sizes for all data type objects
+        // size is 4 bytes for each integer that comes before char or varchar
         return sizeOfRecordInBytes;
     }
 
