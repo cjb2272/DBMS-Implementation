@@ -71,7 +71,12 @@ public class StorageManager {
             Page page = buffer.GetPage(tableID, pageNumber); // the buffer will read from disk if it doesn't have the page
             ArrayList<Record> records = page.getActualPage();
 
+            if (colNames.length == 1 && colNames[0].equals("*")) {
+                return records;
+            }
+
             // todo ask schema manager for col idx by passing it colNames
+
             int[] colIdxs = new int[] {0, 1};
 
             ArrayList<Record> results = new ArrayList<>();
