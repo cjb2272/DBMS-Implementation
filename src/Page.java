@@ -50,6 +50,8 @@ class Page {
     public boolean getisModified() { return this.isModified; }
     public ArrayList<Record> getActualPage() { return this.actualPage; }
 
+    public int getRecordCount() { return actualPage.size(); }
+
 
     /**
      * Method Called by insertRecord method after making insert,

@@ -19,6 +19,10 @@ public class Catalog {
         }
     }
 
+    public int getPageSize() {
+        return pageSize;
+    }
+
     /**
      * THIS METHOD WILL NOT BE NEEDED, given new method to come that will return
      * tableschema based on table num

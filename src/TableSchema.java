@@ -91,4 +91,17 @@ public class TableSchema {
 
         return this.tableNum == tableSchema.tableNum && this.tableName.equals(tableSchema.tableName);
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("Table name: %s\n", tableName));
+        sb.append("Table schema:\n");
+        for (AttributeSchema attribute : attributes) {
+            sb.append("\t");
+            sb.append(attribute.toString());
+            sb.append("\n");
+        }
+        return sb.toString();
+    }
 }

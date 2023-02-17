@@ -130,6 +130,48 @@ public class StorageManager {
 
     }
 
+    /*
+     * Reads the first 4 bytes of the table file on disk, representing the # of pages in this file
+     */
+    public int getPageCountForTable(int tableID) {
+        String tableFilePath = Paths.get(tablesRootPath, String.valueOf(tableID)).toString();
+        RandomAccessFile file;
+        try {
+            file = new RandomAccessFile(tableFilePath, "r");
+            file.seek(0);
+            byte[] pageByteArray = new byte[4];
+            file.read(pageByteArray, 0, 4);
+            file.close(); 
+            return ByteBuffer.wrap(pageByteArray).getInt();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    public int getRecordCountForTable(int tableID) {
+        int numPages = getPageCountForTable(tableID);
+        int sum = 0;
+        for (int i = 0; i < numPages; i++) {
+            try {
+                sum += buffer.GetPage(i, tableID).getRecordCount();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return sum;
+    }
+
+    public int getCurrentBufferSize() {
+        return buffer.PageBuffer.size();
+    }
+
+    public int getNumberOfTables() {
+        return schemaManager.getAllTables().size();
+    }
+
+
+
     /**
      * The Buffer Manager
      * Has Two Public Methods, GetPage() and PurgeBuffer()
@@ -299,7 +341,7 @@ public class StorageManager {
          */
         private Page ReadPageFromDisk(int tableNum, int pageNum) throws IOException {
             //validity of file path and add proper extension todo
-            String tableFilePath = tablesRootPath + "tables/" + tableNum + ".";
+            String tableFilePath = tablesRootPath + "/" + tableNum + ".";
             RandomAccessFile file = new RandomAccessFile(tableFilePath, "r");
             //seek through table file to memory you want and read in page size
             file.seek((long) pageNum * Main.pageSize);
@@ -323,7 +365,7 @@ public class StorageManager {
             int tableNumber = pageToWrite.getTableNumber();
             int pageNumber = pageToWrite.getPageNumberOnDisk();
             //validity of file path and add proper extension todo
-            String tableFilePath = tablesRootPath + "tables/" + tableNumber + ".";
+            String tableFilePath = tablesRootPath + "/" + tableNumber + ".";
             RandomAccessFile file = new RandomAccessFile(tableFilePath, "rw");
             //seek through table file to memory you want and write out page size
             file.seek((long) pageNumber * Main.pageSize);

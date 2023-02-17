@@ -47,8 +47,6 @@ public class Main {
             if(query == null){
                 System.out.println("ERROR");
             } else{
-                System.out.println("SUCCESS");
-
 
                 // Individual query objects all have an execute method that defines what steps should be taken to execute
                 // that query. Having that logic here (switched on the query type) would be a code smell.
