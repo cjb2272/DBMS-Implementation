@@ -36,15 +36,14 @@ class SelectQuery extends Query{
         // ask the storage manager for this data. It will in turn ask the buffer first, but that's
         // abstracted away from this point in the code
 
-        //int tableNum = schemaManager.getTableID(table) todo: ask schema for table id when that method is ready
-        int tableNum = 0;
+        int tableNum = schemaManager.getTableIDFromName(table);
         ArrayList<Record> records = storageManager.selectData(tableNum, colNames);
 
         for (Record record : records) {
             System.out.println(record);
         }
 
-
+        System.out.println("SUCCESS");
 
     }
 }
@@ -68,6 +67,7 @@ class InsertQuery extends Query{
     public void execute() {
         int tableID = 0;
         storageManager.insertRecords(tableID, values);
+        System.out.println("SUCCESS");
     }
 }
 
@@ -89,6 +89,7 @@ class CreateQuery extends Query{
     public void execute() {
         int availableId = schemaManager.getNextAvailableTableID();
         storageManager.createTable(availableId, tableName, columnNames, dataTypes);
+        System.out.println("SUCCESS");
     }
 }
 
@@ -110,15 +111,39 @@ class DisplayQuery extends Query{
     public void execute() {
 
         if (table == null) {
-            ArrayList<TableSchema> tableSchemas = schemaManager.getAllTables();
-            for (TableSchema schema : tableSchemas) {
-                System.out.println(schema);
+            System.out.println(schemaManager.getDisplayString());
+            System.out.println(String.format("Buffer Size: %d\n", storageManager.getCurrentBufferSize()));
+            
+            if (storageManager.getNumberOfTables() == 0) {
+                System.out.println("No tables to display");
+                System.out.println("SUCCESS");
             }
+            else {
+                ArrayList<TableSchema> allTableSchemas = schemaManager.getAllTables();
+                for (TableSchema schema : allTableSchemas) {
+                    displayTableSchema(schema.getTableNum());
+                }
+            }
+
+        }
+
+        int tableID = schemaManager.getTableIDFromName(table);
+
+        if (tableID == -1) {
+            System.out.println("No such table " + table);
+            System.out.println("ERROR");
             return;
         }
-        // todo lookup the table id from the table string name in this object when that method is ready
-        System.out.println(schemaManager.getTableByTableNumber(0));
 
+        displayTableSchema(tableID);
+        System.out.println("SUCCESS");
+
+    }
+
+    private void displayTableSchema(int tableID) {
+        System.out.println(schemaManager.getTableByTableNumber(tableID));
+        System.out.println(String.format("Pages: %d", storageManager.getPageCountForTable(tableID)));
+        System.out.println(String.format("Records: %d", storageManager.getRecordCountForTable(tableID)));
     }
 }
 

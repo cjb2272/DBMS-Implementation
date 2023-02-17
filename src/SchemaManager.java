@@ -32,6 +32,10 @@ public class SchemaManager {
         return catalog.getTablesSize() + 1; // method stub
     }
 
+    public int getTableIDFromName(String name) {
+        return catalog.getTableIntByName(name);
+    }
+
 
     /**
      *
@@ -86,6 +90,14 @@ public class SchemaManager {
             }
         }
         return types;
+    }
+
+
+    public String getDisplayString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("DB location: " + this.root + "\n");
+        sb.append(String.format("Page Size: %d\n", catalog.getPageSize()));
+        return sb.toString();
     }
 
 
