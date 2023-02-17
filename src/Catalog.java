@@ -17,6 +17,7 @@ public class Catalog {
             tableSchema.addAttribute((String) attributeInfo.get(i), (int) attributeInfo.get(i+1),
                     (int) attributeInfo.get(i+2), (boolean) attributeInfo.get(i+3));
         }
+        tableSchemas.add(tableSchema);
     }
 
     public int getPageSize() {

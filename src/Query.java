@@ -37,13 +37,18 @@ class SelectQuery extends Query{
         // abstracted away from this point in the code
 
         int tableNum = schemaManager.getTableIDFromName(table);
+        if (tableNum == -1) {
+            System.out.println("No such table " + table);
+            System.out.println("ERROR\n");
+            return;
+        }
         ArrayList<Record> records = storageManager.selectData(tableNum, colNames);
 
         for (Record record : records) {
             System.out.println(record);
         }
 
-        System.out.println("SUCCESS");
+        System.out.println("SUCCESS\n");
 
     }
 }
@@ -67,7 +72,7 @@ class InsertQuery extends Query{
     public void execute() {
         int tableID = 0;
         storageManager.insertRecords(tableID, values);
-        System.out.println("SUCCESS");
+        System.out.println("SUCCESS\n");
     }
 }
 
@@ -89,7 +94,7 @@ class CreateQuery extends Query{
     public void execute() {
         int availableId = schemaManager.getNextAvailableTableID();
         storageManager.createTable(availableId, tableName, columnNames, dataTypes);
-        System.out.println("SUCCESS");
+        System.out.println("SUCCESS\n");
     }
 }
 
@@ -116,7 +121,8 @@ class DisplayQuery extends Query{
             
             if (storageManager.getNumberOfTables() == 0) {
                 System.out.println("No tables to display");
-                System.out.println("SUCCESS");
+                System.out.println("SUCCESS\n");
+                return;
             }
             else {
                 ArrayList<TableSchema> allTableSchemas = schemaManager.getAllTables();
@@ -131,12 +137,12 @@ class DisplayQuery extends Query{
 
         if (tableID == -1) {
             System.out.println("No such table " + table);
-            System.out.println("ERROR");
+            System.out.println("ERROR\n");
             return;
         }
 
         displayTableSchema(tableID);
-        System.out.println("SUCCESS");
+        System.out.println("SUCCESS\n");
 
     }
 

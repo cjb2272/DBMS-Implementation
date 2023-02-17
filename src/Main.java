@@ -45,7 +45,7 @@ public class Main {
             Query query = parser.CommandParse( input );
 
             if(query == null){
-                System.out.println("ERROR");
+                System.out.println("ERROR\n");
             } else{
 
                 // Individual query objects all have an execute method that defines what steps should be taken to execute

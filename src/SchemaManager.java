@@ -96,7 +96,7 @@ public class SchemaManager {
     public String getDisplayString() {
         StringBuilder sb = new StringBuilder();
         sb.append("DB location: " + this.root + "\n");
-        sb.append(String.format("Page Size: %d\n", catalog.getPageSize()));
+        sb.append(String.format("Page Size: %d", catalog.getPageSize()));
         return sb.toString();
     }
 
