@@ -93,4 +93,30 @@ public class Catalog {
         }
         return null;
     }
+
+    public ArrayList<Integer> getTableAttributeTypesByName(String tableName) {
+        ArrayList<AttributeSchema> attributes = getTableByName(tableName).getAttributes();
+        ArrayList<Integer> types = new ArrayList<>();
+        for (AttributeSchema attribute: attributes) {
+            int type = attribute.getType();
+            types.add(type);
+            if (type == 4 || type == 5) {
+                types.add(attribute.getSize());
+            }
+        }
+        return types;
+    }
+
+    public ArrayList<Integer> getTableAttributeTypes(int tableNum) {
+        ArrayList<AttributeSchema> attributes = getTableByInt(tableNum).getAttributes();
+        ArrayList<Integer> types = new ArrayList<>();
+        for (AttributeSchema attribute: attributes) {
+            int type = attribute.getType();
+            types.add(type);
+            if (type == 4 || type == 5) {
+                types.add(attribute.getSize());
+            }
+        }
+        return types;
+    }
 }

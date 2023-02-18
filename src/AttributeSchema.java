@@ -1,5 +1,7 @@
 package src;
 
+import java.nio.ByteBuffer;
+
 public class AttributeSchema {
 
     private String name;
@@ -28,5 +30,10 @@ public class AttributeSchema {
 
     public boolean isPrimaryKey() {
         return isPrimaryKey;
+    }
+
+    public int getSizeInBytes() {
+        int size = Integer.BYTES + name.length();
+        return size;
     }
 }
