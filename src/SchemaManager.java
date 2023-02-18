@@ -1,12 +1,7 @@
 package src;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 
 /*
@@ -18,6 +13,8 @@ public class SchemaManager {
     // directory path for the database
     private String root;
     private Catalog catalog;
+
+    public static SchemaManager instance = null;
 
 
     public SchemaManager(String root, int pageSize) {

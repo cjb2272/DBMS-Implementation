@@ -9,13 +9,7 @@ import java.util.*;
 
 class QueryParser{
 
-    private final SchemaManager schemaManager;
-    private final StorageManager storageManager;
-
-    public QueryParser(StorageManager storageManager, SchemaManager schemaManager){
-        this.storageManager = storageManager;
-        this.schemaManager = schemaManager;
-    }
+    public QueryParser() { }
 
     //display info <table>;
     //display schema;
@@ -29,7 +23,7 @@ class QueryParser{
                     return null;
                 }
                 if ( tokens[1].toLowerCase( Locale.ROOT ).equals( "schema;" ) ) {
-                    return new DisplayQuery( storageManager, schemaManager );
+                    return new DisplayQuery();
                 }
                 System.out.println( "Expected 'schema' got: " + tokens[1] );
             }
@@ -39,7 +33,7 @@ class QueryParser{
                     return null;
                 }
                 if ( tokens[1].toLowerCase( Locale.ROOT ).equals( "info" ) ) {
-                    return new DisplayQuery( storageManager, schemaManager, tokens[2].replace( ";", "" ) );
+                    return new DisplayQuery(tokens[2].replace( ";", "" ) );
                 }
                 System.out.println( "Expected 'info' got: " + tokens[1] );
             }
@@ -70,7 +64,7 @@ class QueryParser{
         for (int i = 0; i < colNames.length; i++) {
             colNames[i] = colNames[i].trim();
         }
-        return new SelectQuery( storageManager, schemaManager, colNames, tokens[3].replace( ";", "" ) );
+        return new SelectQuery(colNames, tokens[3].replace( ";", "" ) );
     }
 
     //INSERT INTO <table> values <tuple>;
@@ -162,7 +156,7 @@ class QueryParser{
             }
         }
 
-        return new InsertQuery( storageManager, schemaManager, tableName, formattedTuples );
+        return new InsertQuery(tableName, formattedTuples );
     }
 
     public boolean AttributeMatch(ArrayList<Integer> tableAttrList, ArrayList<Integer> dataAttrList){
@@ -297,7 +291,7 @@ class QueryParser{
 
             }
         }
-        return new CreateQuery(storageManager, schemaManager, keywords[2], columnNames, dataTypes, pk );
+        return new CreateQuery(keywords[2], columnNames, dataTypes, pk );
     }
 
     public List<Object> TypeCast(String input){

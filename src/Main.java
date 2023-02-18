@@ -21,14 +21,14 @@ public class Main {
         pageSize = Integer.parseInt(args[1]);
         bufferSizeLimit = Integer.parseInt(args[2]);
 
-        SchemaManager schemaManager = new SchemaManager(db_loc, pageSize);
-        StorageManager storageManager = new StorageManager(db_loc, schemaManager);
+        SchemaManager.instance = new SchemaManager(db_loc, pageSize);
+        StorageManager.instance = new StorageManager(db_loc);
 
         System.out.println("\nPlease enter commands, enter <quit> to shutdown the db.\n");
 
         Scanner scanner = new Scanner( System.in );
 
-        QueryParser parser = new QueryParser(storageManager, schemaManager);
+        QueryParser parser = new QueryParser();
         while(true){
             System.out.print("JottQL $ ");
             String input = "";

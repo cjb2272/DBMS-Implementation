@@ -7,7 +7,6 @@ package src;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -22,14 +21,17 @@ public class StorageManager {
 
     private BufferManager buffer;
 
-    private SchemaManager schemaManager;
 
-    public StorageManager(String rootPath, SchemaManager schemaManager) {
+    public static StorageManager instance = null;
+
+    public StorageManager(String rootPath) {
         this.rootPath = rootPath;
         this.tablesRootPath = Paths.get(rootPath, "tables").toString();
         this.buffer = new BufferManager();
-        this.schemaManager = schemaManager;
     }
+
+
+
 
     /*
     Called by the SQL parser to create a new table file on disk.
@@ -86,7 +88,7 @@ public class StorageManager {
                 return records;
             }
 
-            ArrayList<AttributeSchema> columns = schemaManager.getTableByTableNumber(tableID).getAttributes();
+            ArrayList<AttributeSchema> columns = SchemaManager.instance.getTableByTableNumber(tableID).getAttributes();
 
             ArrayList<Integer> indexes = new ArrayList<>();
             int i = 0;
@@ -167,7 +169,7 @@ public class StorageManager {
     }
 
     public int getNumberOfTables() {
-        return schemaManager.getAllTables().size();
+        return SchemaManager.instance.getAllTables().size();
     }
 
 
@@ -282,7 +284,7 @@ public class StorageManager {
             newPage.setTableNumber(tableNumber);
             newPage.setIsModified(true); //could alternatively change to true in constructor for
                                          // page instance
-            TableSchema table = schemaManager.getTableByTableNumber(tableNumber);
+            TableSchema table = SchemaManager.instance.getTableByTableNumber(tableNumber);
             // insert page into P.O. using proper method calls
             int locOnDisk = table.changePageOrder(priorPageDiskPosition);
             newPage.setPageNumberOnDisk(locOnDisk);

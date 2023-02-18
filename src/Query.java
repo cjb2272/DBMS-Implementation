@@ -4,18 +4,10 @@ package src;/*
  */
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public abstract class Query {
 
-    // may end up migrating these to singletons so we can avoid passing this into all the Query objects
-    protected StorageManager storageManager;
-    protected SchemaManager schemaManager;
-
-    public Query(StorageManager storageManager, SchemaManager schemaManager) {
-        this.storageManager = storageManager;
-        this.schemaManager = schemaManager;
-    }
+    public Query() {}
 
     public abstract void execute();
 
@@ -25,8 +17,7 @@ class SelectQuery extends Query{
     String[] colNames;
     String table;
 
-    public SelectQuery(StorageManager storageManager, SchemaManager schemaManager, String[] colNames, String table){
-        super(storageManager, schemaManager);
+    public SelectQuery(String[] colNames, String table){
         this.colNames = colNames;
         this.table = table;
     }
@@ -36,13 +27,13 @@ class SelectQuery extends Query{
         // ask the storage manager for this data. It will in turn ask the buffer first, but that's
         // abstracted away from this point in the code
 
-        int tableNum = schemaManager.getTableIDFromName(table);
+        int tableNum = SchemaManager.instance.getTableIDFromName(table);
         if (tableNum == -1) {
             System.out.println("No such table " + table);
             System.out.println("ERROR\n");
             return;
         }
-        ArrayList<Record> records = storageManager.selectData(tableNum, colNames);
+        ArrayList<Record> records = StorageManager.instance.selectData(tableNum, colNames);
 
         for (Record record : records) {
             System.out.println(record);
@@ -57,8 +48,7 @@ class InsertQuery extends Query{
     ArrayList<Record> values = new ArrayList<>();
     String table;
 
-    public InsertQuery(StorageManager storageManager, SchemaManager schemaManager, String table, ArrayList<ArrayList<Object>> val){
-        super(storageManager, schemaManager);
+    public InsertQuery(String table, ArrayList<ArrayList<Object>> val){
         this.table = table;
 
         for (ArrayList<Object> row : val) {
@@ -71,7 +61,7 @@ class InsertQuery extends Query{
     @Override
     public void execute() {
         int tableID = 0;
-        storageManager.insertRecords(tableID, values);
+        StorageManager.instance.insertRecords(tableID, values);
         System.out.println("SUCCESS\n");
     }
 }
@@ -83,17 +73,17 @@ class CreateQuery extends Query{
     ArrayList<Integer> dataTypes;
     String primaryKey;
 
-    public CreateQuery(StorageManager storageManager, SchemaManager schemaManager, String table, ArrayList<String> colNames, ArrayList<Integer> dt, String primaryKey) {
-        super(storageManager, schemaManager);
+    public CreateQuery(String table, ArrayList<String> colNames, ArrayList<Integer> dt, String primaryKey) {
         this.tableName = table;
         this.columnNames = colNames;
         this.dataTypes = dt;
         this.primaryKey = primaryKey;
     }
+    
     @Override
     public void execute() {
-        int availableId = schemaManager.getNextAvailableTableID();
-        storageManager.createTable(availableId, tableName, columnNames, dataTypes);
+        int availableId = SchemaManager.instance.getNextAvailableTableID();
+        StorageManager.instance.createTable(availableId, tableName, columnNames, dataTypes);
         System.out.println("SUCCESS\n");
     }
 }
@@ -103,12 +93,10 @@ class DisplayQuery extends Query{
     //  else it is a display info <table> command
     String table = null;
 
-    public DisplayQuery(StorageManager storageManager, SchemaManager schemaManager) {
-        super(storageManager, schemaManager);
+    public DisplayQuery() {
     }
 
-    public DisplayQuery(StorageManager storageManager, SchemaManager schemaManager, String table){
-        super(storageManager, schemaManager);
+    public DisplayQuery(String table){
         this.table = table;
     }
 
@@ -116,16 +104,16 @@ class DisplayQuery extends Query{
     public void execute() {
 
         if (table == null) {
-            System.out.println(schemaManager.getDisplayString());
-            System.out.println(String.format("Buffer Size: %d\n", storageManager.getCurrentBufferSize()));
+            System.out.println(SchemaManager.instance.getDisplayString());
+            System.out.println(String.format("Buffer Size: %d\n", StorageManager.instance.getCurrentBufferSize()));
             
-            if (storageManager.getNumberOfTables() == 0) {
+            if (StorageManager.instance.getNumberOfTables() == 0) {
                 System.out.println("No tables to display");
                 System.out.println("SUCCESS\n");
                 return;
             }
             else {
-                ArrayList<TableSchema> allTableSchemas = schemaManager.getAllTables();
+                ArrayList<TableSchema> allTableSchemas = SchemaManager.instance.getAllTables();
                 for (TableSchema schema : allTableSchemas) {
                     displayTableSchema(schema.getTableNum());
                 }
@@ -133,7 +121,7 @@ class DisplayQuery extends Query{
 
         }
 
-        int tableID = schemaManager.getTableIDFromName(table);
+        int tableID = SchemaManager.instance.getTableIDFromName(table);
 
         if (tableID == -1) {
             System.out.println("No such table " + table);
@@ -147,9 +135,9 @@ class DisplayQuery extends Query{
     }
 
     private void displayTableSchema(int tableID) {
-        System.out.println(schemaManager.getTableByTableNumber(tableID));
-        System.out.println(String.format("Pages: %d", storageManager.getPageCountForTable(tableID)));
-        System.out.println(String.format("Records: %d", storageManager.getRecordCountForTable(tableID)));
+        System.out.println(SchemaManager.instance.getTableByTableNumber(tableID));
+        System.out.println(String.format("Pages: %d", StorageManager.instance.getPageCountForTable(tableID)));
+        System.out.println(String.format("Records: %d", StorageManager.instance.getRecordCountForTable(tableID)));
     }
 }
 
