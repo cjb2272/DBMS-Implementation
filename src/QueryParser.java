@@ -169,7 +169,7 @@ class QueryParser{
         Integer expected = -1;
 
         for ( int i = 0; i < tableAttrList.size(); i++ ) {
-            if(dataAttrList.get( i ) == 0 && (tableAttrList.get( i ) == 4 || tableAttrList.get( i ) == 5)){
+            if(dataAttrList.get( i ) == 0 && tableAttrList.get( i ) == 4 ){
                 try{
                     if ( !dataAttrList.get( i + 1 ).equals(tableAttrList.get( i + 1 ) )) {
                         System.out.println( "Error! Got Char with length " + dataAttrList.get( i + 1 ).toString() + ", expected Char with length " + tableAttrList.get( i + 1 ).toString() );
@@ -177,6 +177,18 @@ class QueryParser{
                     }
                 } catch (ArrayIndexOutOfBoundsException e){
                     System.out.println("Error! Expected Char length in data type array.");
+                    return false;
+                }
+                continue;
+            }
+            else if (dataAttrList.get( i ) == 0 && tableAttrList.get( i ) == 5 ){
+                try{
+                    if ( dataAttrList.get( i + 1 ) > tableAttrList.get( i + 1 ) ) {
+                        System.out.println( "Error! Got VarChar with length " + dataAttrList.get( i + 1 ).toString() + ", expected Char with length up to" + tableAttrList.get( i + 1 ).toString() );
+                        return false;
+                    }
+                } catch (ArrayIndexOutOfBoundsException e){
+                    System.out.println("Error! Expected VarChar length in data type array.");
                     return false;
                 }
                 continue;
