@@ -5,6 +5,8 @@ package src;/*
 
 import java.util.ArrayList;
 
+import javax.xml.validation.Schema;
+
 public abstract class Query {
 
     public Query() {}
@@ -79,11 +81,34 @@ class CreateQuery extends Query{
         this.dataTypes = dt;
         this.primaryKey = primaryKey;
     }
-    
+
     @Override
     public void execute() {
+
+        // build the attributeInfo arraylist that the schema needs to record the new table
+        ArrayList<Object> attributeInfo = new ArrayList<>();
+
+        int index = 0;
+        for (int i = 0; i < 4 * columnNames.size(); i += 4) {
+            attributeInfo.add(i, columnNames.get(index));
+            attributeInfo.add(i+1, dataTypes.get(index));
+
+            if (dataTypes.get(index) == 5 || dataTypes.get(index) == 4) { // varchar or char
+                // need to talk to duncan about where length comes from in char and varchar types
+            }
+            else {
+                attributeInfo.add(i+2, QueryParser.getDataTypeSize(dataTypes.get(index)));
+            }
+
+            attributeInfo.add(i+3, columnNames.get(index).equals(primaryKey));
+
+            index++;
+        }
+
+
         int availableId = SchemaManager.instance.getNextAvailableTableID();
         StorageManager.instance.createTable(availableId, tableName, columnNames, dataTypes);
+        SchemaManager.instance.addTableSchema(availableId, tableName, attributeInfo);
         System.out.println("SUCCESS\n");
     }
 }
