@@ -62,7 +62,7 @@ class Page {
      *         return value used to crosscheck surpassing of max page size,
      *         indicating split needed
      */
-    public int computeSizeInBytes() {
+    int compute_size_in_bytes() {
         int sizeOfPageInBytes = 8; //beginning of page (fixed at 8 for two ints)
         //call records compute size for each record that is a part of this page
         for (Record record : this.getActualPage()) {
@@ -193,13 +193,11 @@ class Page {
     public static byte[] parsePage(Page pageToConvert) {
         byte[] byteArray = new byte[Main.pageSize];
         ByteBuffer byteBuffer = ByteBuffer.wrap(byteArray);
-        byteBuffer.put((byte) pageToConvert.computeSizeInBytes()); //insert size
-        byteBuffer.put((byte) pageToConvert.actualPage.size()); //insert num of entries
-        ArrayList<Record> records = pageToConvert.getActualPage();
-        //loop through records and insert them
-        for (Record record:records) {
-            byteBuffer.put(record.toBytes());
-        }
+        pageToConvert.getActualPage();
+
+        //todo make use of byteBuffers put methods
+        //todo can create equivalent method in Record to convert record objects
+        // back into byte strings
 
         return byteArray;
     }

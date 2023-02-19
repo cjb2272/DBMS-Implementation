@@ -82,7 +82,9 @@ class InsertQuery extends Query{
     @Override
     public void execute() {
         int tableID =  Catalog.instance.getTableIntByName(this.table);
-        StorageManager.instance.insertRecords(tableID, values);
+        for (Record r : values) {
+            StorageManager.instance.insertRecord(tableID, r);
+        }
         System.out.println("SUCCESS\n");
     }
 }

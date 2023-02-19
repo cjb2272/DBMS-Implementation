@@ -128,8 +128,46 @@ public class StorageManager {
         }
     }
 
-    public void insertRecords(int tableID, ArrayList<Record> records) {
-
+    //public void insertRecords(int tableID, ArrayList<Record> records) {
+    /**
+     *
+     * @param tableID the table for which we want to insert a record into its pages
+     * @param recordToInsert the record to insert
+     */
+    public void insertRecord(int tableID, Record recordToInsert) {
+        TableSchema table = Catalog.instance.getTableByInt(tableID);
+        ArrayList<Integer> pageOrder = table.getPageOrder();
+        if (0 == pageOrder.size()) {
+            try {
+                Page emptyPageInbuffer = buffer.CreateNewPage(tableID, 0);
+                //insert the record, no comparator needed here, because this is the
+                //first record of the table
+                emptyPageInbuffer.getActualPage().add(recordToInsert);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            int numPagesInTable = pageOrder.size();
+            for (int index = 0; index < numPagesInTable; index++) {
+                try {
+                    Page pageReference = buffer.GetPage(tableID, pageOrder.get(index));
+                    int numRecordsInPage = pageReference.getRecordCount();
+                    for (int idx = 0; idx < numRecordsInPage; idx++) {
+                        Record curRecord = pageReference.getActualPage().get(idx);
+                        //call comparator? //todo
+                        // if recordToInsert is to be placed before curRecord
+                            int someIndex = 0; //todo this will be the index of where our record we
+                                               //  want to come before is
+                            pageReference.getActualPage().add(someIndex, recordToInsert);
+                            if (pageReference.compute_size_in_bytes() > Main.pageSize) {
+                                buffer.PageSplit(pageReference, tableID);
+                            }
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
     }
 
     /*
