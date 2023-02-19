@@ -92,8 +92,7 @@ class QueryParser{
 
         String tableName = keywords[2];
 
-        //ArrayList<Integer> tableAttrList = schemaManager.getAttrList(tableName);
-        ArrayList<Integer> tableAttrList = new ArrayList<>();
+        ArrayList<Integer> tableAttrList = Catalog.instance.getTableAttributeTypesByName(tableName);
         ArrayList<ArrayList<Object>> formattedTuples = new ArrayList<>();
 
         String[] tuples = separate[1].split( "," );
@@ -179,6 +178,7 @@ class QueryParser{
                     System.out.println("Error! Expected Char length in data type array.");
                     return false;
                 }
+                i++;
                 continue;
             }
             else if (dataAttrList.get( i ) == 0 && tableAttrList.get( i ) == 5 ){
@@ -191,6 +191,7 @@ class QueryParser{
                     System.out.println("Error! Expected VarChar length in data type array.");
                     return false;
                 }
+                i++;
                 continue;
             }
             if(!dataAttrList.get( i ).equals(tableAttrList.get( i ))){
@@ -211,6 +212,7 @@ class QueryParser{
 
     public static String CodeToString(Integer code){
         return switch (code) {
+            case 0 -> "oops";
             case 1 -> "Integer";
             case 2 -> "Double";
             case 3 -> "Boolean";
@@ -234,7 +236,7 @@ class QueryParser{
     }
 
     public Integer GetLength(String str){
-        String temp = str.substring(str.indexOf("(", 0)+1, str.indexOf(")", 0));
+        String temp = str.substring(str.indexOf("(")+1, str.indexOf(")"));
         return Integer.parseInt(temp);
     }
 
@@ -301,7 +303,9 @@ class QueryParser{
 
                     // if char or varchar, we need to store the supplied length in a separate list
                     if (result == 4 || result == 5) {
-                        varLengthSizes.add(GetLength(temp[1]));
+                        int charLength = GetLength( temp[1] );
+                        varLengthSizes.add(charLength);
+                        dataTypes.add( charLength );
                     }
                     else {
                         varLengthSizes.add(-1);
@@ -320,7 +324,9 @@ class QueryParser{
 
                             // if char or varchar, we need to store the supplied length in a separate list
                             if (result == 4 || result == 5) {
-                                varLengthSizes.add(GetLength(temp[1]));
+                                int charLength = GetLength( temp[1] );
+                                varLengthSizes.add(charLength);
+                                dataTypes.add( charLength );
                             } else {
                                 varLengthSizes.add(-1);
                             }

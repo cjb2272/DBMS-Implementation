@@ -78,4 +78,21 @@ public class Record {
     }
 
 
+    public String displayRecords(int padLen){
+        String result = "";
+
+        String padding = "                 ".substring( 0, padLen );
+
+        for (Object obj : this.Record){
+            String temp = obj.toString();
+            if(temp.length() >= padding.length()){
+                result += " |" + temp;
+            } else {
+                result += " |" + padding.substring( 0, padding.length() - temp.length() ) + temp;
+            }
+        }
+
+        return result + "|";
+    }
+
 }

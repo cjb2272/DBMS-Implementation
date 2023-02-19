@@ -27,3 +27,4 @@ hs_err_pid*
 
 # for VSCode
 .vscode/launch.json
+/db/tables/

@@ -5,7 +5,6 @@ package src;/*
 
 import java.util.ArrayList;
 
-import javax.xml.validation.Schema;
 
 public abstract class Query {
 
@@ -37,8 +36,28 @@ class SelectQuery extends Query{
         }
         ArrayList<Record> records = StorageManager.instance.selectData(tableNum, colNames);
 
+        int max = 0;
+        for (String col : colNames){
+            if( col.length() > max){
+                max = col.length();
+            }
+        }
+
+        String padding = "                 ";
+
+        String columns = "";
+        for(String col : colNames){
+            if(col.length() == max){
+                columns += " |" + col;
+            } else {
+                columns += " |" + padding.substring( 0, padding.length() - col.length() ) + col;
+            }
+        }
+        System.out.println(columns + "|");
+
+
         for (Record record : records) {
-            System.out.println(record);
+            System.out.println(record.displayRecords( max ));
         }
 
         System.out.println("SUCCESS\n");
@@ -62,7 +81,7 @@ class InsertQuery extends Query{
 
     @Override
     public void execute() {
-        int tableID = 0;
+        int tableID =  Catalog.instance.getTableIntByName(this.table);
         StorageManager.instance.insertRecords(tableID, values);
         System.out.println("SUCCESS\n");
     }
