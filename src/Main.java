@@ -21,7 +21,7 @@ public class Main {
         pageSize = Integer.parseInt(args[1]);
         bufferSizeLimit = Integer.parseInt(args[2]);
 
-        SchemaManager.instance = new SchemaManager(db_loc, pageSize);
+        Catalog.instance = new Catalog(pageSize, db_loc);
         StorageManager.instance = new StorageManager(db_loc);
 
         System.out.println("\nPlease enter commands, enter <quit> to shutdown the db.\n");

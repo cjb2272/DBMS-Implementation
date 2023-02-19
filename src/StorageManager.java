@@ -88,7 +88,7 @@ public class StorageManager {
                 return records;
             }
 
-            ArrayList<AttributeSchema> columns = SchemaManager.instance.getTableByTableNumber(tableID).getAttributes();
+            ArrayList<AttributeSchema> columns = Catalog.instance.getTableByInt(tableID).getAttributes();
 
             ArrayList<Integer> indexes = new ArrayList<>();
             int i = 0;
@@ -169,7 +169,7 @@ public class StorageManager {
     }
 
     public int getNumberOfTables() {
-        return SchemaManager.instance.getAllTables().size();
+        return Catalog.instance.getTableSchemas().size();
     }
 
 
@@ -284,7 +284,7 @@ public class StorageManager {
             newPage.setTableNumber(tableNumber);
             newPage.setIsModified(true); //could alternatively change to true in constructor for
                                          // page instance
-            TableSchema table = SchemaManager.instance.getTableByTableNumber(tableNumber);
+            TableSchema table = Catalog.instance.getTableByInt(tableNumber);
             // insert page into P.O. using proper method calls
             int locOnDisk = table.changePageOrder(priorPageDiskPosition);
             newPage.setPageNumberOnDisk(locOnDisk);

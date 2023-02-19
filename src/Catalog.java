@@ -3,12 +3,17 @@ package src;
 import java.util.ArrayList;
 
 public class Catalog {
+
+    public static Catalog instance = null;
+    private String root;
+
     private ArrayList<TableSchema> tableSchemas;
     private int pageSize;
 
-    public Catalog(int pageSize) {
+    public Catalog(int pageSize, String root) {
         this.tableSchemas = new ArrayList<>();
         this.pageSize = pageSize;
+        this.root = root;
     }
 
     public void addTable(int tableNum, String tableName, ArrayList attributeInfo) {
@@ -118,5 +123,12 @@ public class Catalog {
             }
         }
         return types;
+    }
+
+    public String getDisplayString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("DB location: " + this.root + "\n");
+        sb.append(String.format("Page Size: %d", getPageSize()));
+        return sb.toString();
     }
 }

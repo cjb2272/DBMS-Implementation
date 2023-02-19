@@ -29,7 +29,7 @@ class SelectQuery extends Query{
         // ask the storage manager for this data. It will in turn ask the buffer first, but that's
         // abstracted away from this point in the code
 
-        int tableNum = SchemaManager.instance.getTableIDFromName(table);
+        int tableNum = Catalog.instance.getTableIntByName(table);
         if (tableNum == -1) {
             System.out.println("No such table " + table);
             System.out.println("ERROR\n");
@@ -106,9 +106,9 @@ class CreateQuery extends Query{
         }
 
 
-        int availableId = SchemaManager.instance.getNextAvailableTableID();
+        int availableId = Catalog.instance.getTablesSize() + 1;
         StorageManager.instance.createTable(availableId, tableName, columnNames, dataTypes);
-        SchemaManager.instance.addTableSchema(availableId, tableName, attributeInfo);
+        Catalog.instance.addTable(availableId, tableName, attributeInfo);
         System.out.println("SUCCESS\n");
     }
 }
@@ -129,7 +129,7 @@ class DisplayQuery extends Query{
     public void execute() {
 
         if (table == null) {
-            System.out.println(SchemaManager.instance.getDisplayString());
+            System.out.println(Catalog.instance.getDisplayString());
             System.out.println(String.format("Buffer Size: %d\n", StorageManager.instance.getCurrentBufferSize()));
             
             if (StorageManager.instance.getNumberOfTables() == 0) {
@@ -138,7 +138,7 @@ class DisplayQuery extends Query{
                 return;
             }
             else {
-                ArrayList<TableSchema> allTableSchemas = SchemaManager.instance.getAllTables();
+                ArrayList<TableSchema> allTableSchemas = Catalog.instance.getTableSchemas();
                 for (TableSchema schema : allTableSchemas) {
                     displayTableSchema(schema.getTableNum());
                 }
@@ -146,7 +146,7 @@ class DisplayQuery extends Query{
 
         }
 
-        int tableID = SchemaManager.instance.getTableIDFromName(table);
+        int tableID = Catalog.instance.getTableIntByName(table);
 
         if (tableID == -1) {
             System.out.println("No such table " + table);
@@ -160,7 +160,7 @@ class DisplayQuery extends Query{
     }
 
     private void displayTableSchema(int tableID) {
-        System.out.println(SchemaManager.instance.getTableByTableNumber(tableID));
+        System.out.println(Catalog.instance.getTableByInt(tableID));
         System.out.println(String.format("Pages: %d", StorageManager.instance.getPageCountForTable(tableID)));
         System.out.println(String.format("Records: %d", StorageManager.instance.getRecordCountForTable(tableID)));
     }
