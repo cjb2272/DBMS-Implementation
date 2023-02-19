@@ -73,12 +73,14 @@ class CreateQuery extends Query{
     String tableName;
     ArrayList<String> columnNames; // name of attributes
     ArrayList<Integer> dataTypes;
+    ArrayList<Integer> varLengthSizes;
     String primaryKey;
 
-    public CreateQuery(String table, ArrayList<String> colNames, ArrayList<Integer> dt, String primaryKey) {
+    public CreateQuery(String table, ArrayList<String> colNames, ArrayList<Integer> dt, ArrayList<Integer> varLengthSizes, String primaryKey) {
         this.tableName = table;
         this.columnNames = colNames;
         this.dataTypes = dt;
+        this.varLengthSizes = varLengthSizes;
         this.primaryKey = primaryKey;
     }
 
@@ -94,7 +96,7 @@ class CreateQuery extends Query{
             attributeInfo.add(i+1, dataTypes.get(index));
 
             if (dataTypes.get(index) == 5 || dataTypes.get(index) == 4) { // varchar or char
-                // need to talk to duncan about where length comes from in char and varchar types
+                attributeInfo.add(i+2, varLengthSizes.get(index));
             }
             else {
                 attributeInfo.add(i+2, QueryParser.getDataTypeSize(dataTypes.get(index)));
@@ -104,7 +106,6 @@ class CreateQuery extends Query{
 
             index++;
         }
-
 
         int availableId = Catalog.instance.getTablesSize() + 1;
         StorageManager.instance.createTable(availableId, tableName, columnNames, dataTypes);

@@ -233,6 +233,11 @@ class QueryParser{
         };
     }
 
+    public Integer GetLength(String str){
+        String temp = str.substring(str.indexOf("(", 0)+1, str.indexOf(")", 0));
+        return Integer.parseInt(temp);
+    }
+
     public static int getDataTypeSize(int type) {
         
         // This does not handle varchar. That has to be calculated by the caller
@@ -281,6 +286,7 @@ class QueryParser{
 
         ArrayList<String> columnNames = new ArrayList<>();
         ArrayList<Integer> dataTypes = new ArrayList<>();
+        ArrayList<Integer> varLengthSizes = new ArrayList<>();
         String pk = null;
 
         for ( String attr : attributes ) {
@@ -290,7 +296,16 @@ class QueryParser{
                 case 2:
                     //not primary key
                     columnNames.add( temp[0]);
-                    dataTypes.add( StringToCode( temp[1]) ); //make the pairing for name of attribute and the type of attr
+                    int result =  StringToCode( temp[1]);
+                    dataTypes.add(result); //make the pairing for name of attribute and the type of attr
+
+                    // if char or varchar, we need to store the supplied length in a separate list
+                    if (result == 4 || result == 5) {
+                        varLengthSizes.add(GetLength(temp[1]));
+                    }
+                    else {
+                        varLengthSizes.add(-1);
+                    }
                     break;
                 case 3:
                     //Primary key
@@ -298,7 +313,18 @@ class QueryParser{
                         if(pk == null){
                             pk = temp[0];
                             columnNames.add( temp[0]);
-                            dataTypes.add( StringToCode( temp[1]) );
+
+                            result =  StringToCode( temp[1]);
+                            
+                            dataTypes.add( result );
+
+                            // if char or varchar, we need to store the supplied length in a separate list
+                            if (result == 4 || result == 5) {
+                                varLengthSizes.add(GetLength(temp[1]));
+                            } else {
+                                varLengthSizes.add(-1);
+                            }
+
                             break;
                         } else{
                             System.out.println("Primary key already exists, it was named: " + pk);
@@ -316,7 +342,7 @@ class QueryParser{
 
             }
         }
-        return new CreateQuery(keywords[2], columnNames, dataTypes, pk );
+        return new CreateQuery(keywords[2], columnNames, dataTypes, varLengthSizes, pk );
     }
 
     public List<Object> TypeCast(String input){

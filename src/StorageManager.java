@@ -51,7 +51,7 @@ public class StorageManager {
         // creation of a new table never involves the buffer (there are no pages to start), so the file is created here.
         DataOutputStream output=null;
         try {
-            output = new DataOutputStream(new FileOutputStream(Paths.get(tablesRootPath, name).toString()));
+            output = new DataOutputStream(new FileOutputStream(Paths.get(tablesRootPath, String.valueOf(ID)).toString()));
 
             // no pages in a new table file, so write 0
             output.writeInt(0);
