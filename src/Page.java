@@ -80,7 +80,7 @@ class Page {
      * @param pageInBytes a page represented by a singular array of bytes
      * @return
      */
-    public static Page parse_bytes(int tableNumber, byte[] pageInBytes) {
+    public static Page parseBytes(int tableNumber, byte[] pageInBytes) {
         Page returnPage = new Page();
         //Iterate through Bytes, creating record arrays of objects
                //use ByteBuffers get methods to move pointer through pageInBytes
@@ -95,6 +95,48 @@ class Page {
         //
         // and appending those records to actualPage arraylist of records for this page
 
+        ByteBuffer byteBuffer = ByteBuffer.wrap(pageInBytes);
+        //Read first portions of page coming before records
+        int sizeOfPageInBytes = byteBuffer.getInt(); //read first 4 bytes
+        int numRecords = byteBuffer.getInt(); //read second 4 bytes
+        ArrayList<Integer> typeIntegers = Catalog.instance.getTableAttributeTypes(tableNumber);
+        ArrayList<Record> records = new ArrayList<>();
+        for (int rcrd = 0; rcrd < numRecords; rcrd++) {
+            // LOOP in the order of data types expected - data types cannot be stored in pages,
+            // MUST be stored in Catalog ONLY for a given page
+            Record record = Record.parseRecordBytes(byteBuffer);
+// This section here is essentially what the Record's parseBytes needs to do
+//            for (Integer typeInt : typeIntegers) {
+//                switch (typeInt) {
+//                    case 1 -> //Integer
+//                            byteBuffer.getInt(); //get next 4 BYTES
+//                    case 2 -> //Double
+//                            byteBuffer.getDouble(); //get next 8 BYTES
+//                    case 3 -> //Boolean
+//                            byteBuffer.get(); //A Boolean is 1 BYTE so simple .get()
+//                    case 4 -> { //Char(x) standard string fixed array of len x
+//                        int numCharXChars = byteBuffer.getInt();
+//                        for (int ch = 0; ch < numCharXChars; ch++) {
+//                            byteBuffer.getChar(); //get next 2 BYTES
+//                        }
+//                    }
+//                    case 5 -> { //Varchar(x) variable size array of max len x NOT Padded
+//                        //records with var chars cause scenario of records not being same size
+//                        int numChars = byteBuffer.getInt();
+//                        for (int chr = 0; chr < numChars; chr++) {
+//                            byteBuffer.getChar(); //get next 2 BYTES
+//                            int x; //remove this line, only present to remove annoyance
+//                            //telling me I can merge case 4 and 5 bc they are the same rn
+//                        }
+//                    }
+//                }
+//            } //END LOOP
+            records.add(record);
+            //TODO verify that the byte buffer has moved forward to the next record here. Not sure if the pointer
+            // being moved in another method will make it move here. If it doesn't, then the buffer pointer
+            // needs to be moved forward
+        } //END LOOP NUM RECORDS
+        returnPage.setActualPage(records);
         return returnPage;
     }
     /*
@@ -149,7 +191,7 @@ class Page {
      *         - second 4 bytes: number of records
      *         - all bytes for actual records
      */
-    public static byte[] parse_page(Page pageToConvert) {
+    public static byte[] parsePage(Page pageToConvert) {
         byte[] byteArray = new byte[Main.pageSize];
         ByteBuffer byteBuffer = ByteBuffer.wrap(byteArray);
         pageToConvert.getActualPage();

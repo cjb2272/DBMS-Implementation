@@ -350,7 +350,7 @@ public class StorageManager {
             byte[] pageByteArray = new byte[Main.pageSize];
             file.read(pageByteArray, 0, Main.pageSize);
             file.close();
-            Page readPage = Page.parse_bytes(tableNum, pageByteArray);
+            Page readPage = Page.parseBytes(tableNum, pageByteArray);
             return readPage;
         }
 
@@ -371,7 +371,7 @@ public class StorageManager {
             RandomAccessFile file = new RandomAccessFile(tableFilePath, "rw");
             //seek through table file to memory you want and write out page size
             file.seek((long) pageNumber * Main.pageSize);
-            file.write(Page.parse_page(pageToWrite)); //still need to write out page size worth of bytes
+            file.write(Page.parsePage(pageToWrite)); //still need to write out page size worth of bytes
             file.close();
         }
 

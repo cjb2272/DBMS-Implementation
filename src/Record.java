@@ -1,5 +1,6 @@
 package src;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 /**
@@ -69,7 +70,7 @@ public class Record {
      *                      varchars
      * @return Record Object
      */
-    public static Record parse_record_bytes(byte[] recordInBytes) {
+    public static Record parseRecordBytes(ByteBuffer recordInBytes) {
         Record returnRecord = new Record();
         //Iterate through Bytes, getting varrying data types and appending to returnRecord
         //DO NOT APPEND THE INT(s) telling the amount of chars in varchar or char
