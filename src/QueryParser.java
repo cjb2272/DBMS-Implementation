@@ -221,6 +221,19 @@ class QueryParser{
         };
     }
 
+    public static int getDataTypeSize(int type) {
+        
+        // This does not handle varchar. That has to be calculated by the caller
+
+        return switch (type) {
+            case 1 -> Integer.SIZE;
+            case 2 -> Double.SIZE;
+            case 3 -> 1; // I know we're not supposed to hardcode these, but Boolean.SIZE doesn't exist and my research didn't return an alternative way of getting bool size -AC
+            case 4 -> Character.SIZE;
+            default -> -1;
+        };
+    }
+
     //CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,
     //      <attr_name2> <attr_type2>, <attr_nameN> <attr_typeN>);
     public CreateQuery ParseCreate(String input){
