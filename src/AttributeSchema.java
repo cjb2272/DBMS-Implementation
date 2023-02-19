@@ -36,4 +36,18 @@ public class AttributeSchema {
         int size = Integer.BYTES + name.length();
         return size;
     }
+
+    public String toString() {
+
+        String typeStr;
+
+        if (type == 4 || type == 5) {
+            typeStr = QueryParser.CodeToString(type).substring(0, QueryParser.CodeToString(type).length()-3).toLowerCase() + "(" + String.valueOf(size) + ")";
+        }
+        else {
+            typeStr = QueryParser.CodeToString(type).toLowerCase();
+        }
+
+        return String.format("%s:%s %s", name, typeStr, isPrimaryKey ? "primaryKey" : "");
+    }
 }

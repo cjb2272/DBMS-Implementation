@@ -209,7 +209,7 @@ class QueryParser{
         return false;
     }
 
-    public String CodeToString(Integer code){
+    public static String CodeToString(Integer code){
         return switch (code) {
             case 1 -> "Integer";
             case 2 -> "Double";
