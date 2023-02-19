@@ -35,7 +35,7 @@ public class Record {
 
     /**
      * pre-condition: Record that we are computing size for is composed of data
-     * Method Called by Page's compute_size_in_bytes
+     * Method Called by Page's computeSizeInBytes
      * Also Called by Page's parse_bytes
      * @return How many bytes this record consists of.
      *         Size returned includes the bytes used to represent ints
@@ -76,6 +76,16 @@ public class Record {
         //DO NOT APPEND THE INT(s) telling the amount of chars in varchar or char
 
         return returnRecord;
+    }
+
+    /**
+     * Convert the objects in this record into their byte forms within a byte array
+     * @return the byte array of the objects
+     */
+    public byte[] toBytes() {
+        byte[] bytes = new byte[this.compute_size()];
+        //TODO write logic to convert all stored objects into their byte representations and add them to the array
+        return bytes;
     }
 
 

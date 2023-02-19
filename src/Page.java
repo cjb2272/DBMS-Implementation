@@ -58,15 +58,14 @@ class Page {
      *     or ANY Method that makes actual changes to data of page
      * Size returned includes the bytes for page size and number of records
      * at the beginning of page
-     * @param page page
      * @return how many bytes does this record consist of
      *         return value used to crosscheck surpassing of max page size,
      *         indicating split needed
      */
-    int compute_size_in_bytes(Page page) {
+    public int computeSizeInBytes() {
         int sizeOfPageInBytes = 8; //beginning of page (fixed at 8 for two ints)
         //call records compute size for each record that is a part of this page
-        for (Record record : page.getActualPage()) {
+        for (Record record : this.getActualPage()) {
             int bytesInRecord = record.compute_size();
             sizeOfPageInBytes = sizeOfPageInBytes + bytesInRecord;
         }
@@ -194,11 +193,13 @@ class Page {
     public static byte[] parsePage(Page pageToConvert) {
         byte[] byteArray = new byte[Main.pageSize];
         ByteBuffer byteBuffer = ByteBuffer.wrap(byteArray);
-        pageToConvert.getActualPage();
-
-        //todo make use of byteBuffers put methods
-        //todo can create equivalent method in Record to convert record objects
-        // back into byte strings
+        byteBuffer.put((byte) pageToConvert.computeSizeInBytes()); //insert size
+        byteBuffer.put((byte) pageToConvert.actualPage.size()); //insert num of entries
+        ArrayList<Record> records = pageToConvert.getActualPage();
+        //loop through records and insert them
+        for (Record record:records) {
+            byteBuffer.put(record.toBytes());
+        }
 
         return byteArray;
     }
