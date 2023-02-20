@@ -2,7 +2,7 @@ package src;
 /*
  * This file represents the Storage Manager as Whole,
  * Which includes the Buffer Manager within
- * @author(s) Charlie Baker, Austin Cepalia
+ * @author(s) Charlie Baker, Austin Cepalia, Duncan Small (barely)
  */
 
 import java.io.*;
@@ -106,6 +106,8 @@ public class StorageManager {
                 i++;
             }
 
+            //int pkIndex = Catalog.getTablePKIndex(tableName);
+
             ArrayList<Record> results = new ArrayList<>();
             for (Record record : records) {
 
@@ -118,6 +120,7 @@ public class StorageManager {
 
                 Record newRecord = new Record();
                 newRecord.setRecord(filteredRecordData);
+                //newRecord.setPKIndex(pkIndex);
                 results.add(newRecord);
             }
 

@@ -36,7 +36,7 @@ class SelectQuery extends Query{
         }
         ArrayList<Record> records = StorageManager.instance.selectData(tableNum, colNames);
 
-        int max = 0;
+        int max = 8;
         for (String col : colNames){
             if( col.length() > max){
                 max = col.length();
@@ -50,11 +50,10 @@ class SelectQuery extends Query{
             if(col.length() == max){
                 columns += " |" + col;
             } else {
-                columns += " |" + padding.substring( 0, padding.length() - col.length() ) + col;
+                columns += " |" + padding.substring( 0, max - col.length() ) + col;
             }
         }
         System.out.println(columns + "|");
-
 
         for (Record record : records) {
             System.out.println(record.displayRecords( max ));
@@ -72,9 +71,12 @@ class InsertQuery extends Query{
     public InsertQuery(String table, ArrayList<ArrayList<Object>> val){
         this.table = table;
 
+        //int pkIndex = Catalog.getTablePKIndex(this.table);
+
         for (ArrayList<Object> row : val) {
             Record r = new Record();
             r.setRecord(row);
+            //r.setPKIndex(pkIndex);
             values.add(r);
         }
     }

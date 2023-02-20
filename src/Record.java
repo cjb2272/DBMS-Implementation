@@ -2,9 +2,11 @@ package src;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Comparator;
 
 /**
  * representative of an individual record
+ * @author Charlie Baker, Duncan Small
  */
 public class Record {
 
@@ -16,6 +18,7 @@ public class Record {
     // being that varying attribute types can be stored in
     // the same ArrayList including Null values
     private ArrayList<Object> Record;
+    //private int pkIndex;
 
     /**
      * Record Constructor
@@ -72,7 +75,7 @@ public class Record {
      */
     public static Record parseRecordBytes(ByteBuffer recordInBytes) {
         Record returnRecord = new Record();
-        //Iterate through Bytes, getting varrying data types and appending to returnRecord
+        //Iterate through Bytes, getting varying data types and appending to returnRecord
         //DO NOT APPEND THE INT(s) telling the amount of chars in varchar or char
 
         return returnRecord;
@@ -88,6 +91,23 @@ public class Record {
         return bytes;
     }
 
+    public boolean equals(Object obj){
+        if(obj instanceof Record){
+            return false;
+        }
+
+        Record rec = ( Record ) obj;
+
+        if(this.Record.size() != rec.Record.size() ){
+            return false;
+        }
+
+        if(this.compute_size() != rec.compute_size()){
+            return false;
+        }
+
+        return this.Record.equals( rec.Record );
+    }
 
     public String displayRecords(int padLen){
         String result = "";
@@ -106,4 +126,27 @@ public class Record {
         return result + "|";
     }
 
+}
+
+
+class RecordSort implements Comparator<Record>{
+    public int compare(Record a, Record b){
+
+        if(a.equals( b )) return 0;
+
+        //Eventually will be this.pkIndex
+        int pkIndex = 0;
+
+        Object objA = a.getRecord().get( pkIndex );
+
+        Object objB = b.getRecord().get( pkIndex );
+
+        return switch (objA.getClass().getSimpleName()) {
+            case "String" -> CharSequence.compare( (String) objA, (String) objB );
+            case "Integer" -> Integer.compare( (int) objA, (int) objB );
+            case "Boolean" -> Boolean.compare( (boolean) objA, (boolean) objB );
+            case "Double" -> Double.compare( (double) objA, (double) objB );
+            default -> 0;
+        };
+    }
 }
