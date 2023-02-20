@@ -19,17 +19,31 @@ public class TableSchema {
                Value 0, 1, 5, 2, 3, 4  */
     private ArrayList<Integer> pageOrder;
 
-    public TableSchema(String tableName, int tableNum) {
+    /**
+     *
+     * @param tableName
+     * @param tableNum
+     */
+    public TableSchema(String tableName, int tableNum, ArrayList<Integer> pageOrder) {
         this.tableName = tableName;
         this.tableNum = tableNum;
         this.attributes = new ArrayList<>();
-        this.pageOrder = new ArrayList<>();
+        this.pageOrder = pageOrder;
     }
 
+    /**
+     *
+     * @param name
+     * @param type
+     * @param size
+     * @param isPrimaryKey
+     */
     public void addAttribute(String name, int type, int size, boolean isPrimaryKey) {
         AttributeSchema attribute = new AttributeSchema(name, type, size, isPrimaryKey);
         attributes.add(attribute);
     }
+
+
 
     /**
      * Method should return the pageNumber of where the page is stored sequentially
@@ -62,22 +76,56 @@ public class TableSchema {
         }
     }
 
+    /**
+     *
+     * @return
+     */
     public String getTableName() {
         return tableName;
     }
 
+    /**
+     *
+     * @return
+     */
     public int getTableNum() {
         return tableNum;
     }
 
+    /**
+     *
+     * @return
+     */
     public ArrayList<AttributeSchema> getAttributes() {
         return attributes;
     }
 
+    /**
+     *
+     * @return
+     */
     public ArrayList<Integer> getPageOrder() {
         return pageOrder;
     }
 
+    /**
+     *
+     * @return
+     */
+    protected int getSizeInBytes() {
+        int size = Integer.BYTES + (tableName.length() * Character.BYTES) + Integer.BYTES +
+                (pageOrder.size() * Integer.BYTES) + Integer.BYTES;
+        for (AttributeSchema attribute: attributes) {
+            size += attribute.getSizeInBytes();
+        }
+        return size;
+    }
+
+    /**
+     *
+     * @param o
+     * @return
+     */
     @Override
     public boolean equals(Object o) {
         if (o == this) {
@@ -92,6 +140,10 @@ public class TableSchema {
         return this.tableNum == tableSchema.tableNum && this.tableName.equals(tableSchema.tableName);
     }
 
+    /**
+     *
+     * @return
+     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

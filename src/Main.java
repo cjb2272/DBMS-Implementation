@@ -3,6 +3,8 @@ package src;/*
  * @author Duncan Small, Austin Cepalia
  */
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 public class Main {
@@ -21,7 +23,18 @@ public class Main {
         pageSize = Integer.parseInt(args[1]);
         bufferSizeLimit = Integer.parseInt(args[2]);
 
-        Catalog.instance = new Catalog(pageSize, db_loc);
+        File catalog = new File(db_loc, "db-catalog.catalog");
+        if (!catalog.isFile()) {
+            try {
+                catalog.createNewFile();
+                Catalog.instance = new Catalog(pageSize, db_loc);
+            } catch(IOException e) {
+                System.out.println("Error in creating catalog file.");
+                e.printStackTrace();
+            }
+        } else {
+            Catalog.instance = Catalog.readCatalogFromFile(db_loc);
+        }
         StorageManager.instance = new StorageManager(db_loc);
 
         System.out.println("\nPlease enter commands, enter <quit> to shutdown the db.\n");

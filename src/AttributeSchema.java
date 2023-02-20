@@ -32,8 +32,8 @@ public class AttributeSchema {
         return isPrimaryKey;
     }
 
-    public int getSizeInBytes() {
-        int size = Integer.BYTES + name.length();
+    protected int getSizeInBytes() {
+        int size = Integer.BYTES + (name.length() * Character.BYTES) + Integer.BYTES + Integer.BYTES + Character.BYTES;
         return size;
     }
 
