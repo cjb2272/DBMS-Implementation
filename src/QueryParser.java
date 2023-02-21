@@ -113,6 +113,11 @@ class QueryParser{
 
         String tableName = keywords[2];
 
+        if (Catalog.instance.getTableByName(tableName) == null) {
+            System.out.println("No such table " + tableName + "\nERROR\n");
+            return null;
+        }
+
         ArrayList<Integer> tableAttrList = Catalog.instance.getTableAttributeTypesByName(tableName);
         ArrayList<ArrayList<Object>> formattedTuples = new ArrayList<>();
 
