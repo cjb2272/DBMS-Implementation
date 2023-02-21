@@ -413,9 +413,11 @@ class QueryParser{
                 default:
                     System.out.println("Please ensure that attributes are in the following format <name> <type>.");
                     return null;
-
-
             }
+        }
+        if(pk == null){
+            System.out.println("You must enter a primarykey attribute.");
+            return null;
         }
         return new CreateQuery(keywords[2], columnNames, dataTypes, varLengthSizes, pk );
     }
