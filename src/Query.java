@@ -75,12 +75,12 @@ class InsertQuery extends Query{
     public InsertQuery(String table, ArrayList<ArrayList<Object>> val){
         this.table = table;
 
-        //int pkIndex = Catalog.getTablePKIndex(this.table);
+        int pkIndex = Catalog.instance.getTablePKIndex(this.table);
 
         for (ArrayList<Object> row : val) {
             Record r = new Record();
             r.setRecord(row);
-            //r.setPKIndex(pkIndex);
+            r.setPkIndex(pkIndex);
             values.add(r);
         }
     }

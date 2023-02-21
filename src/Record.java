@@ -18,7 +18,15 @@ public class Record {
     // being that varying attribute types can be stored in
     // the same ArrayList including Null values
     private ArrayList<Object> Record;
-    //private int pkIndex;
+    private int pkIndex;
+
+    public int getPkIndex() {
+        return pkIndex;
+    }
+
+    public void setPkIndex( int pkIndex ) {
+        this.pkIndex = pkIndex;
+    }
 
     /**
      * Record Constructor
@@ -163,12 +171,9 @@ class RecordSort implements Comparator<Record>{
 
         if(a.equals( b )) return 0;
 
-        //Eventually will be this.pkIndex
-        int pkIndex = 0;
+        Object objA = a.getRecord().get( a.getPkIndex() );
 
-        Object objA = a.getRecord().get( pkIndex );
-
-        Object objB = b.getRecord().get( pkIndex );
+        Object objB = b.getRecord().get( b.getPkIndex() );
 
         return switch (objA.getClass().getSimpleName()) {
             case "String" -> CharSequence.compare( (String) objA, (String) objB );

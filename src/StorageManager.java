@@ -106,7 +106,7 @@ public class StorageManager {
                 i++;
             }
 
-            //int pkIndex = Catalog.getTablePKIndex(tableName);
+            int pkIndex = Catalog.instance.getTablePKIndex(Catalog.instance.getTableByInt( tableID ).getTableName());
 
             ArrayList<Record> results = new ArrayList<>();
             for (Record record : records) {
@@ -120,7 +120,7 @@ public class StorageManager {
 
                 Record newRecord = new Record();
                 newRecord.setRecord(filteredRecordData);
-                //newRecord.setPKIndex(pkIndex);
+                newRecord.setPkIndex(pkIndex);
                 results.add(newRecord);
             }
 
