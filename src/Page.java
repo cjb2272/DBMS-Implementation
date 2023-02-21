@@ -8,7 +8,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 /**
- *
+ * representative of an individual Page
+ * @author Kevin Martin
  */
 class Page {
 

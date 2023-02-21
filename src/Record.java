@@ -6,7 +6,7 @@ import java.util.Comparator;
 
 /**
  * representative of an individual record
- * @author Charlie Baker, Duncan Small
+ * @author Charlie Baker, Duncan Small, Kevin Martin
  */
 public class Record {
 
