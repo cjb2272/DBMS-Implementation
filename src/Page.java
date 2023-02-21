@@ -103,7 +103,7 @@ class Page {
         for (int rcrd = 0; rcrd < numRecords; rcrd++) {
             // LOOP in the order of data types expected - data types cannot be stored in pages,
             // MUST be stored in Catalog ONLY for a given page
-            Record record = Record.parseRecordBytes(byteBuffer);
+            Record record = Record.parseRecordBytes(tableNumber, byteBuffer);
 // This section here is essentially what the Record's parseBytes needs to do
 //            for (Integer typeInt : typeIntegers) {
 //                switch (typeInt) {

@@ -79,7 +79,7 @@ class InsertQuery extends Query{
 
         for (ArrayList<Object> row : val) {
             Record r = new Record();
-            r.setRecord(row);
+            r.setRecordContents(row);
             r.setPkIndex(pkIndex);
             values.add(r);
         }

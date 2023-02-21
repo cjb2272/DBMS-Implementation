@@ -17,7 +17,8 @@ public class Record {
     // A Record is represented by an ArrayList of Objects
     // being that varying attribute types can be stored in
     // the same ArrayList including Null values
-    private ArrayList<Object> Record;
+    private ArrayList<Object> recordContents;
+    //private int pkIndex;
     private int pkIndex;
 
     public int getPkIndex() {
@@ -32,15 +33,15 @@ public class Record {
      * Record Constructor
      */
     public Record() {
-        this.Record = new ArrayList<>();
+        this.recordContents = new ArrayList<>();
     }
 
-    public void setRecord(ArrayList<Object> record) {
-        this.Record = record;
+    public void setRecordContents(ArrayList<Object> recordContents) {
+        this.recordContents = recordContents;
     }
 
-    public ArrayList<Object> getRecord() {
-        return this.Record;
+    public ArrayList<Object> getRecordContents() {
+        return this.recordContents;
     }
 
 
@@ -54,7 +55,7 @@ public class Record {
      */
     int compute_size() {
         int sizeOfRecordInBytes = 0;
-        for (Object obj : this.Record) {
+        for (Object obj : this.recordContents) {
             //not sure if this will work todo
             if (obj instanceof Integer) { sizeOfRecordInBytes = sizeOfRecordInBytes + 4; }
             if (obj instanceof Double) { sizeOfRecordInBytes = sizeOfRecordInBytes + 8; }
@@ -81,40 +82,41 @@ public class Record {
      *                      varchars
      * @return Record Object
      */
-    public static Record parseRecordBytes(ByteBuffer recordInBytes) {
+    public static Record parseRecordBytes(int tableNumber, ByteBuffer recordInBytes) {
         Record returnRecord = new Record();
         //Iterate through Bytes, getting varying data types and appending to returnRecord
         //DO NOT APPEND THE INT(s) telling the amount of chars in varchar or char
-        //TODO this needs to be fleshed out
+
         //LOOP in the order of data types expected - data types cannot be stored in pages,
         //MUST be stored in Catalog ONLY for a given page
-//        int[] typeIntegers = new int[0];
-//        //new int[] typeIntegers = SchemaManager.ReadTableSchemaFromCatalogFile(tableNum);
-//        for (int typeInt : typeIntegers) {
-//            switch (typeInt) {
-//                case 1 -> //Integer
-//                        byteBuffer.getInt(); //get next 4 BYTES
-//                case 2 -> //Double
-//                        byteBuffer.getDouble(); //get next 8 BYTES
-//                case 3 -> //Boolean
-//                        byteBuffer.get(); //A Boolean is 1 BYTE so simple .get()
-//                case 4 -> { //Char(x) standard string fixed array of len x
-//                    int numCharXChars = byteBuffer.getInt();
-//                    for (int ch = 0; ch < numCharXChars; ch++) {
-//                        byteBuffer.getChar(); //get next 2 BYTES
-//                    }
-//                }
-//                case 5 -> { //Varchar(x) variable size array of max len x NOT Padded
-//                    //records with var chars cause scenario of records not being same size
-//                    int numChars = byteBuffer.getInt();
-//                    for (int chr = 0; chr < numChars; chr++) {
-//                        byteBuffer.getChar(); //get next 2 BYTES
-//                        int x; //remove this line, only present to remove annoyance
-//                        //telling me I can merge case 4 and 5 bc they are the same rn
-//                    }
-//                }
-//            }
-//        } //END LOOP
+        ArrayList<Integer> typeIntegers = Catalog.instance.getTableAttributeTypes(tableNumber);
+        for (int typeInt : typeIntegers) {
+            switch (typeInt) {
+                case 1 -> //Integer
+                        returnRecord.recordContents.add(recordInBytes.getInt()); //get next 4 BYTES
+                case 2 -> //Double
+                        returnRecord.recordContents.add(recordInBytes.getDouble()); //get next 8 BYTES
+                case 3 -> //Boolean
+                        returnRecord.recordContents.add(recordInBytes.get()); //A Boolean is 1 BYTE so simple .get()
+                case 4 -> { //Char(x) standard string fixed array of len x
+                    int numCharXChars = recordInBytes.getInt();
+                    StringBuilder chars = new StringBuilder();
+                    for (int ch = 0; ch < numCharXChars; ch++) {
+                        chars.append(recordInBytes.getChar()); //get next 2 BYTES
+                    }
+                    returnRecord.recordContents.add(chars.toString());
+                }
+                case 5 -> { //Varchar(x) variable size array of max len x NOT Padded
+                    //records with var chars cause scenario of records not being same size
+                    int numChars = recordInBytes.getInt();
+                    StringBuilder chars = new StringBuilder();
+                    for (int chr = 0; chr < numChars; chr++) {
+                        chars.append(recordInBytes.getChar()); //get next 2 BYTES
+                    }
+                    returnRecord.recordContents.add(chars.toString());
+                }
+            }
+        } //END LOOP
         return returnRecord;
     }
 
@@ -135,7 +137,7 @@ public class Record {
 
         Record rec = ( Record ) obj;
 
-        if(this.Record.size() != rec.Record.size() ){
+        if(this.recordContents.size() != rec.recordContents.size() ){
             return false;
         }
 
@@ -143,7 +145,7 @@ public class Record {
             return false;
         }
 
-        return this.Record.equals( rec.Record );
+        return this.recordContents.equals( rec.recordContents);
     }
 
     public String displayRecords(int padLen){
@@ -151,7 +153,7 @@ public class Record {
 
         String padding = "                 ".substring( 0, padLen );
 
-        for (Object obj : this.Record){
+        for (Object obj : this.recordContents){
             String temp = obj.toString();
             if(temp.length() >= padding.length()){
                 result += " |" + temp;
@@ -171,9 +173,9 @@ class RecordSort implements Comparator<Record>{
 
         if(a.equals( b )) return 0;
 
-        Object objA = a.getRecord().get( a.getPkIndex() );
+        Object objA = a.getRecordContents().get( a.getPkIndex() );
 
-        Object objB = b.getRecord().get( b.getPkIndex() );
+        Object objB = b.getRecordContents().get( b.getPkIndex() );
 
         return switch (objA.getClass().getSimpleName()) {
             case "String" -> CharSequence.compare( (String) objA, (String) objB );

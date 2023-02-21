@@ -111,7 +111,7 @@ public class StorageManager {
             ArrayList<Record> results = new ArrayList<>();
             for (Record record : records) {
 
-                ArrayList<Object> originalRecordData = record.getRecord();
+                ArrayList<Object> originalRecordData = record.getRecordContents();
 
                 ArrayList<Object> filteredRecordData = new ArrayList<>();
                 for (int idx : colIdxs) {
@@ -119,7 +119,7 @@ public class StorageManager {
                 }
 
                 Record newRecord = new Record();
-                newRecord.setRecord(filteredRecordData);
+                newRecord.setRecordContents(filteredRecordData);
                 newRecord.setPkIndex(pkIndex);
                 results.add(newRecord);
             }
