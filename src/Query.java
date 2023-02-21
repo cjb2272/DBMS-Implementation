@@ -36,6 +36,10 @@ class SelectQuery extends Query{
         }
         ArrayList<Record> records = StorageManager.instance.selectData(tableNum, colNames);
 
+        if(colNames.length == 1 && colNames[0].equals( "*" )){
+            //colNames = Catalog.instance.getAttributeNames(this.table);
+        }
+
         int max = 8;
         for (String col : colNames){
             if( col.length() > max){

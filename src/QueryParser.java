@@ -13,6 +13,12 @@ class QueryParser{
 
     //display info <table>;
     //display schema;
+
+    /**
+     * This function Parses a display command into a DisplayQuery.
+     * @param input The command being parsed
+     * @return One of two types of DisplayQuery (table or schema) or null if there is an error
+     */
     public DisplayQuery ParseDisplay(String input){
         String[] tokens = input.split( " " );
 
@@ -44,6 +50,12 @@ class QueryParser{
     }
 
     //SELECT * FROM <table>;
+
+    /**
+     * This function parses a Select command into a SelectQuery Object
+     * @param input The Select command being parsed
+     * @return A SelectQuery object representing the command that was passed or null if there is an error
+     */
     public SelectQuery ParseSelect(String input){
         String[] tokens = input.split( " " );
         if(tokens.length < 4){
@@ -72,6 +84,12 @@ class QueryParser{
     //(3"baz" true 4.14),
     //(2"bar" false 5.2),
     //(5 "true" true null);
+
+    /**
+     * This function takes a given Insert Command and parses it into an InsertQuery object
+     * @param input The command to be parsed
+     * @return An InsertQuery object representing the command, or null if there is an error
+     */
     public InsertQuery ParseInsert(String input){
         String[] separate = input.split( "values" );
         if(separate.length != 2 ){
@@ -158,6 +176,14 @@ class QueryParser{
         return new InsertQuery(tableName, formattedTuples );
     }
 
+
+    /**
+     * This function compares two lists of data types to ensure that data being
+     *    inserted into a table matches the columns
+     * @param tableAttrList The list of data types belonging to the table
+     * @param dataAttrList The list of data types belonging to the data being inserted
+     * @return True if the data being inserted is a match, False if there are discrepancy's
+     */
     public boolean AttributeMatch(ArrayList<Integer> tableAttrList, ArrayList<Integer> dataAttrList){
         if(tableAttrList.size() != dataAttrList.size()) {
             System.out.println("Error! Table and Data Attribute list do not match with length!");
@@ -210,18 +236,27 @@ class QueryParser{
         return false;
     }
 
+    /**
+     * Converts the code of a data type to the Data type string that it represents
+     * @param code The code that represents a given data type
+     * @return A String that corresponds to the data type code
+     */
     public static String CodeToString(Integer code){
         return switch (code) {
-            case 0 -> "oops";
             case 1 -> "Integer";
             case 2 -> "Double";
             case 3 -> "Boolean";
             case 4 -> "Char(x)";
             case 5 -> "VarChar(x)";
-            default -> "Error, code out of bounds";
+            default -> "Data-type not recognized";
         };
     }
 
+    /**
+     * Converts a string containing a data type into a code that represents it
+     * @param str The Data type being converted
+     * @return The Integer that represents the given data type
+     */
     public Integer StringToCode(String str){
         String[] temp = str.split( "[(]" );
 
@@ -235,11 +270,21 @@ class QueryParser{
         };
     }
 
+    /**
+     * This just grabs a number that is inside parenthesis, used to get the x from "Char(x)"
+     * @param str The string of "VarChar(x)" or "Char(x)"
+     * @return the integer that is "x" ^^^^
+     */
     public Integer GetLength(String str){
         String temp = str.substring(str.indexOf("(")+1, str.indexOf(")"));
         return Integer.parseInt(temp);
     }
 
+    /**
+     * This function gets the size in bytes of a given data type
+     * @param type The integer representing a given data type
+     * @return The number of bytes that this data type will take up
+     */
     public static int getDataTypeSize(int type) {
         
         // This does not handle varchar. That has to be calculated by the caller
@@ -255,6 +300,12 @@ class QueryParser{
 
     //CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,
     //      <attr_name2> <attr_type2>, <attr_nameN> <attr_typeN>);
+
+    /**
+     * This function parses a create table command into a CreateQuery object
+     * @param input The command being parsed
+     * @return a CreateQuery representing the command given, null if there is an error
+     */
     public CreateQuery ParseCreate(String input){
         String[] chunks = input.split( "[(]", 2 );
         if(chunks.length < 2){
@@ -299,6 +350,11 @@ class QueryParser{
                     //not primary key
                     columnNames.add( temp[0]);
                     int result =  StringToCode( temp[1]);
+                    if(result == -1){
+                        System.out.println("You must give one of the accepted types for an attribute:\n Integer, Double, Boolean, Char(x), or Varchar(x).");
+                        System.out.println("Recieved: " + temp[1]);
+                        return null;
+                    }
                     dataTypes.add(result); //make the pairing for name of attribute and the type of attr
 
                     // if char or varchar, we need to store the supplied length in a separate list
@@ -319,7 +375,11 @@ class QueryParser{
                             columnNames.add( temp[0]);
 
                             result =  StringToCode( temp[1]);
-                            
+                            if(result == -1){
+                                System.out.println("You must give one of the accepted types for an attribute:\n Integer, Double, Boolean, Char(x), or Varchar(x).");
+                                System.out.println("Recieved: " + temp[1]);
+                                return null;
+                            }
                             dataTypes.add( result );
 
                             // if char or varchar, we need to store the supplied length in a separate list
@@ -351,6 +411,14 @@ class QueryParser{
         return new CreateQuery(keywords[2], columnNames, dataTypes, varLengthSizes, pk );
     }
 
+
+    /**
+     * This function takes a given piece of data as a string, like an integer boolean etc., and turns
+     *      it into the correct object by method of trial and error
+     * @param input The piece of data being casted into a type
+     * @return a tuple of two pieces of info. First will be the integer representing which data type
+     *          the data was turned into and Second will be the data itself as the correct type
+     */
     public List<Object> TypeCast(String input){
         try {
             int i = Integer.parseInt(input);
@@ -369,6 +437,12 @@ class QueryParser{
         }
     }
 
+    /**
+     * This just takes a given command passed from standard in and takes the first word
+     *      then points it in the correct direction.
+     * @param input The command that was given, which will be parsed by the corresponding function
+     * @return Some kind of Query if it was successfully parsed, or null if there was an error
+     */
     public Query CommandParse(String input){
         String[] temp = input.split(" ", 2);
         String command = temp[0].toLowerCase( Locale.ROOT );
