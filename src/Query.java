@@ -79,7 +79,7 @@ class InsertQuery extends Query{
 
         for (ArrayList<Object> row : val) {
             Record r = new Record();
-            r.setRecord(row);
+            r.setRecordContents(row);
             r.setPkIndex(pkIndex);
             values.add(r);
         }
@@ -188,7 +188,7 @@ class DisplayQuery extends Query{
     }
 
     private void displayTableSchema(int tableID) {
-        System.out.println(Catalog.instance.getTableByInt(tableID));
+        System.out.println(Catalog.instance.getTableSchemaByInt(tableID));
         System.out.println(String.format("Pages: %d", StorageManager.instance.getPageCountForTable(tableID)));
         System.out.println(String.format("Records: %d", StorageManager.instance.getRecordCountForTable(tableID)));
     }
