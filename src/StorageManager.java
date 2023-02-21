@@ -78,13 +78,13 @@ public class StorageManager {
     /*
     Returns the requested row(s) of data. The Query object calling this is expected to print it out.
      */
-    public ArrayList<Record> selectData(int tableID, String[] colNames) {
+    public ArrayList<Record> selectData(int tableID, ArrayList<String> colNames) {
         int pageNumber = 0; //stub
         try {
             Page page = buffer.GetPage(tableID, pageNumber); // the buffer will read from disk if it doesn't have the page
             ArrayList<Record> records = page.getActualPage();
 
-            if (colNames.length == 1 && colNames[0].equals("*")) {
+            if (colNames.size() == 1 && colNames.get(0).equals("*")) {
                 return records;
             }
 

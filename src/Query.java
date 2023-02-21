@@ -15,10 +15,10 @@ public abstract class Query {
 }
 
 class SelectQuery extends Query{
-    String[] colNames;
+    ArrayList<String> colNames;
     String table;
 
-    public SelectQuery(String[] colNames, String table){
+    public SelectQuery(ArrayList<String> colNames, String table){
         this.colNames = colNames;
         this.table = table;
     }
@@ -36,8 +36,8 @@ class SelectQuery extends Query{
         }
         ArrayList<Record> records = StorageManager.instance.selectData(tableNum, colNames);
 
-        if(colNames.length == 1 && colNames[0].equals( "*" )){
-            //colNames = Catalog.instance.getAttributeNames(this.table);
+        if(colNames.size() == 1 && colNames.get( 0 ).equals( "*" )){
+            colNames = Catalog.instance.getAttributeNames( table );
         }
 
         int max = 8;

@@ -75,9 +75,9 @@ class QueryParser{
         }
 
         // get individual column names from clause
-        String[] colNames = tokens[1].split(",");
-        for (int i = 0; i < colNames.length; i++) {
-            colNames[i] = colNames[i].trim();
+        ArrayList<String> colNames = new ArrayList<>( Arrays.asList(  tokens[1].split(",")));
+        for (int i = 0; i < colNames.size(); i++) {
+            colNames.set( i, colNames.get(i).trim() );
         }
         return new SelectQuery(colNames, tokens[3].replace( ";", "" ) );
     }
