@@ -1,7 +1,6 @@
 package src;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -100,7 +99,7 @@ public class Catalog {
      * @param tableNum
      * @return
      */
-    protected TableSchema getTableByInt(int tableNum) {
+    protected TableSchema getTableSchemaByInt(int tableNum) {
         for (TableSchema tableSchema: tableSchemas) {
             if (tableSchema.getTableNum() == tableNum) {
                 return tableSchema;
@@ -161,7 +160,7 @@ public class Catalog {
      * @return
      */
     public ArrayList<Integer> getTableAttributeTypes(int tableNum) {
-        ArrayList<AttributeSchema> attributes = getTableByInt(tableNum).getAttributes();
+        ArrayList<AttributeSchema> attributes = getTableSchemaByInt(tableNum).getAttributes();
         ArrayList<Integer> types = new ArrayList<>();
         for (AttributeSchema attribute: attributes) {
             int type = attribute.getType();
@@ -173,8 +172,8 @@ public class Catalog {
         return types;
     }
 
-    public int getTablePKIndex(String tableName) {
-        TableSchema tableSchema = getTableSchemaByName(tableName);
+    public int getTablePKIndex(int tableNum) {
+        TableSchema tableSchema = getTableSchemaByInt(tableNum);
         ArrayList<AttributeSchema> attributeSchemas = tableSchema.getAttributes();
         for (int i = 0; i < attributeSchemas.size(); i++) {
             if (attributeSchemas.get(i).isPrimaryKey()) {

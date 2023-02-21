@@ -88,7 +88,7 @@ public class StorageManager {
                 return records;
             }
 
-            ArrayList<AttributeSchema> columns = Catalog.instance.getTableByInt(tableID).getAttributes();
+            ArrayList<AttributeSchema> columns = Catalog.instance.getTableSchemaByInt(tableID).getAttributes();
 
             ArrayList<Integer> indexes = new ArrayList<>();
             int i = 0;
@@ -138,7 +138,7 @@ public class StorageManager {
      * @param recordToInsert the record to insert
      */
     public void insertRecord(int tableID, Record recordToInsert) {
-        TableSchema table = Catalog.instance.getTableByInt(tableID);
+        TableSchema table = Catalog.instance.getTableSchemaByInt(tableID);
         ArrayList<Integer> pageOrder = table.getPageOrder();
         if (0 == pageOrder.size()) {
             try {
@@ -329,7 +329,7 @@ public class StorageManager {
             newPage.setTableNumber(tableNumber);
             newPage.setIsModified(true); //could alternatively change to true in constructor for
                                          // page instance
-            TableSchema table = Catalog.instance.getTableByInt(tableNumber);
+            TableSchema table = Catalog.instance.getTableSchemaByInt(tableNumber);
             // insert page into P.O. using proper method calls
             int locOnDisk = table.changePageOrder(priorPageDiskPosition);
             newPage.setPageNumberOnDisk(locOnDisk);

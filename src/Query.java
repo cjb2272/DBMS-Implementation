@@ -188,7 +188,7 @@ class DisplayQuery extends Query{
     }
 
     private void displayTableSchema(int tableID) {
-        System.out.println(Catalog.instance.getTableByInt(tableID));
+        System.out.println(Catalog.instance.getTableSchemaByInt(tableID));
         System.out.println(String.format("Pages: %d", StorageManager.instance.getPageCountForTable(tableID)));
         System.out.println(String.format("Records: %d", StorageManager.instance.getRecordCountForTable(tableID)));
     }
