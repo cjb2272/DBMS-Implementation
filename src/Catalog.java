@@ -226,11 +226,10 @@ public class Catalog {
             for (int i = 0; i < numOfTables; i++) {
                 int tableNum = byteProcessor.readInt();
                 int tableNameLen = byteProcessor.readInt();
-                char[] strArr = new char[tableNameLen];
+                String tableName = "";
                 for (int j = 0; j < tableNameLen; j++) {
-                    strArr[j] = byteProcessor.readChar();
+                    tableName += byteProcessor.readChar();
                 }
-                String tableName = strArr.toString();
 
                 int pageOrderLen = byteProcessor.readInt();
                 ArrayList<Integer> pageOrder = new ArrayList<>();
@@ -242,11 +241,10 @@ public class Catalog {
                 int numOfAttributes = byteProcessor.readInt();
                 for (int j = 0; j < numOfAttributes; j++) {
                     int attrNameLen = byteProcessor.readInt();
-                    char[] nameArr = new char[attrNameLen];
+                    String attrName = "";
                     for (int k = 0; k < attrNameLen; k++) {
-                        nameArr[k] = byteProcessor.readChar();
+                        attrName += byteProcessor.readChar();
                     }
-                    String attrName = nameArr.toString();
                     int type = byteProcessor.readInt();
                     int size = byteProcessor.readInt();
                     char isPrimary = byteProcessor.readChar();
