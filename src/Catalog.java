@@ -184,6 +184,15 @@ public class Catalog {
         return -1;
     }
 
+    public ArrayList<String> getAttributeNames(String tableName) {
+        TableSchema tableSchema = getTableSchemaByName(tableName);
+        ArrayList<String> names = new ArrayList<>();
+        for (AttributeSchema attributeSchema: tableSchema.getAttributes()) {
+            names.add(attributeSchema.getName());
+        }
+        return names;
+    }
+
     /**
      *
      * @return
