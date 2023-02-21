@@ -113,7 +113,7 @@ public class TableSchema {
      * @return
      */
     protected int getSizeInBytes() {
-        int size = Integer.BYTES + (tableName.length() * Character.BYTES) + Integer.BYTES +
+        int size = Integer.BYTES + Integer.BYTES + (tableName.length() * Character.BYTES) + Integer.BYTES +
                 (pageOrder.size() * Integer.BYTES) + Integer.BYTES;
         for (AttributeSchema attribute: attributes) {
             size += attribute.getSizeInBytes();

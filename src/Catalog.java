@@ -267,7 +267,7 @@ public class Catalog {
 
     public void writeCatalogToFile() {
         File catalog = new File(root, "db-catalog.catalog");
-        byte[] bytes = new byte[getSizeInBytes()];
+        byte[] bytes = new byte[instance.getSizeInBytes()];
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         buffer.putInt(pageSize);
         buffer.putInt(tableSchemas.size());
