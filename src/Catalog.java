@@ -173,6 +173,17 @@ public class Catalog {
         return types;
     }
 
+    public int getTablePKIndex(String tableName) {
+        TableSchema tableSchema = getTableSchemaByName(tableName);
+        ArrayList<AttributeSchema> attributeSchemas = tableSchema.getAttributes();
+        for (int i = 0; i < attributeSchemas.size(); i++) {
+            if (attributeSchemas.get(i).isPrimaryKey()) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     /**
      *
      * @return
