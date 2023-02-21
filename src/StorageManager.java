@@ -162,7 +162,7 @@ public class StorageManager {
                             int someIndex = 0; //todo this will be the index of where our record we
                                                //  want to come before is
                             pageReference.getActualPage().add(someIndex, recordToInsert);
-                            if (pageReference.compute_size_in_bytes() > Main.pageSize) {
+                            if (pageReference.computeSizeInBytes() > Main.pageSize) {
                                 buffer.PageSplit(pageReference, tableID);
                             }
                     }
