@@ -171,6 +171,7 @@ class DisplayQuery extends Query{
                     displayTableSchema(schema.getTableNum());
                 }
             }
+            return;
 
         }
 
