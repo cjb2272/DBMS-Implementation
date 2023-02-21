@@ -158,7 +158,7 @@ class DisplayQuery extends Query{
 
         if (table == null) {
             System.out.println(Catalog.instance.getDisplayString());
-            System.out.println(String.format("Buffer Size: %d\n", StorageManager.instance.getCurrentBufferSize()));
+            System.out.println(String.format("Buffer Size: %d\n", Main.bufferSizeLimit));
             
             if (StorageManager.instance.getNumberOfTables() == 0) {
                 System.out.println("No tables to display");
@@ -171,6 +171,7 @@ class DisplayQuery extends Query{
                     displayTableSchema(schema.getTableNum());
                 }
             }
+            System.out.println("SUCCESS\n");
             return;
 
         }
