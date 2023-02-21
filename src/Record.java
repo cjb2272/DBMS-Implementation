@@ -20,6 +20,7 @@ public class Record {
     private ArrayList<Object> recordContents;
     //private int pkIndex;
     private int pkIndex;
+    private int tableNumber;
 
     public int getPkIndex() {
         return pkIndex;
@@ -84,6 +85,7 @@ public class Record {
      */
     public static Record parseRecordBytes(int tableNumber, ByteBuffer recordInBytes) {
         Record returnRecord = new Record();
+        returnRecord.tableNumber = tableNumber;
         //Iterate through Bytes, getting varying data types and appending to returnRecord
         //DO NOT APPEND THE INT(s) telling the amount of chars in varchar or char
 
@@ -126,7 +128,34 @@ public class Record {
      */
     public byte[] toBytes() {
         byte[] bytes = new byte[this.compute_size()];
-        //TODO write logic to convert all stored objects into their byte representations and add them to the array
+        ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
+        ArrayList<Integer> typeIntegers = Catalog.instance.getTableAttributeTypes(tableNumber);
+        int i = 0;
+        for (int typeInt : typeIntegers) {
+            switch (typeInt) {
+                case 1 -> //Integer
+                        byteBuffer.putInt((Integer) this.recordContents.get(i)); //get next 4 BYTES
+                case 2 -> //Double
+                        byteBuffer.putDouble((Double) this.recordContents.get(i)); //get next 8 BYTES
+                case 3 -> //Boolean
+                        byteBuffer.put((byte) this.recordContents.get(i)); //A Boolean is 1 BYTE so simple .get()
+                case 4 -> { //Char(x) standard string fixed array of len x
+                    String chars = (String) this.recordContents.get(i);
+                    byteBuffer.putInt(chars.length());
+                    for (int j = 0; j < chars.length(); ++j) {
+                        byteBuffer.putChar(chars.charAt(j));
+                    }
+                }
+                case 5 -> { //Varchar(x) variable size array of max len x NOT Padded
+                    String chars = (String) this.recordContents.get(i);
+                    byteBuffer.putInt(chars.length());
+                    for (int j = 0; j < chars.length(); ++j) {
+                        byteBuffer.putChar(chars.charAt(j));
+                    }
+                }
+            }
+            ++i;
+        } //END LOOP
         return bytes;
     }
 
