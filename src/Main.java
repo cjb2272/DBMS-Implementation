@@ -53,6 +53,7 @@ public class Main {
             if(input.equals( "<quit> " )){
                 System.out.println("Exiting the database...");
                 Catalog.instance.writeCatalogToFile();
+                StorageManager.instance.writeOutBuffer();
                 break;
             }
 

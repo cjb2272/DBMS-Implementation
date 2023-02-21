@@ -18,9 +18,7 @@ public class StorageManager {
 
     private String rootPath;
     private String tablesRootPath;
-
     private BufferManager buffer;
-
 
     public static StorageManager instance = null;
 
@@ -29,8 +27,6 @@ public class StorageManager {
         this.tablesRootPath = Paths.get(rootPath, "tables").toString();
         this.buffer = new BufferManager();
     }
-
-
 
 
     /*
@@ -217,7 +213,13 @@ public class StorageManager {
         return Catalog.instance.getTableSchemas().size();
     }
 
-
+    public void writeOutBuffer() {
+        try {
+            buffer.PurgeBuffer();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * The Buffer Manager
