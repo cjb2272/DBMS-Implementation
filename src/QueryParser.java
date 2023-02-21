@@ -41,6 +41,9 @@ class QueryParser{
                 if ( tokens[1].toLowerCase( Locale.ROOT ).equals( "info" ) ) {
                     return new DisplayQuery(tokens[2].replace( ";", "" ) );
                 }
+                else if(tokens[1].toLowerCase().equals( "schema" ) && tokens[2].trim().equals( ";" )){
+                    return new DisplayQuery();
+                }
                 System.out.println( "Expected 'info' got: " + tokens[1] );
             }
             default -> System.out.println( "Must use either 'display info <table>;' or \n 'display schema;' command" );
@@ -243,6 +246,7 @@ class QueryParser{
      */
     public static String CodeToString(Integer code){
         return switch (code) {
+            case 0 -> "String";
             case 1 -> "Integer";
             case 2 -> "Double";
             case 3 -> "Boolean";

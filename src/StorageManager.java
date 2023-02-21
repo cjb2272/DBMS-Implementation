@@ -155,13 +155,17 @@ public class StorageManager {
                 try {
                     Page pageReference = buffer.GetPage(tableID, pageOrder.get(index));
                     int numRecordsInPage = pageReference.getRecordCount();
+                    RecordSort sorter = new RecordSort();
                     for (int idx = 0; idx < numRecordsInPage; idx++) {
                         Record curRecord = pageReference.getActualPage().get(idx);
                         //call comparator? //todo
+                        if(sorter.compare( recordToInsert, curRecord ) < 0){
+                            continue;
+                        }
                         // if recordToInsert is to be placed before curRecord
-                            int someIndex = 0; //todo this will be the index of where our record we
+                            //int someIndex = 0; //todo this will be the index of where our record we
                                                //  want to come before is
-                            pageReference.getActualPage().add(someIndex, recordToInsert);
+                            pageReference.getActualPage().add(idx + 1, recordToInsert);
                             if (pageReference.computeSizeInBytes() > Main.pageSize) {
                                 buffer.PageSplit(pageReference, tableID);
                             }
