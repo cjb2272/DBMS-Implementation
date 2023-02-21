@@ -167,6 +167,7 @@ class DisplayQuery extends Query{
             }
             else {
                 ArrayList<TableSchema> allTableSchemas = Catalog.instance.getTableSchemas();
+                System.out.println("Tables:\n");
                 for (TableSchema schema : allTableSchemas) {
                     displayTableSchema(schema.getTableNum());
                 }

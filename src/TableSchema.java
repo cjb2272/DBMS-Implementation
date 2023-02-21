@@ -152,7 +152,6 @@ public class TableSchema {
         for (AttributeSchema attribute : attributes) {
             sb.append("\t");
             sb.append(attribute.toString());
-            sb.append("\n");
         }
         return sb.toString();
     }

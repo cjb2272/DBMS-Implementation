@@ -48,6 +48,6 @@ public class AttributeSchema {
             typeStr = QueryParser.CodeToString(type).toLowerCase();
         }
 
-        return String.format("%s:%s %s", name, typeStr, isPrimaryKey ? "primaryKey" : "");
+        return String.format("%s:%s %s", name, typeStr, isPrimaryKey ? "primarykey" : "");
     }
 }
