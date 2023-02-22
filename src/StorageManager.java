@@ -76,13 +76,15 @@ public class StorageManager {
     Returns the requested row(s) of data. The Query object calling this is expected to print it out.
      */
     public ArrayList<Record> selectData(int tableID, ArrayList<String> colNames) {
-        int pageCount = Catalog.instance.getTableSchemaByInt(tableID).getPageOrder().size(); // this is stupid but it works
+        ArrayList<Integer> arrayOfPageLocationsOnDisk = Catalog.instance.getTableSchemaByInt(tableID).getPageOrder(); //need the P.O. itself
+        int pageCount = arrayOfPageLocationsOnDisk.size();
         ArrayList<Record> results = new ArrayList<>();
 
         for (int pageNum = 0; pageNum < pageCount; pageNum++) {
+            int locationOnDisk = arrayOfPageLocationsOnDisk.get(pageNum);
 
             try {
-                Page page = buffer.GetPage(tableID, pageNum); // the buffer will read from disk if it doesn't have the page
+                Page page = buffer.GetPage(tableID, locationOnDisk); // the buffer will read from disk if it doesn't have the page
                 ArrayList<Record> records = page.getActualPage();
 
                 if (colNames.size() == 1 && colNames.get(0).equals("*")) {

@@ -35,8 +35,8 @@ class Page {
     public Page() {
         this.lruLongValue = 0;
         this.isModified = false; //could change to true for new instance
-        this.pageNumberOnDisk = -1; //will be set using the P.O when page is created
-        this.tableNumber = 0;
+        //this.pageNumberOnDisk = 0; //will be set using the P.O when page is created
+        //this.tableNumber = 0;
     }
 
     public void setPageNumberOnDisk(int value) { this.pageNumberOnDisk = value; }
