@@ -76,56 +76,63 @@ public class StorageManager {
     Returns the requested row(s) of data. The Query object calling this is expected to print it out.
      */
     public ArrayList<Record> selectData(int tableID, ArrayList<String> colNames) {
-        int pageNumber = 0; //stub
-        try {
-            Page page = buffer.GetPage(tableID, pageNumber); // the buffer will read from disk if it doesn't have the page
-            ArrayList<Record> records = page.getActualPage();
+        int pageCount = Catalog.instance.getTableSchemaByInt(tableID).getPageOrder().size(); // this is stupid but it works
+        ArrayList<Record> results = new ArrayList<>();
 
-            if (colNames.size() == 1 && colNames.get(0).equals("*")) {
-                return records;
-            }
+        for (int pageNum = 0; pageNum < pageCount; pageNum++) {
 
-            ArrayList<AttributeSchema> columns = Catalog.instance.getTableSchemaByInt(tableID).getAttributes();
+            try {
+                Page page = buffer.GetPage(tableID, pageNum); // the buffer will read from disk if it doesn't have the page
+                ArrayList<Record> records = page.getActualPage();
 
-            ArrayList<Integer> indexes = new ArrayList<>();
-            int i = 0;
-            for (AttributeSchema column : columns) {
-                if (column.getName().equals(columns.get(i).getName())) {
-                    indexes.add(i);
-                }
-                i++;
-            }
-
-            int[] colIdxs = new int[indexes.size()];
-            i = 0;
-            for (Integer index : indexes) {
-                colIdxs[i] = index;
-                i++;
-            }
-
-            int pkIndex = Catalog.instance.getTablePKIndex(tableID);
-
-            ArrayList<Record> results = new ArrayList<>();
-            for (Record record : records) {
-
-                ArrayList<Object> originalRecordData = record.getRecordContents();
-
-                ArrayList<Object> filteredRecordData = new ArrayList<>();
-                for (int idx : colIdxs) {
-                    filteredRecordData.add(originalRecordData.get(idx));
+                if (colNames.size() == 1 && colNames.get(0).equals("*")) {
+                    return records;
                 }
 
-                Record newRecord = new Record();
-                newRecord.setRecordContents(filteredRecordData);
-                newRecord.setPkIndex(pkIndex);
-                results.add(newRecord);
+                ArrayList<AttributeSchema> columns = Catalog.instance.getTableSchemaByInt(tableID).getAttributes();
+
+                ArrayList<Integer> indexes = new ArrayList<>();
+                int i = 0;
+                for (AttributeSchema column : columns) {
+                    if (column.getName().equals(columns.get(i).getName())) {
+                        indexes.add(i);
+                    }
+                    i++;
+                }
+
+                int[] colIdxs = new int[indexes.size()];
+                i = 0;
+                for (Integer index : indexes) {
+                    colIdxs[i] = index;
+                    i++;
+                }
+
+                int pkIndex = Catalog.instance.getTablePKIndex(tableID);
+
+                for (Record record : records) {
+
+                    ArrayList<Object> originalRecordData = record.getRecordContents();
+
+                    ArrayList<Object> filteredRecordData = new ArrayList<>();
+                    for (int idx : colIdxs) {
+                        filteredRecordData.add(originalRecordData.get(idx));
+                    }
+
+                    Record newRecord = new Record();
+                    newRecord.setRecordContents(filteredRecordData);
+                    newRecord.setPkIndex(pkIndex);
+                    results.add(newRecord);
+                }
+
+                return results;
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-
-            return results;
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
+
+        return results;
+
     }
 
     //public void insertRecords(int tableID, ArrayList<Record> records) {

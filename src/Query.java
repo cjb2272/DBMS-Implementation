@@ -49,12 +49,12 @@ class SelectQuery extends Query{
 
         String padding = "                 ";
 
-        String columns = "";
+        StringBuilder columns = new StringBuilder();
         for(String col : colNames){
             if(col.length() == max){
-                columns += " |" + col;
+                columns.append(" |").append(col);
             } else {
-                columns += " |" + padding.substring( 0, max - col.length() ) + col;
+                columns.append(" |").append(padding, 0, max - col.length()).append(col);
             }
         }
         System.out.println(columns + "|");
