@@ -408,6 +408,8 @@ public class StorageManager {
             file.read(pageByteArray, 0, Main.pageSize);
             file.close();
             Page readPage = Page.parseBytes(tableNum, pageByteArray);
+            readPage.setTableNumber(tableNum);
+            readPage.setPageNumberOnDisk(pageNum);
             return readPage;
         }
 
