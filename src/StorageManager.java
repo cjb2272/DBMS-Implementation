@@ -340,7 +340,7 @@ public class StorageManager {
                     newPage.setPageNumberOnDisk(aPageNumber);
                     newPage.setLruLongValue(counterForLRU);
                     counterForLRU++;
-                    PageBuffer.add(newPage);
+                    PageBuffer.add(indexOfLRU, newPage);
                     return newPage;
                 }
                 Page newlyReadPage = ReadPageFromDisk(aTableNumber, aPageNumber);
