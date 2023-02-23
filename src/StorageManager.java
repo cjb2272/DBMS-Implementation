@@ -303,6 +303,8 @@ public class StorageManager {
             if (PageBuffer.size() < maxBufferSize) {
                 if (createNew) {
                     Page newPage = new Page();
+                    ArrayList<Record> records = new ArrayList<>();
+                    newPage.setActualPage(records);
                     newPage.setTableNumber(aTableNumber);
                     newPage.setIsModified(true);
                     newPage.setPageNumberOnDisk(aPageNumber);
@@ -335,6 +337,8 @@ public class StorageManager {
                 }
                 if (createNew) {
                     Page newPage = new Page();
+                    ArrayList<Record> records = new ArrayList<>();
+                    newPage.setActualPage(records);
                     newPage.setTableNumber(aTableNumber);
                     newPage.setIsModified(true);
                     newPage.setPageNumberOnDisk(aPageNumber);
