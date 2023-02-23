@@ -145,6 +145,7 @@ public class StorageManager {
      */
     public void insertRecord(int tableID, Record recordToInsert) {
         TableSchema table = Catalog.instance.getTableSchemaByInt(tableID);
+
         ArrayList<Integer> pageOrder = table.getPageOrder();
         if (0 == pageOrder.size()) {
             try {

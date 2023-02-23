@@ -88,8 +88,21 @@ class InsertQuery extends Query{
     @Override
     public void execute() {
         int tableID =  Catalog.instance.getTableIntByName(this.table);
+        TableSchema table = Catalog.instance.getTableSchemaByInt(tableID);
+
         for (Record r : values) {
+
+            int pkIndex = r.getPkIndex();
+            Object pkValue = r.getRecordContents().get(pkIndex);
+            int existingIdx = table.doesPKValueExist(pkValue);
+            if (existingIdx != -1) {
+                System.out.println("Duplicate primary key for row " + existingIdx);
+                System.out.println("ERROR\n");
+                return;
+            }
+
             StorageManager.instance.insertRecord(tableID, r);
+            table.addPrimaryKey(pkValue);
         }
         System.out.println("SUCCESS\n");
     }

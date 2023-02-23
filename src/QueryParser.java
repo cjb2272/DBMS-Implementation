@@ -178,6 +178,7 @@ class QueryParser{
             } else{
                 System.out.println("The following values were not inserted: ");
                 System.out.println(values);
+                return null;
             }
         }
 
@@ -416,7 +417,8 @@ class QueryParser{
             }
         }
         if(pk == null){
-            System.out.println("You must enter a primarykey attribute.");
+            System.out.println("No primary key defined.");
+            System.out.println("ERROR\n");
             return null;
         }
         return new CreateQuery(keywords[2], columnNames, dataTypes, varLengthSizes, pk );

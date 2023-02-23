@@ -59,16 +59,14 @@ public class Main {
 
             Query query = parser.CommandParse( input );
 
-            if(query == null){
-                System.out.println("ERROR\n");
-            } else{
-
+            if (query != null) {
                 // Individual query objects all have an execute method that defines what steps should be taken to execute
                 // that query. Having that logic here (switched on the query type) would be a code smell.
                 query.execute();  // where all the magic happens!
 
             }
 
+    
         }
     }
 }
