@@ -188,6 +188,8 @@ public class StorageManager {
      * Reads the first 4 bytes of the table file on disk, representing the # of pages in this file
      */
     public int getPageCountForTable(int tableID) {
+        return Catalog.instance.getTableSchemaByInt(tableID).getPageOrder().size();
+        /*
         String tableFilePath = Paths.get(tablesRootPath, String.valueOf(tableID)).toString();
         RandomAccessFile file;
         try {
@@ -201,14 +203,18 @@ public class StorageManager {
             e.printStackTrace();
         }
         return -1;
+
+         */
     }
 
     public int getRecordCountForTable(int tableID) {
-        int numPages = getPageCountForTable(tableID);
+        ArrayList<Integer> arrayOfPageLocationsOnDisk = Catalog.instance.getTableSchemaByInt(tableID).getPageOrder();
+        int numPages = arrayOfPageLocationsOnDisk.size();
         int sum = 0;
         for (int i = 0; i < numPages; i++) {
             try {
-                sum += buffer.GetPage(i, tableID).getRecordCount();
+                int locationOnDisk = arrayOfPageLocationsOnDisk.get(i);
+                sum += buffer.GetPage(tableID, locationOnDisk).getRecordCount();
             } catch (IOException e) {
                 e.printStackTrace();
             }
