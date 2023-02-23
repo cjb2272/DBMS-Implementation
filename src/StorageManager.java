@@ -171,6 +171,7 @@ public class StorageManager {
                         if (pageReference.computeSizeInBytes() > Main.pageSize) {
                             buffer.PageSplit(pageReference, tableID);
                         }
+                        break;
                     }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -242,7 +243,6 @@ public class StorageManager {
      * TODO MUST HANDLE FILE READ AND WRITE ERRORS
      */
     private class BufferManager {
-
 
         //will be THE NEXT value to assign when page read
         //will increase indefinitely (long better than int...)
