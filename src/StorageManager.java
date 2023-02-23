@@ -164,17 +164,13 @@ public class StorageManager {
                     RecordSort sorter = new RecordSort();
                     for (int idx = 0; idx < numRecordsInPage; idx++) {
                         Record curRecord = pageReference.getActualPage().get(idx);
-                        //call comparator? //todo
                         if(sorter.compare( recordToInsert, curRecord ) < 0){
                             continue;
                         }
-                        // if recordToInsert is to be placed before curRecord
-                            //int someIndex = 0; //todo this will be the index of where our record we
-                                               //  want to come before is
-                            pageReference.getActualPage().add(idx + 1, recordToInsert);
-                            if (pageReference.computeSizeInBytes() > Main.pageSize) {
-                                buffer.PageSplit(pageReference, tableID);
-                            }
+                        pageReference.getActualPage().add(idx + 1, recordToInsert);
+                        if (pageReference.computeSizeInBytes() > Main.pageSize) {
+                            buffer.PageSplit(pageReference, tableID);
+                        }
                     }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -202,7 +198,6 @@ public class StorageManager {
             e.printStackTrace();
         }
         return -1;
-
          */
     }
 
@@ -274,7 +269,8 @@ public class StorageManager {
         public Page GetPage(int tableNumber, int pageNumber) throws IOException {
             //if block is present in pageBuffer ArrayList already then return that page
             for (Page inBufferPage : PageBuffer) {
-                if (inBufferPage.getPageNumberOnDisk() == pageNumber) {
+                if ((inBufferPage.getTableNumber() == tableNumber) &&
+                        (inBufferPage.getPageNumberOnDisk() == pageNumber)) {
                     inBufferPage.setLruLongValue(counterForLRU); //update count and increment counterForLRU
                     counterForLRU++;
                     //should this method be handling set of IsModified?
@@ -425,7 +421,6 @@ public class StorageManager {
          * @throws IOException .
          */
         private Page ReadPageFromDisk(int tableNum, int pageNum) throws IOException {
-            //validity of file path and add proper extension todo
             String tableFilePath = Paths.get(tablesRootPath, String.valueOf(tableNum)).toString();
             RandomAccessFile file = new RandomAccessFile(tableFilePath, "r");
             //seek through table file to memory you want and read in page size
@@ -451,7 +446,6 @@ public class StorageManager {
         private void WritePageToDisk(Page pageToWrite) throws IOException {
             int tableNumber = pageToWrite.getTableNumber();
             int pageNumber = pageToWrite.getPageNumberOnDisk();
-            //validity of file path and add proper extension todo
             String tableFilePath = Paths.get(tablesRootPath, String.valueOf(tableNumber)).toString();
             RandomAccessFile file = new RandomAccessFile(tableFilePath, "rw");
             //seek through table file to memory you want and write out page size
