@@ -134,6 +134,14 @@ class CreateQuery extends Query{
             index++;
         }
 
+        if (Catalog.instance.getTableByName(tableName) != null) {
+            // table already exists, error out
+            System.out.println("Table with name \"" + tableName + "\" already exists in the database.");
+            System.out.println("ERROR\n");
+            return;
+        }
+
+
         int availableId = Catalog.instance.getTablesSize() + 1;
         StorageManager.instance.createTable(availableId, tableName, columnNames, dataTypes);
         Catalog.instance.addTable(availableId, tableName, attributeInfo);
@@ -193,7 +201,7 @@ class DisplayQuery extends Query{
     private void displayTableSchema(int tableID) {
         System.out.println(Catalog.instance.getTableSchemaByInt(tableID));
         System.out.println(String.format("Pages: %d", StorageManager.instance.getPageCountForTable(tableID)));
-        System.out.println(String.format("Records: %d", StorageManager.instance.getRecordCountForTable(tableID)));
+        System.out.println(String.format("Records: %d\n", StorageManager.instance.getRecordCountForTable(tableID)));
     }
 }
 
