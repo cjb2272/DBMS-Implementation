@@ -137,7 +137,6 @@ public class StorageManager {
 
     }
 
-    //public void insertRecords(int tableID, ArrayList<Record> records) {
     /**
      *
      * @param tableID the table for which we want to insert a record into its pages
@@ -285,7 +284,7 @@ public class StorageManager {
                 }
             }
             //page is not in the buffer so call the buffer logic
-            return AddToBufferLogic(tableNumber, pageNumber);
+            return AddToBufferLogic(tableNumber, pageNumber, false);
         }
 
         /**
@@ -293,14 +292,25 @@ public class StorageManager {
          * we don't want getPage to become to bulky
          * @param aTableNumber see getPage
          * @param aPageNumber see getPage
+         * @param createNew are we creating new page that does not yet exist on disk
          * @return page added to the buffer
          * @throws IOException exception
          */
-        private Page AddToBufferLogic(int aTableNumber, int aPageNumber) throws IOException {
+        private Page AddToBufferLogic(int aTableNumber, int aPageNumber, boolean createNew) throws IOException {
             int maxBufferSize = Main.bufferSizeLimit;
             //At beginning of program buffer will not be at capacity,
             //so we call read immediately
             if (PageBuffer.size() < maxBufferSize) {
+                if (createNew) {
+                    Page newPage = new Page();
+                    newPage.setTableNumber(aTableNumber);
+                    newPage.setIsModified(true);
+                    newPage.setPageNumberOnDisk(aPageNumber);
+                    newPage.setLruLongValue(counterForLRU);
+                    counterForLRU++;
+                    PageBuffer.add(newPage);
+                    return newPage;
+                }
                 Page newlyReadPage = ReadPageFromDisk(aTableNumber, aPageNumber);
                 newlyReadPage.setLruLongValue(counterForLRU);
                 counterForLRU++;
@@ -323,6 +333,16 @@ public class StorageManager {
                 if (PageBuffer.get(indexOfLRU).getisModified()) {
                     WritePageToDisk(PageBuffer.get(indexOfLRU));
                 }
+                if (createNew) {
+                    Page newPage = new Page();
+                    newPage.setTableNumber(aTableNumber);
+                    newPage.setIsModified(true);
+                    newPage.setPageNumberOnDisk(aPageNumber);
+                    newPage.setLruLongValue(counterForLRU);
+                    counterForLRU++;
+                    PageBuffer.add(newPage);
+                    return newPage;
+                }
                 Page newlyReadPage = ReadPageFromDisk(aTableNumber, aPageNumber);
                 newlyReadPage.setLruLongValue(counterForLRU);
                 counterForLRU++;
@@ -344,15 +364,10 @@ public class StorageManager {
          * @return empty page that is now in the buffer
          */
         public Page CreateNewPage(int tableNumber, int priorPageDiskPosition) throws IOException {
-            Page newPage = new Page();
-            newPage.setTableNumber(tableNumber);
-            newPage.setIsModified(true); //could alternatively change to true in constructor for
-                                         // page instance
             TableSchema table = Catalog.instance.getTableSchemaByInt(tableNumber);
             // insert page into P.O. using proper method calls
             int locOnDisk = table.changePageOrder(priorPageDiskPosition);
-            newPage.setPageNumberOnDisk(locOnDisk);
-            return AddToBufferLogic(tableNumber, newPage.getPageNumberOnDisk());
+            return AddToBufferLogic(tableNumber, locOnDisk, true);
         }
 
         /**
