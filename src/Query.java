@@ -1,4 +1,5 @@
-package src;/*
+package src;
+/*
  * This holds the different types of queries that can be made.
  * @author Duncan Small, Austin Cepalia
  */
@@ -47,23 +48,31 @@ class SelectQuery extends Query{
             }
         }
 
-        String padding = "                 ";
-
+        String padding = " ".repeat( max + 2);
+        String line = "-".repeat( max + 2 );
+        StringBuilder spacer = new StringBuilder();
         StringBuilder columns = new StringBuilder();
+
+        spacer.append( " " );
         for(String col : colNames){
             if(col.length() == max){
                 columns.append(" |").append(col);
+                spacer.append( line);
             } else {
-                columns.append(" |").append(padding, 0, max - col.length()).append(col);
+                columns.append(" |").append(padding, 0, max - col.length() - 1).append(col);
+                spacer.append(line);
             }
         }
-        System.out.println(columns + "|");
+
+        System.out.println( spacer);
+        System.out.println(columns + " |");
+        System.out.println( spacer );
 
         for (Record record : records) {
             System.out.println(record.displayRecords( max ));
         }
-
-        System.out.println("SUCCESS\n");
+        System.out.println(spacer);
+        System.out.println("\nSUCCESS\n");
 
     }
 }

@@ -7,6 +7,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import src.*;
+
 public class Main {
 
     public static int pageSize; //these values should be final
@@ -45,7 +47,7 @@ public class Main {
             System.out.println("\tIgnoring provided pages size, using stored page size");
 
         }
-        StorageManager.instance = new StorageManager(db_loc);
+        src.StorageManager.instance = new StorageManager(db_loc);
 
         System.out.println("Page size: " + pageSize);
         System.out.println("Buffer size: " + bufferSizeLimit);

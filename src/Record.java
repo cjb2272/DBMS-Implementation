@@ -4,6 +4,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
 
+import src.*;
+
 /**
  * representative of an individual record
  * @author Charlie Baker, Duncan Small, Kevin Martin

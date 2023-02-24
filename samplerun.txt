@@ -1,0 +1,94 @@
+
+display schema;
+
+display info foo;
+
+select * from foo;
+
+insert into foo values
+(1 "foo");
+
+create table foo(
+num integer);
+
+create table foo(
+num integer primarykey);
+
+display info foo;
+
+display schema;
+
+select *
+from foo;
+
+insert into
+foo values
+(1),(2);
+
+insert into foo values (3.2);
+
+insert into foo values (1 3.2);
+
+select *
+from foo;
+
+insert into foo
+values (3),(1),(4);
+
+select *
+from foo;
+
+display info foo;
+
+<quit>
+
+display schema;
+
+select *
+from foo;
+
+create table foo(
+x double primarykey,
+y char(5));
+
+create table bar(
+x double primarykey,
+y char(5));
+
+create table bar2(
+double x primarykey,
+y char(5));
+
+display schema;
+
+create table bar2(
+x double primarykey,
+x char(5));
+
+create table bar2(
+x double primarykey,
+y char(5) primarykey);
+
+create table bar2();
+
+create table bar2(
+x double,
+y char(5) primarykey);
+
+insert into bar values
+(3.2 "helloworld");
+
+insert into bar values 
+(3.2 "hello"),
+(14.5 "a23ab"),
+("hello" 3.2);
+
+select * from bar;
+
+insert into bar2 values 
+(3.2 "hello"),
+(14.5 "a23ab");
+
+select * from bar2;
+
+<quit>
