@@ -34,6 +34,7 @@ public class Main {
             }
         } else {
             Catalog.instance = Catalog.readCatalogFromFile(db_loc);
+            pageSize = Catalog.instance.getPageSize(); //reset so we retain page original db page size
         }
         StorageManager.instance = new StorageManager(db_loc);
 
