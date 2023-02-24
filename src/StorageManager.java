@@ -179,7 +179,10 @@ public class StorageManager {
     }
 
     /*
-     * Reads the first 4 bytes of the table file on disk, representing the # of pages in this file
+     * Table should always know how many pages it has due through
+     * Page Ordering
+     * old: (Reads the first 4 bytes of the table file on disk,
+     * representing the # of pages in this file)
      */
     public int getPageCountForTable(int tableID) {
         return Catalog.instance.getTableSchemaByInt(tableID).getPageOrder().size();
@@ -233,12 +236,13 @@ public class StorageManager {
 
     /**
      * The Buffer Manager
-     * Has Two Public Methods, GetPage() and PurgeBuffer()
+     * Has Four Public Methods, GetPage(), createNewPage(), pageSplit(),
+     * and PurgeBuffer().
      * The Buffer is in place to ideally reduce read/writes to file system
      *
      * THIS SHOULD BE COMPLETELY INVISIBLE TO THE REST OF THE PROGRAM (besides StorageManager).
      * Everything should go through StorageManager.
-     * TODO MUST HANDLE FILE READ AND WRITE ERRORS
+     * MUST HANDLE FILE READ AND WRITE ERRORS - t o d o
      */
     private class BufferManager {
 
@@ -252,11 +256,11 @@ public class StorageManager {
         /**
          * Request A page by table number id and page number
          * If page is in buffer, no disk access needed, otherwise,
-         * ensure room in buffer, read into buffer, and pass page.
+         * call the addToBufferLogic
          * This Method is Called when getting record by primary key
          *                       when getting all records for given table num
          *                       when inserting a record
-         *
+         *                       ...
          * @param tableNumber table num (table is file on disk)
          * @param pageNumber how many pages deep into the table file is this page,
          *                ... where does this page lie sequentially on the disk,
@@ -282,8 +286,8 @@ public class StorageManager {
         }
 
         /**
-         * This Method includes logic needed in create page and pageSplit, and
-         * we don't want getPage to become to bulky
+         * This Method includes logic needed in create page and pageSplit.
+         * Ensure room in buffer if needed, read into buffer, and pass page.
          * @param aTableNumber see getPage
          * @param aPageNumber see getPage
          * @param createNew are we creating new page that does not yet exist on disk
@@ -295,7 +299,7 @@ public class StorageManager {
             //At beginning of program buffer will not be at capacity,
             //so we call read immediately
             if (PageBuffer.size() < maxBufferSize) {
-                if (createNew) {
+                if (createNew) { // Method has a bit of redundancy that can be cleaned up
                     Page newPage = new Page();
                     ArrayList<Record> records = new ArrayList<>();
                     newPage.setRecordsInPage(records);
@@ -306,7 +310,7 @@ public class StorageManager {
                     counterForLRU++;
                     PageBuffer.add(newPage);
                     return newPage;
-                }
+                } //else the page exists on disk (is not a brand-new page)
                 Page newlyReadPage = ReadPageFromDisk(aTableNumber, aPageNumber);
                 newlyReadPage.setLruLongValue(counterForLRU);
                 counterForLRU++;
@@ -317,18 +321,18 @@ public class StorageManager {
                 int indexOfLRU = 0;
                 long tempLRUCountVal = Long.MAX_VALUE;
                 //find the LRU page
-                for (int curPageIndex = 0; curPageIndex <= maxBufferSize; curPageIndex++) {
+                for (int curPageIndex = 0; curPageIndex < maxBufferSize; curPageIndex++) {
                     long lruCountVal = PageBuffer.get(curPageIndex).getLruLongValue();
                     if (lruCountVal < tempLRUCountVal) {
                         tempLRUCountVal = lruCountVal;
                         indexOfLRU = curPageIndex;
                     }
                 }
-                // write the LRU page to hardware
-                // (if it has been modified bc if it hasn't copy on disk already same)
+                // write the LRU page to hardware/disk
+                // (if it has been modified bc if it hasn't, copy on disk already same)
                 if (PageBuffer.get(indexOfLRU).getisModified()) {
                     WritePageToDisk(PageBuffer.get(indexOfLRU));
-                }
+                } //there is now room in the buffer
                 if (createNew) {
                     Page newPage = new Page();
                     ArrayList<Record> records = new ArrayList<>();
@@ -340,7 +344,7 @@ public class StorageManager {
                     counterForLRU++;
                     PageBuffer.add(indexOfLRU, newPage);
                     return newPage;
-                }
+                } //else the page exists on disk (is not a brand-new page)
                 Page newlyReadPage = ReadPageFromDisk(aTableNumber, aPageNumber);
                 newlyReadPage.setLruLongValue(counterForLRU);
                 counterForLRU++;
@@ -350,7 +354,7 @@ public class StorageManager {
         }
 
         /**
-         * Method creates Empty page and puts that page in the buffer
+         * Method creates Empty page and calls addToBufferLogic
          * This Method is called when a new page needs to be created- for instance:
          *      -table file is empty (P.O. empty) and no pages exist
          *       (insert record method)
@@ -358,7 +362,7 @@ public class StorageManager {
          * @param tableNumber table number needed to get table schema
          * @param priorPageDiskPosition if method called when...
          *        -table file is empty, there is no prior page use '0' for param
-         *        -page splitting, use overflowPage on disk location for param
+         *        -page splitting, use overflowPage's on disk location for param
          * @return empty page that is now in the buffer
          */
         public Page CreateNewPage(int tableNumber, int priorPageDiskPosition) throws IOException {
@@ -433,12 +437,11 @@ public class StorageManager {
         }
 
         /**
-         * Method calls Page's ____ Method, passing in pageToWrite, returning a singular
-         * byte array representation to write out to the disk all at once.
+         * Method calls Page's parsePage Method, passing in pageToWrite, returning a
+         * singular byte array representation to write out to the disk all at once.
          * The write page to disk method is only called by the buffer manager when
          * a page in the buffer has been modified, and thus the corresponding copy
          * of that page on the disk is outdated.
-         *  would this also be called when page is first created, I believe so
          * @param pageToWrite the page to be written to hardware once converted to byte[]
          */
         private void WritePageToDisk(Page pageToWrite) throws IOException {
@@ -454,23 +457,18 @@ public class StorageManager {
 
         /**
          * Method iterates through entire Buffer (ArrayList<Page>)
-         * checking boolean Page attribute- 'modified' to determine
+         * checking boolean Page attribute- 'isModified' to determine
          * if each successive page needs to be written to hardware,
-         * calling WritePageToDisk method on page if so
-         *
-         * this method is invoked when quit is typed at command line
-         * (giant try catch for quit at any time?)
+         * calling WritePageToDisk method on page if so.
+         * This method is invoked when quit is typed at command line
          */
         public void PurgeBuffer() throws IOException {
             for (Page page : PageBuffer) {
-                //when testing can start off by writing all to disk regardless of isModified
                 if (page.getisModified()) {
                     WritePageToDisk(page);
                 }
             }
-
         }
-
     }
 
 }
