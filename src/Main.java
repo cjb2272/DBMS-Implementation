@@ -23,20 +23,32 @@ public class Main {
         pageSize = Integer.parseInt(args[1]);
         bufferSizeLimit = Integer.parseInt(args[2]);
 
+        System.out.println("Looking at " + db_loc + "for existing db...");
+
         File catalog = new File(db_loc, "db-catalog.catalog");
         if (!catalog.isFile()) {
             try {
+                System.out.println("No existing db found");
+                System.out.println("Creating new db at " + db_loc);
                 catalog.createNewFile();
                 Catalog.instance = new Catalog(pageSize, db_loc);
+                System.out.println("New db created successfully");
             } catch(IOException e) {
                 System.out.println("Error in creating catalog file.");
                 e.printStackTrace();
             }
         } else {
+            System.out.println("Database found...");
+            System.out.println("Restarting the database...");
             Catalog.instance = Catalog.readCatalogFromFile(db_loc);
             pageSize = Catalog.instance.getPageSize(); //reset so we retain page original db page size
+            System.out.println("\tIgnoring provided pages size, using stored page size");
+
         }
         StorageManager.instance = new StorageManager(db_loc);
+
+        System.out.println("Page size: " + pageSize);
+        System.out.println("Buffer size: " + bufferSizeLimit);
 
         System.out.println("\nPlease enter commands, enter <quit> to shutdown the db.\n");
 
@@ -67,7 +79,7 @@ public class Main {
 
             }
             else{
-                System.out.println("ERROR");
+                System.out.println("ERROR\n");
             }
 
     
