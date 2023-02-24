@@ -91,7 +91,7 @@ public class Record {
 
         //LOOP in the order of data types expected - data types cannot be stored in pages,
         //MUST be stored in Catalog ONLY for a given page
-        ArrayList<Integer> typeIntegers = Catalog.instance.getTableAttributeTypes(tableNumber);
+        ArrayList<Integer> typeIntegers = Catalog.instance.getSolelyTableAttributeTypes(tableNumber);
         for (int typeInt : typeIntegers) {
             switch (typeInt) {
                 case 1 -> //Integer
@@ -131,7 +131,7 @@ public class Record {
     public byte[] toBytes(int tableNum) {
         byte[] bytes = new byte[this.compute_size()];
         ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
-        ArrayList<Integer> typeIntegers = Catalog.instance.getTableAttributeTypes(tableNum);
+        ArrayList<Integer> typeIntegers = Catalog.instance.getSolelyTableAttributeTypes(tableNum);
         int i = 0;
         for (int typeInt : typeIntegers) {
             switch (typeInt) {

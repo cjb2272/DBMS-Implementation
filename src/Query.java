@@ -93,7 +93,13 @@ class InsertQuery extends Query{
         for (Record r : values) {
 
             int pkIndex = r.getPkIndex();
-            StorageManager.instance.insertRecord(tableID, r);
+            int attemptToInsert = StorageManager.instance.insertRecord(tableID, r);
+            if (attemptToInsert < 0) {
+                int row = -1 * attemptToInsert;
+                System.out.println("row ("+ row + "): Duplicate  primary key for row ("+ row+")");
+                System.out.println("ERROR\n");
+                return;
+            }
 
         }
         System.out.println("SUCCESS\n");

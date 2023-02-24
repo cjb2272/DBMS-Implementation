@@ -140,7 +140,7 @@ public class StorageManager {
      * @param tableID the table for which we want to insert a record into its pages
      * @param recordToInsert the record to insert
      */
-    public void insertRecord(int tableID, Record recordToInsert) {
+    public int insertRecord(int tableID, Record recordToInsert) {
         TableSchema table = Catalog.instance.getTableSchemaByInt(tableID);
 
         ArrayList<Integer> pageOrder = table.getPageOrder();
@@ -150,10 +150,12 @@ public class StorageManager {
                 //insert the record, no comparator needed here, because this is the
                 //first record of the table
                 emptyPageInbuffer.getRecordsInPage().add(recordToInsert);
+                return 1;
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         } else {
+            int totalRecords = 1;
             int numPagesInTable = pageOrder.size();
             for (int index = 0; index < numPagesInTable; index++) {
                 try {
@@ -162,19 +164,31 @@ public class StorageManager {
                     RecordSort sorter = new RecordSort();
                     for (int idx = 0; idx < numRecordsInPage; idx++) {
                         Record curRecord = pageReference.getRecordsInPage().get(idx);
-                        if(sorter.compare( recordToInsert, curRecord ) < 0){
-                            continue;
+                        int comparison = sorter.compare( recordToInsert, curRecord );
+                        if (comparison == 0) {
+                            return -1 * totalRecords;
                         }
-                        pageReference.getRecordsInPage().add(idx + 1, recordToInsert);
-                        if (pageReference.computeSizeInBytes() > Main.pageSize) {
-                            buffer.PageSplit(pageReference, tableID);
+                        if( comparison < 0){
+                            pageReference.getRecordsInPage().add(idx, recordToInsert);
+                            if (pageReference.computeSizeInBytes() > Main.pageSize) {
+                                buffer.PageSplit(pageReference, tableID);
+                            }
+                            break;
                         }
-                        break;
+                        if (index == numPagesInTable - 1 && idx == numRecordsInPage - 1 && comparison > 0) {
+                            pageReference.getRecordsInPage().add(idx + 1, recordToInsert);
+                            if (pageReference.computeSizeInBytes() > Main.pageSize) {
+                                buffer.PageSplit(pageReference, tableID);
+                            }
+                            break;
+                        }
+                        totalRecords++;
                     }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }
+            return 1;
         }
     }
 

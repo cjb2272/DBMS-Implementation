@@ -84,7 +84,7 @@ class Page {
         //Read first portions of page coming before records
         int sizeOfPageInBytes = byteBuffer.getInt(); //read first 4 bytes
         int numRecords = byteBuffer.getInt(); //read second 4 bytes
-        ArrayList<Integer> typeIntegers = Catalog.instance.getTableAttributeTypes(tableNumber);
+        ArrayList<Integer> typeIntegers = Catalog.instance.getSolelyTableAttributeTypes(tableNumber);
         ArrayList<Record> records = new ArrayList<>();
         for (int rcrd = 0; rcrd < numRecords; rcrd++) {
             Record record = Record.parseRecordBytes(tableNumber, byteBuffer);

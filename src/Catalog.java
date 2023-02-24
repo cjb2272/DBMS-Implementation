@@ -138,9 +138,16 @@ public class Catalog {
     }
 
     /**
-     *
-     * @param tableName
-     * @return
+     * Returns an ordered list of a given table's attributes' types.
+     *      * 1 - integer
+     *      * 2 - double
+     *      * 3 - boolean
+     *      * 4 - char
+     *      * 5 - varchar
+     *      After char and varchar it includes the length of the strings it can make.
+     * @param tableName : given table name
+     * @return An array of ints representing the types of the given table's attributes. Plus length after
+     * char and varchar.
      */
     public ArrayList<Integer> getTableAttributeTypesByName(String tableName) {
         ArrayList<AttributeSchema> attributes = getTableByName(tableName).getAttributes();
@@ -165,7 +172,7 @@ public class Catalog {
      * @param tableNum : given table ID
      * @return An array of ints representing the types of the given table's attributes.
      */
-    public ArrayList<Integer> getTableAttributeTypes(int tableNum) {
+    public ArrayList<Integer> getSolelyTableAttributeTypes(int tableNum) {
         ArrayList<AttributeSchema> attributes = getTableSchemaByInt(tableNum).getAttributes();
         ArrayList<Integer> types = new ArrayList<>();
         for (AttributeSchema attribute: attributes) {
