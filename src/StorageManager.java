@@ -342,13 +342,13 @@ public class StorageManager {
                     newPage.setPageNumberOnDisk(aPageNumber);
                     newPage.setLruLongValue(counterForLRU);
                     counterForLRU++;
-                    PageBuffer.add(indexOfLRU, newPage);
+                    PageBuffer.set(indexOfLRU, newPage);
                     return newPage;
                 } //else the page exists on disk (is not a brand-new page)
                 Page newlyReadPage = ReadPageFromDisk(aTableNumber, aPageNumber);
                 newlyReadPage.setLruLongValue(counterForLRU);
                 counterForLRU++;
-                PageBuffer.add(indexOfLRU, newlyReadPage); //place page in buffer at location
+                PageBuffer.set(indexOfLRU, newlyReadPage); //place page in buffer at location
                 return newlyReadPage;                      //we wrote out the page
             }
         }
