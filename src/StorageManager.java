@@ -161,6 +161,7 @@ public class StorageManager {
             for (int index = 0; index < numPagesInTable; index++) {
                 try {
                     Page pageReference = buffer.GetPage(tableID, pageOrder.get(index));
+                    pageReference.setIsModified(true);
                     int numRecordsInPage = pageReference.getRecordCount();
                     RecordSort sorter = new RecordSort();
                     for (int idx = 0; idx < numRecordsInPage; idx++) {
