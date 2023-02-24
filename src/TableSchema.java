@@ -19,7 +19,6 @@ public class TableSchema {
                Value 0, 1, 5, 2, 3, 4  */
     private ArrayList<Integer> pageOrder;
 
-    private ArrayList<Object> primaryKeyValues;
 
     /**
      *
@@ -30,7 +29,6 @@ public class TableSchema {
         this.tableName = tableName;
         this.tableNum = tableNum;
         this.attributes = new ArrayList<>();
-        this.primaryKeyValues = new ArrayList<>();
         this.pageOrder = pageOrder;
     }
 
@@ -45,15 +43,6 @@ public class TableSchema {
         AttributeSchema attribute = new AttributeSchema(name, type, size, isPrimaryKey);
         attributes.add(attribute);
     }
-
-    public int doesPKValueExist(Object o) {
-        return primaryKeyValues.indexOf(o);
-    }
-
-    public void addPrimaryKey(Object o) {
-        primaryKeyValues.add(o);
-    }
-
 
 
     /**
