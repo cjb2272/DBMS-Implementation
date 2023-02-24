@@ -11,7 +11,7 @@ import src.*;
 
 /**
  * representative of an individual Page
- * @author Kevin Martin
+ * @author Kevin Martin, Charlie Baker
  */
 class Page {
 
@@ -36,7 +36,7 @@ class Page {
      */
     public Page() {
         this.lruLongValue = 0;
-        this.isModified = false; //could change to true for new instance
+        this.isModified = false;
     }
 
     public void setPageNumberOnDisk(int value) { this.pageNumberOnDisk = value; }
@@ -90,40 +90,8 @@ class Page {
         ArrayList<Record> records = new ArrayList<>();
         for (int rcrd = 0; rcrd < numRecords; rcrd++) {
             Record record = Record.parseRecordBytes(tableNumber, byteBuffer);
-            //TODO verify that the byte buffer has moved forward to the next record here. Not sure if the pointer
-            // being moved in another method will make it move here. If it doesn't, then the buffer pointer
-            // needs to be moved forward
-            // EDIT: I've tried leaving the code in Record and moving it to Page and it seems to work both ways
-
-//            for (int typeInt : typeIntegers) {
-//                switch (typeInt) {
-//                    case 1 -> //Integer
-//                            record.recordContents.add(byteBuffer.getInt()); //get next 4 BYTES
-//                    case 2 -> //Double
-//                            record.recordContents.add(byteBuffer.getDouble()); //get next 8 BYTES
-//                    case 3 -> //Boolean
-//                            record.recordContents.add(byteBuffer.get()); //A Boolean is 1 BYTE so simple .get()
-//                    case 4 -> { //Char(x) standard string fixed array of len x
-//                        int numCharXChars = byteBuffer.getInt();
-//                        StringBuilder chars = new StringBuilder();
-//                        for (int ch = 0; ch < numCharXChars; ch++) {
-//                            chars.append(byteBuffer.getChar()); //get next 2 BYTES
-//                        }
-//                        record.recordContents.add(chars.toString());
-//                    }
-//                    case 5 -> { //Varchar(x) variable size array of max len x NOT Padded
-//                        //records with var chars cause scenario of records not being same size
-//                        int numChars = byteBuffer.getInt();
-//                        StringBuilder chars = new StringBuilder();
-//                        for (int chr = 0; chr < numChars; chr++) {
-//                            chars.append(byteBuffer.getChar()); //get next 2 BYTES
-//                        }
-//                        record.recordContents.add(chars.toString());
-//                    }
-//                }
-//            } //END LOOP
             records.add(record);
-        } //END LOOP NUM RECORDS
+        }
         returnPage.setRecordsInPage(records);
         return returnPage;
     }
