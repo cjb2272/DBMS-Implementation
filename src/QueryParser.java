@@ -397,7 +397,7 @@ class QueryParser{
             int result =  StringToCode( temp[1]);
             if(result == -1){
                 System.out.println("You must give one of the accepted types for an attribute:\n Integer, Double, Boolean, Char(x), or Varchar(x).");
-                System.out.println("Recieved: " + temp[1]);
+                System.out.println("Received: " + temp[1]);
                 return null;
             }
 

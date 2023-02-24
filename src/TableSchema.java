@@ -149,9 +149,14 @@ public class TableSchema {
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("Table name: %s\n", tableName));
         sb.append("Table schema:\n");
+        int count = 0;
         for (AttributeSchema attribute : attributes) {
             sb.append("\t");
             sb.append(attribute.toString());
+            if (count != attributes.size()-1) {
+                sb.append("\n");
+            }
+            count++;
         }
         return sb.toString();
     }
