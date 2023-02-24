@@ -76,7 +76,7 @@ class Page {
     /**
      * Called by Buffer Manager when reading page into buffer
      * Turns long byte array representing page into usable data
-     * @param tableNumber table page is a part of
+     * @param tableNumber the table number corresponding to the given page
      * @param pageInBytes a page represented by a singular array of bytes
      * @return a Page object representing the byte array given
      */
@@ -98,7 +98,7 @@ class Page {
 
     /**
      * Method that does the exact opposite of parse_bytes,
-     * taking our ArrayList<Record> actualPage and converting back to a single byte array
+     * taking our ArrayList<Record> page representation and converting back into a single byte array
      * to return to Buffer Managers, writepagetodisk method
      * @param pageToConvert page object to convert
      * @return byte array representation of the page

@@ -62,7 +62,7 @@ public class Record {
             //not sure if this will work todo
             if (obj instanceof Integer) { sizeOfRecordInBytes = sizeOfRecordInBytes + Integer.BYTES; }
             if (obj instanceof Double) { sizeOfRecordInBytes = sizeOfRecordInBytes + Double.BYTES; }
-            if (obj instanceof Boolean) { sizeOfRecordInBytes = sizeOfRecordInBytes + 1; }
+            if (obj instanceof Boolean) { sizeOfRecordInBytes = sizeOfRecordInBytes + Character.BYTES; }
             //case for char(x) and varchar(x), add 2 bytes for each char
             if (obj instanceof String) {
                 sizeOfRecordInBytes = sizeOfRecordInBytes + Integer.BYTES; // 4 bytes for each int that comes
@@ -75,15 +75,11 @@ public class Record {
     }
 
     /**
-     * Through schema will be able to know order of types in record
-     * before a char(x) and before a varchar(x) comes 4 bytes, being an
-     * int of the num of characters to read, number of times to loop
-     * calling getChar() for char(x) or varchar(x)
-     *
-     * @param recordInBytes a byte array of a record
-     *                      records varry in size (num bytes) on disk because
-     *                      varchars
-     * @return Record Object
+     * Parses a byte array representation of a record and returns the Record representation of the data
+     * to be used with the Page object
+     * @param tableNumber the table number corresponding to the record
+     * @param recordInBytes the Page's ByteBuffer with the pointer at the beginning of this record's data
+     * @return a complete Record object that represents the parsed data as an ArrayList of Objects
      */
     public static Record parseRecordBytes(int tableNumber, ByteBuffer recordInBytes) {
         //Iterate through Bytes, getting varying data types and appending to returnRecord
@@ -98,8 +94,13 @@ public class Record {
                         returnRecord.recordContents.add(recordInBytes.getInt()); //get next 4 BYTES
                 case 2 -> //Double
                         returnRecord.recordContents.add(recordInBytes.getDouble()); //get next 8 BYTES
-                case 3 -> //Boolean
-                        returnRecord.recordContents.add(recordInBytes.get()); //A Boolean is 1 BYTE so simple .get()
+                case 3 -> { //Boolean
+                    char boolChar = recordInBytes.getChar(); //A Boolean is either 't' or 'f' on disk
+                    if (boolChar == 't')
+                        returnRecord.recordContents.add(true);
+                    else
+                        returnRecord.recordContents.add(false);
+                }
                 case 4 -> { //Char(x) standard string fixed array of len x
                     int numCharXChars = recordInBytes.getInt();
                     StringBuilder chars = new StringBuilder();
@@ -123,10 +124,9 @@ public class Record {
     }
 
     /**
-     * Convert the objects in this record into their byte forms within a byte array
-     * @param tableNum added table num param needed, classes instance of tableNumber
-     *                 is zero on entering this method, could be larger issue
-     * @return the byte array of the objects
+     * Converts the object representation of a record into the byte representation to be stored on disk
+     * @param tableNum the table number corresponding to this record
+     * @return a byte array containing all the record's data in byte form
      */
     public byte[] toBytes(int tableNum) {
         byte[] bytes = new byte[this.compute_size()];
@@ -139,8 +139,13 @@ public class Record {
                         byteBuffer.putInt((Integer) this.recordContents.get(i)); //get next 4 BYTES
                 case 2 -> //Double
                         byteBuffer.putDouble((Double) this.recordContents.get(i)); //get next 8 BYTES
-                case 3 -> //Boolean
-                        byteBuffer.put((byte) this.recordContents.get(i)); //A Boolean is 1 BYTE so simple .get()
+                case 3 -> { //Boolean
+                    boolean val = (boolean) this.recordContents.get(i);
+                    if (val) //A Boolean is either 't' or 'f' on disk
+                        byteBuffer.putChar('t');
+                    else
+                        byteBuffer.putChar('f');
+                }
                 case 4 -> { //Char(x) standard string fixed array of len x
                     String chars = (String) this.recordContents.get(i);
                     byteBuffer.putInt(chars.length());
