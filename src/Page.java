@@ -117,7 +117,7 @@ class Page {
         ArrayList<Record> records = pageToConvert.getActualPage();
         //loop through records and insert them
         for (Record record:records) {
-            byteBuffer.put(record.toBytes());
+            byteBuffer.put(record.toBytes(pageToConvert.getTableNumber()));
         }
 
         return byteArray;

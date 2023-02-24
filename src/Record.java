@@ -124,12 +124,14 @@ public class Record {
 
     /**
      * Convert the objects in this record into their byte forms within a byte array
+     * @param tableNum added table num param needed, classes instance of tableNumber
+     *                 is zero on entering this method, could be larger issue
      * @return the byte array of the objects
      */
-    public byte[] toBytes() {
+    public byte[] toBytes(int tableNum) {
         byte[] bytes = new byte[this.compute_size()];
         ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
-        ArrayList<Integer> typeIntegers = Catalog.instance.getTableAttributeTypes(tableNumber);
+        ArrayList<Integer> typeIntegers = Catalog.instance.getTableAttributeTypes(tableNum);
         int i = 0;
         for (int typeInt : typeIntegers) {
             switch (typeInt) {
