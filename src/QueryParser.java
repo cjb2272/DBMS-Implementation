@@ -65,7 +65,20 @@ class QueryParser{
         for (int i = 0; i < colNames.size(); i++) {
             colNames.set( i, colNames.get(i).trim() );
         }
-        return new SelectQuery(colNames, tokens[3].replace( ";", "" ) );
+
+        String tableName = tokens[3].replace( ";", "" );
+        ArrayList<String> expectedColNames = Catalog.instance.getAttributeNames(tableName);
+
+        if (!colNames.contains("*")) {
+            for (String name : colNames) {
+                if (!expectedColNames.contains(name)) {
+                    System.out.println("Unknown attribute name \"" + name + "\"");
+                    return null;
+                }
+            }
+        }
+
+        return new SelectQuery(colNames, tableName);
     }
 
     //INSERT INTO <table> values <tuple>;
