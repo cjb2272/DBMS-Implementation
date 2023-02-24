@@ -86,7 +86,8 @@ public class StorageManager {
                 ArrayList<Record> records = page.getRecordsInPage();
 
                 if (colNames.size() == 1 && colNames.get(0).equals("*")) {
-                    return records;
+                    results.addAll(records);
+                    continue;
                 }
 
                 ArrayList<AttributeSchema> columns = Catalog.instance.getTableSchemaByInt(tableID).getAttributes();
