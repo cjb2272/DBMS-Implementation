@@ -26,7 +26,7 @@ class Page {
 
     // A Page and the data contained is represented by an ArrayList of
     // Record Instances.
-    private ArrayList<Record> actualPage;
+    private ArrayList<Record> recordsInPage;
 
 
     /**
@@ -41,15 +41,15 @@ class Page {
     public void setTableNumber(int value) { this.tableNumber = value; }
     public void setLruLongValue(long value) { this.lruLongValue = value; }
     public void setIsModified(Boolean value) { this.isModified = value; }
-    public void setActualPage(ArrayList<Record> records) { this.actualPage = records; }
+    public void setRecordsInPage(ArrayList<Record> records) { this.recordsInPage = records; }
 
     public int getPageNumberOnDisk() { return this.pageNumberOnDisk; }
     public int getTableNumber() { return this.tableNumber; }
     public long getLruLongValue() { return this.lruLongValue; }
     public boolean getisModified() { return this.isModified; }
-    public ArrayList<Record> getActualPage() { return this.actualPage; }
+    public ArrayList<Record> getRecordsInPage() { return this.recordsInPage; }
 
-    public int getRecordCount() { return actualPage.size(); }
+    public int getRecordCount() { return recordsInPage.size(); }
 
 
     /**
@@ -64,7 +64,7 @@ class Page {
     int computeSizeInBytes() {
         int sizeOfPageInBytes = Integer.BYTES * 2; //beginning of page (fixed at 8 for two ints)
         //call records compute size for each record that is a part of this page
-        for (Record record : this.getActualPage()) {
+        for (Record record : this.getRecordsInPage()) {
             int bytesInRecord = record.compute_size();
             sizeOfPageInBytes = sizeOfPageInBytes + bytesInRecord;
         }
@@ -88,12 +88,41 @@ class Page {
         ArrayList<Record> records = new ArrayList<>();
         for (int rcrd = 0; rcrd < numRecords; rcrd++) {
             Record record = Record.parseRecordBytes(tableNumber, byteBuffer);
-            records.add(record);
             //TODO verify that the byte buffer has moved forward to the next record here. Not sure if the pointer
             // being moved in another method will make it move here. If it doesn't, then the buffer pointer
             // needs to be moved forward
+            // EDIT: I've tried leaving the code in Record and moving it to Page and it seems to work both ways
+
+//            for (int typeInt : typeIntegers) {
+//                switch (typeInt) {
+//                    case 1 -> //Integer
+//                            record.recordContents.add(byteBuffer.getInt()); //get next 4 BYTES
+//                    case 2 -> //Double
+//                            record.recordContents.add(byteBuffer.getDouble()); //get next 8 BYTES
+//                    case 3 -> //Boolean
+//                            record.recordContents.add(byteBuffer.get()); //A Boolean is 1 BYTE so simple .get()
+//                    case 4 -> { //Char(x) standard string fixed array of len x
+//                        int numCharXChars = byteBuffer.getInt();
+//                        StringBuilder chars = new StringBuilder();
+//                        for (int ch = 0; ch < numCharXChars; ch++) {
+//                            chars.append(byteBuffer.getChar()); //get next 2 BYTES
+//                        }
+//                        record.recordContents.add(chars.toString());
+//                    }
+//                    case 5 -> { //Varchar(x) variable size array of max len x NOT Padded
+//                        //records with var chars cause scenario of records not being same size
+//                        int numChars = byteBuffer.getInt();
+//                        StringBuilder chars = new StringBuilder();
+//                        for (int chr = 0; chr < numChars; chr++) {
+//                            chars.append(byteBuffer.getChar()); //get next 2 BYTES
+//                        }
+//                        record.recordContents.add(chars.toString());
+//                    }
+//                }
+//            } //END LOOP
+            records.add(record);
         } //END LOOP NUM RECORDS
-        returnPage.setActualPage(records);
+        returnPage.setRecordsInPage(records);
         return returnPage;
     }
 
@@ -112,9 +141,9 @@ class Page {
     public static byte[] parsePage(Page pageToConvert) {
         byte[] byteArray = new byte[Main.pageSize];
         ByteBuffer byteBuffer = ByteBuffer.wrap(byteArray);
-        byteBuffer.put((byte) pageToConvert.computeSizeInBytes()); //insert size
-        byteBuffer.put((byte) pageToConvert.actualPage.size()); //insert num of entries
-        ArrayList<Record> records = pageToConvert.getActualPage();
+        byteBuffer.putInt((byte) pageToConvert.computeSizeInBytes()); //insert size
+        byteBuffer.putInt((byte) pageToConvert.recordsInPage.size()); //insert num of entries
+        ArrayList<Record> records = pageToConvert.getRecordsInPage();
         //loop through records and insert them
         for (Record record:records) {
             byteBuffer.put(record.toBytes(pageToConvert.getTableNumber()));

@@ -17,7 +17,7 @@ public class Record {
     // A Record is represented by an ArrayList of Objects
     // being that varying attribute types can be stored in
     // the same ArrayList including Null values
-    private ArrayList<Object> recordContents;
+    protected ArrayList<Object> recordContents;
     //private int pkIndex;
     private int pkIndex;
     private int tableNumber;

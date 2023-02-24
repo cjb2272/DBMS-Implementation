@@ -6,8 +6,6 @@ package src;
  */
 
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -85,7 +83,7 @@ public class StorageManager {
 
             try {
                 Page page = buffer.GetPage(tableID, locationOnDisk); // the buffer will read from disk if it doesn't have the page
-                ArrayList<Record> records = page.getActualPage();
+                ArrayList<Record> records = page.getRecordsInPage();
 
                 if (colNames.size() == 1 && colNames.get(0).equals("*")) {
                     return records;
@@ -151,7 +149,7 @@ public class StorageManager {
                 Page emptyPageInbuffer = buffer.CreateNewPage(tableID, 0);
                 //insert the record, no comparator needed here, because this is the
                 //first record of the table
-                emptyPageInbuffer.getActualPage().add(recordToInsert);
+                emptyPageInbuffer.getRecordsInPage().add(recordToInsert);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -163,11 +161,11 @@ public class StorageManager {
                     int numRecordsInPage = pageReference.getRecordCount();
                     RecordSort sorter = new RecordSort();
                     for (int idx = 0; idx < numRecordsInPage; idx++) {
-                        Record curRecord = pageReference.getActualPage().get(idx);
+                        Record curRecord = pageReference.getRecordsInPage().get(idx);
                         if(sorter.compare( recordToInsert, curRecord ) < 0){
                             continue;
                         }
-                        pageReference.getActualPage().add(idx + 1, recordToInsert);
+                        pageReference.getRecordsInPage().add(idx + 1, recordToInsert);
                         if (pageReference.computeSizeInBytes() > Main.pageSize) {
                             buffer.PageSplit(pageReference, tableID);
                         }
@@ -300,7 +298,7 @@ public class StorageManager {
                 if (createNew) {
                     Page newPage = new Page();
                     ArrayList<Record> records = new ArrayList<>();
-                    newPage.setActualPage(records);
+                    newPage.setRecordsInPage(records);
                     newPage.setTableNumber(aTableNumber);
                     newPage.setIsModified(true);
                     newPage.setPageNumberOnDisk(aPageNumber);
@@ -334,7 +332,7 @@ public class StorageManager {
                 if (createNew) {
                     Page newPage = new Page();
                     ArrayList<Record> records = new ArrayList<>();
-                    newPage.setActualPage(records);
+                    newPage.setRecordsInPage(records);
                     newPage.setTableNumber(aTableNumber);
                     newPage.setIsModified(true);
                     newPage.setPageNumberOnDisk(aPageNumber);
@@ -384,28 +382,28 @@ public class StorageManager {
             //newEmptyPage is in the buffer, now copy the records over
             ArrayList<Record> firstPageRecords = new ArrayList<>();
             ArrayList<Record> secondPageRecords = new ArrayList<>();
-            ArrayList<Record> overFullPageRecords = overFullPage.getActualPage();
+            ArrayList<Record> overFullPageRecords = overFullPage.getRecordsInPage();
             int numberOfRecordsInPage = overFullPageRecords.size();
             if ((numberOfRecordsInPage % 2) == 0) { //if even num of records
                 int numRecordsToCopy = numberOfRecordsInPage / 2;
                 for (int rec = 0; rec < numRecordsToCopy; rec++) {
                     firstPageRecords.add(overFullPageRecords.get(rec));
                 }
-                overFullPage.setActualPage(firstPageRecords);
+                overFullPage.setRecordsInPage(firstPageRecords);
                 for (int r = numRecordsToCopy; r < numberOfRecordsInPage; r++) {
                     secondPageRecords.add(overFullPageRecords.get(r));
                 }
-                newEmptyPage.setActualPage(secondPageRecords);
+                newEmptyPage.setRecordsInPage(secondPageRecords);
             } else { //number of records is odd
                 int numRecordsForFirstPage = (int) Math.ceil(numberOfRecordsInPage / 2);
                 for (int rec = 0; rec < numRecordsForFirstPage; rec++) {
                     firstPageRecords.add(overFullPageRecords.get(rec));
                 }
-                overFullPage.setActualPage(firstPageRecords);
+                overFullPage.setRecordsInPage(firstPageRecords);
                 for (int r = numRecordsForFirstPage; r < numberOfRecordsInPage; r++) {
                     secondPageRecords.add(overFullPageRecords.get(r));
                 }
-                newEmptyPage.setActualPage(secondPageRecords);
+                newEmptyPage.setRecordsInPage(secondPageRecords);
             }
             //page has been split appropriately
         }
