@@ -157,7 +157,7 @@ class CreateQuery extends Query{
 
         int availableId = Catalog.instance.getTablesSize() + 1;
         StorageManager.instance.createTable(availableId, tableName, columnNames, dataTypes);
-        Catalog.instance.addTable(availableId, tableName, attributeInfo);
+        Catalog.instance.addTableSchema(availableId, tableName, attributeInfo);
         System.out.println("SUCCESS\n");
     }
 }

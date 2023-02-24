@@ -28,12 +28,13 @@ public class Catalog {
     }
 
     /**
-     *
-     * @param tableNum
-     * @param tableName
-     * @param attributeInfo
+     * Adds a tableSchema to the tableSchema array.
+     * @param tableNum : Table number
+     * @param tableName : Table Name
+     * @param attributeInfo : Ordered array of parameters to create attributes. An attribute is done in a set of four
+     *                          objects: String name, int type, int size, and boolean isPrimaryKey.
      */
-    public void addTable(int tableNum, String tableName, ArrayList attributeInfo) {
+    public void addTableSchema(int tableNum, String tableName, ArrayList attributeInfo) {
         TableSchema tableSchema = new TableSchema(tableName, tableNum, new ArrayList<>());
         for (int i = 0; i < attributeInfo.size(); i += 4) {
             tableSchema.addAttribute((String) attributeInfo.get(i), (int) attributeInfo.get(i+1),
@@ -43,7 +44,7 @@ public class Catalog {
     }
 
     /**
-     *
+     * Return
      * @return
      */
     public int getPageSize() {
@@ -165,9 +166,9 @@ public class Catalog {
         for (AttributeSchema attribute: attributes) {
             int type = attribute.getType();
             types.add(type);
-            if (type == 4 || type == 5) {
-                types.add(attribute.getSize());
-            }
+            //if (type == 4 || type == 5) {
+            //    types.add(attribute.getSize());
+            //}
         }
         return types;
     }
@@ -215,6 +216,11 @@ public class Catalog {
         return size;
     }
 
+    /**
+     *
+     * @param rootPath
+     * @return
+     */
     public static Catalog readCatalogFromFile(String rootPath){
         File catalogFile = new File(rootPath, "db-catalog.catalog");
         try {
@@ -263,6 +269,9 @@ public class Catalog {
         return null;
     }
 
+    /**
+     * 
+     */
     public void writeCatalogToFile() {
         File catalog = new File(root, "db-catalog.catalog");
         byte[] bytes = new byte[instance.getSizeInBytes()];
