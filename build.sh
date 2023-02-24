@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-S=./source
+S=./src
 
 javac $S/*.java
 javac -d $S/ $S/Main.java 
