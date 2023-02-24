@@ -73,7 +73,7 @@ public class Record {
     }
 
     /**
-     * through schema will be able to know order of types in record
+     * Through schema will be able to know order of types in record
      * before a char(x) and before a varchar(x) comes 4 bytes, being an
      * int of the num of characters to read, number of times to loop
      * calling getChar() for char(x) or varchar(x)
@@ -84,13 +84,11 @@ public class Record {
      * @return Record Object
      */
     public static Record parseRecordBytes(int tableNumber, ByteBuffer recordInBytes) {
+        //Iterate through Bytes, getting varying data types and appending to returnRecord
         Record returnRecord = new Record();
         returnRecord.tableNumber = tableNumber;
-        //Iterate through Bytes, getting varying data types and appending to returnRecord
-        //DO NOT APPEND THE INT(s) telling the amount of chars in varchar or char
-
-        //LOOP in the order of data types expected - data types cannot be stored in pages,
-        //MUST be stored in Catalog ONLY for a given page
+        //refrains appending int(s) telling the amount of chars in varchar or char
+        //Loop in the order of data types expected - stored in Catalog ONLY for a given page
         ArrayList<Integer> typeIntegers = Catalog.instance.getSolelyTableAttributeTypes(tableNumber);
         for (int typeInt : typeIntegers) {
             switch (typeInt) {

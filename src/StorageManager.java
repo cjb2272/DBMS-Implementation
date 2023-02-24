@@ -161,7 +161,6 @@ public class StorageManager {
             for (int index = 0; index < numPagesInTable; index++) {
                 try {
                     Page pageReference = buffer.GetPage(tableID, pageOrder.get(index));
-                    pageReference.setIsModified(true);
                     int numRecordsInPage = pageReference.getRecordCount();
                     RecordSort sorter = new RecordSort();
                     for (int idx = 0; idx < numRecordsInPage; idx++) {
@@ -172,6 +171,7 @@ public class StorageManager {
                         }
                         if( comparison < 0){
                             pageReference.getRecordsInPage().add(idx, recordToInsert);
+                            pageReference.setIsModified(true);
                             if (pageReference.computeSizeInBytes() > Main.pageSize) {
                                 buffer.PageSplit(pageReference, tableID);
                             }
@@ -179,6 +179,7 @@ public class StorageManager {
                         }
                         if (index == numPagesInTable - 1 && idx == numRecordsInPage - 1 && comparison > 0) {
                             pageReference.getRecordsInPage().add(idx + 1, recordToInsert);
+                            pageReference.setIsModified(true);
                             if (pageReference.computeSizeInBytes() > Main.pageSize) {
                                 buffer.PageSplit(pageReference, tableID);
                             }
@@ -194,29 +195,14 @@ public class StorageManager {
         }
     }
 
-    /*
-     * Table should always know how many pages it has due through
+    /**
+     * Table should always know how many pages it has through
      * Page Ordering
-     * old: (Reads the first 4 bytes of the table file on disk,
-     * representing the # of pages in this file)
+     * @param tableID identifier for table
+     * @return number of pages in a table
      */
     public int getPageCountForTable(int tableID) {
         return Catalog.instance.getTableSchemaByInt(tableID).getPageOrder().size();
-        /*
-        String tableFilePath = Paths.get(tablesRootPath, String.valueOf(tableID)).toString();
-        RandomAccessFile file;
-        try {
-            file = new RandomAccessFile(tableFilePath, "r");
-            file.seek(0);
-            byte[] pageByteArray = new byte[4];
-            file.read(pageByteArray, 0, 4);
-            file.close(); 
-            return ByteBuffer.wrap(pageByteArray).getInt();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return -1;
-         */
     }
 
     public int getRecordCountForTable(int tableID) {
@@ -242,6 +228,10 @@ public class StorageManager {
         return Catalog.instance.getTableSchemas().size();
     }
 
+    /**
+     * Called by main driving program on command quit
+     * to initiate purging buffer contents
+     */
     public void writeOutBuffer() {
         try {
             buffer.PurgeBuffer();
@@ -255,17 +245,12 @@ public class StorageManager {
      * Has Four Public Methods, GetPage(), createNewPage(), pageSplit(),
      * and PurgeBuffer().
      * The Buffer is in place to ideally reduce read/writes to file system
-     *
-     * THIS SHOULD BE COMPLETELY INVISIBLE TO THE REST OF THE PROGRAM (besides StorageManager).
-     * Everything should go through StorageManager.
-     * MUST HANDLE FILE READ AND WRITE ERRORS - t o d o
      */
     private class BufferManager {
 
-        //will be THE NEXT value to assign when page read
+        //will be THE NEXT value to assign when page is accessed
         //will increase indefinitely (long better than int...)
         private long counterForLRU = 0;
-
         // The Program Wide Buffer Itself
         ArrayList<Page> PageBuffer= new ArrayList<Page>();
 
@@ -289,11 +274,9 @@ public class StorageManager {
             for (Page inBufferPage : PageBuffer) {
                 if ((inBufferPage.getTableNumber() == tableNumber) &&
                         (inBufferPage.getPageNumberOnDisk() == pageNumber)) {
-                    inBufferPage.setLruLongValue(counterForLRU); //update count and increment counterForLRU
-                    counterForLRU++;
-                    //should this method be handling set of IsModified?
-                    //hand page off, we do not need to read from
-                    //disk since already in buffer
+                    inBufferPage.setLruLongValue(counterForLRU); //update count
+                    counterForLRU++;                             //and increment counterForLRU
+                    //hand page off, we do not need to read from disk since already in buffer
                     return inBufferPage;
                 }
             }
@@ -346,9 +329,10 @@ public class StorageManager {
                 }
                 // write the LRU page to hardware/disk
                 // (if it has been modified bc if it hasn't, copy on disk already same)
-                if (PageBuffer.get(indexOfLRU).getisModified()) {
-                    WritePageToDisk(PageBuffer.get(indexOfLRU));
-                } //there is now room in the buffer
+                // (commented out if) for now we will write to disk regardless - just to be safe
+                //if (PageBuffer.get(indexOfLRU).getisModified()) {
+                WritePageToDisk(PageBuffer.get(indexOfLRU));
+                //} //there is now room in the buffer
                 if (createNew) {
                     Page newPage = new Page();
                     ArrayList<Record> records = new ArrayList<>();
@@ -480,9 +464,9 @@ public class StorageManager {
          */
         public void PurgeBuffer() throws IOException {
             for (Page page : PageBuffer) {
-                if (page.getisModified()) {
-                    WritePageToDisk(page);
-                }
+                //if (page.getisModified()) {
+                WritePageToDisk(page);
+                //}
             }
         }
     }
