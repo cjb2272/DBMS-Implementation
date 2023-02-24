@@ -176,9 +176,8 @@ class QueryParser{
             if(AttributeMatch( tableAttrList, dataTypes )){
                 formattedTuples.add( values );
             } else{
-                System.out.println("The following values were not inserted: ");
-                System.out.println(values);
-                return null;
+                System.out.println("Only the items before ("+ s + ") will be inserted");
+                return new InsertQuery( tableName, formattedTuples );
             }
         }
 
