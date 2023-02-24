@@ -156,9 +156,14 @@ public class Catalog {
     }
 
     /**
-     *
-     * @param tableNum
-     * @return
+     * Returns an ordered list of a given table's attributes' types.
+     * 1 - integer
+     * 2 - double
+     * 3 - boolean
+     * 4 - char
+     * 5 - varchar
+     * @param tableNum : given table ID
+     * @return An array of ints representing the types of the given table's attributes.
      */
     public ArrayList<Integer> getTableAttributeTypes(int tableNum) {
         ArrayList<AttributeSchema> attributes = getTableSchemaByInt(tableNum).getAttributes();
@@ -173,6 +178,11 @@ public class Catalog {
         return types;
     }
 
+    /**
+     *
+     * @param tableNum
+     * @return
+     */
     public int getTablePKIndex(int tableNum) {
         TableSchema tableSchema = getTableSchemaByInt(tableNum);
         ArrayList<AttributeSchema> attributeSchemas = tableSchema.getAttributes();
@@ -184,6 +194,11 @@ public class Catalog {
         return -1;
     }
 
+    /**
+     *
+     * @param tableName
+     * @return
+     */
     public ArrayList<String> getAttributeNames(String tableName) {
         TableSchema tableSchema = getTableSchemaByName(tableName);
         ArrayList<String> names = new ArrayList<>();
