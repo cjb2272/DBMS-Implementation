@@ -1,7 +1,8 @@
 build:
-	bash build.sh
+	javac ./src/*.java
+	javac -d ./src/ ./src/Main.java 
 
 test:
-	bash tester.sh
+	java src.Main "db" 1024 35
 
 all: build test
