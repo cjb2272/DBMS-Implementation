@@ -24,31 +24,21 @@ class QueryParser{
 
         switch (tokens.length) {
             case 2 -> {
-                if ( !tokens[1].endsWith( ";" ) ) {
-                    System.out.println( "Missing Semicolon" );
-                    return null;
-                }
-                if ( tokens[1].toLowerCase( Locale.ROOT ).equals( "schema;" ) ) {
+
+                if ( tokens[1].toLowerCase( Locale.ROOT ).equals( "schema" ) ) {
                     return new DisplayQuery();
                 }
                 System.out.println( "Expected 'schema' got: " + tokens[1] );
             }
             case 3 -> {
-                if ( !tokens[2].endsWith( ";" ) ) {
-                    System.out.println( "Missing Semicolon." );
-                    return null;
-                }
+
                 if ( tokens[1].toLowerCase( Locale.ROOT ).equals( "info" ) ) {
-                    return new DisplayQuery(tokens[2].replace( ";", "" ) );
-                }
-                else if(tokens[1].toLowerCase().equals( "schema" ) && tokens[2].trim().equals( ";" )){
-                    return new DisplayQuery();
+                    return new DisplayQuery(tokens[2]);
                 }
                 System.out.println( "Expected 'info' got: " + tokens[1] );
             }
             default -> System.out.println( "Must use either 'display info <table>;' or \n 'display schema;' command" );
         }
-
         return null;
     }
 
@@ -67,10 +57,6 @@ class QueryParser{
         }
         if(!tokens[2].toLowerCase( Locale.ROOT ).equals( "from" )){
             System.out.println("Missing FROM keyword.");
-            return null;
-        }
-        if(!tokens[3].endsWith( ";" )){
-            System.out.println("Missing semicolon.");
             return null;
         }
 
@@ -114,7 +100,7 @@ class QueryParser{
         String tableName = keywords[2];
 
         if (Catalog.instance.getTableByName(tableName) == null) {
-            System.out.println("No such table " + tableName + "\nERROR\n");
+            System.out.println("No such table " + tableName);
             return null;
         }
 
@@ -176,7 +162,11 @@ class QueryParser{
             if(AttributeMatch( tableAttrList, dataTypes )){
                 formattedTuples.add( values );
             } else{
-                System.out.println("Only the items before ("+ s + ") will be inserted");
+                if(formattedTuples.size() == 0){
+                    return null;
+                }
+
+                System.out.println("Only the items before (" + s.strip() + ") will be inserted");
                 return new InsertQuery( tableName, formattedTuples );
             }
         }
@@ -267,7 +257,7 @@ class QueryParser{
      * @return The Integer that represents the given data type
      */
     public Integer StringToCode(String str){
-        String[] temp = str.split( "[(]" );
+        String[] temp = str.split( "[()]" );
 
         return switch (temp[0].toLowerCase( Locale.ROOT )) {
             case "integer" -> 1;
@@ -316,10 +306,18 @@ class QueryParser{
      * @return a CreateQuery representing the command given, null if there is an error
      */
     public CreateQuery ParseCreate(String input){
+        if(!input.endsWith( ")" )){
+            System.out.println("Missing closing Parenthesis. Must use this format:\n" +
+                    "CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,\n" +
+                    "    <attr_name2> <attr_type2>, <attr_nameN> <attr_typeN>);");
+            return null;
+        }
+
         String[] chunks = input.split( "[(]", 2 );
         if(chunks.length < 2){
-            System.out.println("Error in formatting. Must use 'CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,\n" +
-                    " <attr_name2> <attr_type2>, <attr_nameN> <attr_typeN>);' format");
+            System.out.println( "Missing opening Parenthesis. Must use this format:\n" +
+                    "CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,\n" +
+                    "    <attr_name2> <attr_type2>, <attr_nameN> <attr_typeN>);");
             return null;
         }
 
@@ -336,15 +334,6 @@ class QueryParser{
 
         String[] attributes = chunks[1].split( "," );
 
-        if(attributes[attributes.length - 1].endsWith( "); " )) {
-            attributes[attributes.length - 1] = attributes[attributes.length - 1].replace( ");", "" );
-        } else{
-            if(attributes[attributes.length - 1].endsWith( "; " )){
-                System.out.println("Missing closing parenthesis.");
-            }
-            System.out.println("Missing Semicolon.");
-            return null;
-        }
 
         ArrayList<String> columnNames = new ArrayList<>();
         ArrayList<Integer> dataTypes = new ArrayList<>();
@@ -354,72 +343,70 @@ class QueryParser{
         for ( String attr : attributes ) {
             attr = attr.strip();
             String[] temp = attr.split( " "  );
-            switch (temp.length){
-                case 2:
-                    //not primary key
-                    columnNames.add( temp[0]);
-                    int result =  StringToCode( temp[1]);
-                    if(result == -1){
-                        System.out.println("You must give one of the accepted types for an attribute:\n Integer, Double, Boolean, Char(x), or Varchar(x).");
-                        System.out.println("Recieved: " + temp[1]);
-                        return null;
-                    }
-                    dataTypes.add(result); //make the pairing for name of attribute and the type of attr
 
-                    // if char or varchar, we need to store the supplied length in a separate list
-                    if (result == 4 || result == 5) {
-                        int charLength = GetLength( temp[1] );
-                        varLengthSizes.add(charLength);
-                        dataTypes.add( charLength );
-                    }
-                    else {
-                        varLengthSizes.add(-1);
-                    }
-                    break;
-                case 3:
-                    //Primary key
-                    if(temp[2].equals( "primarykey" )){
-                        if(pk == null){
-                            pk = temp[0];
-                            columnNames.add( temp[0]);
+            if(temp.length == 1 ){
 
-                            result =  StringToCode( temp[1]);
-                            if(result == -1){
-                                System.out.println("You must give one of the accepted types for an attribute:\n Integer, Double, Boolean, Char(x), or Varchar(x).");
-                                System.out.println("Recieved: " + temp[1]);
-                                return null;
-                            }
-                            dataTypes.add( result );
-
-                            // if char or varchar, we need to store the supplied length in a separate list
-                            if (result == 4 || result == 5) {
-                                int charLength = GetLength( temp[1] );
-                                varLengthSizes.add(charLength);
-                                dataTypes.add( charLength );
-                            } else {
-                                varLengthSizes.add(-1);
-                            }
-
-                            break;
-                        } else{
-                            System.out.println("Primary key already exists, it was named: " + pk);
-                            return null;
-                        }
-
-                    }else{
-                        System.out.println("Too many arguments: Expected primary key, got: " + temp[2]);
-                        return null;
-                    }
-                default:
-                    System.out.println("Please ensure that attributes are in the following format <name> <type>.");
-                    return null;
+                if(dataTypes.size()== 0 && temp[0].equals( ")" )){
+                    System.out.println("Missing attributes from CREATE command.");
+                }else{
+                    System.out.println("Too few arguments for attribute. Got: " + attr);
+                }
+                return null;
             }
+            else if(temp.length == 3) {
+                //Primary key
+                if ( temp[2].replace(")","").equals( "primarykey" ) ) {
+                    if ( pk == null ) {
+                        pk = temp[0];
+                    } else {
+                        System.out.println( "Primary key already exists, it was named: " + pk );
+                        return null;
+                    }
+
+                } else {
+                    System.out.println( "Too many arguments: Expected primary key, got: " + temp[2] );
+                    return null;
+                }
+            }
+            else if(temp.length > 3){
+                System.out.println("Please ensure that attributes are in the following format:\n" +
+                        "<name> <type>     -or-\n" +
+                        "<name> <type> primarykey");
+                return null;
+            }
+
+            String name = temp[0];
+            if(columnNames.contains( name )){
+                System.out.println("Duplicate attribute name \"" + name + "\"");
+                return null;
+            }
+
+            int result =  StringToCode( temp[1]);
+            if(result == -1){
+                System.out.println("You must give one of the accepted types for an attribute:\n Integer, Double, Boolean, Char(x), or Varchar(x).");
+                System.out.println("Recieved: " + temp[1]);
+                return null;
+            }
+
+            columnNames.add( name );
+            dataTypes.add( result );
+
+            if (result == 4 || result == 5) {
+                int charLength = GetLength( temp[1] );
+                varLengthSizes.add(charLength);
+                dataTypes.add( charLength );
+            }
+            else {
+                varLengthSizes.add(-1);
+            }
+
         }
+
         if(pk == null){
             System.out.println("No primary key defined.");
-            System.out.println("ERROR\n");
             return null;
         }
+
         return new CreateQuery(keywords[2], columnNames, dataTypes, varLengthSizes, pk );
     }
 
@@ -456,6 +443,13 @@ class QueryParser{
      * @return Some kind of Query if it was successfully parsed, or null if there was an error
      */
     public Query CommandParse(String input){
+        if(!input.endsWith( "; " ) && !input.endsWith( ";" )){
+            System.out.println("Missing Semicolon.");
+            return null;
+        }
+
+        input = input.replace( ";", "" ).trim();
+
         String[] temp = input.split(" ", 2);
         String command = temp[0].toLowerCase( Locale.ROOT );
 

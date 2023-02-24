@@ -51,7 +51,7 @@ public class Main {
                 input += scanner.next().trim() + " ";
             }
 
-            if(input.equals( "<quit> " )){
+            if(input.trim().equals( "<quit>" )){
                 System.out.println("Exiting the database...");
                 Catalog.instance.writeCatalogToFile();
                 StorageManager.instance.writeOutBuffer();
@@ -65,6 +65,9 @@ public class Main {
                 // that query. Having that logic here (switched on the query type) would be a code smell.
                 query.execute();  // where all the magic happens!
 
+            }
+            else{
+                System.out.println("ERROR");
             }
 
     
