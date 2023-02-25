@@ -25,7 +25,7 @@ public class Main {
         pageSize = Integer.parseInt(args[1]);
         bufferSizeLimit = Integer.parseInt(args[2]);
 
-        System.out.println("Looking at " + db_loc + "for existing db...");
+        System.out.println("Looking at " + db_loc + " for existing db...");
 
         File catalog = new File(db_loc, "db-catalog.catalog");
         if (!catalog.isFile()) {
