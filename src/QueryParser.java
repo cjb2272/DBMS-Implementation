@@ -72,6 +72,13 @@ class QueryParser {
         }
 
         String tableName = tokens[3].replace(";", "");
+        int id = Catalog.instance.getTableIdByName(tableName);
+
+        if (id == -1) {
+            System.out.println("No such table " + tableName);
+            return null;
+        }
+
         ArrayList<String> expectedColNames = Catalog.instance.getAttributeNames(tableName);
 
         if (!colNames.contains("*")) {
