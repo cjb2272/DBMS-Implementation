@@ -1,7 +1,7 @@
 package src;/*
- * This is the main entry to our program that will be a database manager.
- * @author Duncan Small, Austin Cepalia
- */
+            * This is the main entry to our program that will be a database manager.
+            * @author Duncan Small, Austin Cepalia
+            */
 
 import java.io.File;
 import java.io.IOException;
@@ -11,12 +11,13 @@ import src.*;
 
 public class Main {
 
-    public static int pageSize; //these values should be final
+    public static int pageSize; // these values should be final
     public static int bufferSizeLimit;
     public static String db_loc;
-    //java Main <db loc> <page size> <buffer size>
+
+    // java Main <db loc> <page size> <buffer size>
     public static void main(String[] args) {
-        if(args.length != 3){
+        if (args.length != 3) {
             System.out.println("Usage is java Main <db loc> <page size> <buffer size>");
             System.out.println(args.length);
             return;
@@ -35,7 +36,7 @@ public class Main {
                 catalog.createNewFile();
                 Catalog.instance = new Catalog(pageSize, db_loc);
                 System.out.println("New db created successfully");
-            } catch(IOException e) {
+            } catch (IOException e) {
                 System.out.println("Error in creating catalog file.");
                 e.printStackTrace();
             }
@@ -43,7 +44,7 @@ public class Main {
             System.out.println("Database found...");
             System.out.println("Restarting the database...");
             Catalog.instance = Catalog.readCatalogFromFile(db_loc);
-            pageSize = Catalog.instance.getPageSize(); //reset so we retain page original db page size
+            pageSize = Catalog.instance.getPageSize(); // reset so we retain page original db page size
             System.out.println("\tIgnoring provided pages size, using stored page size");
 
         }
@@ -54,37 +55,38 @@ public class Main {
 
         System.out.println("\nPlease enter commands, enter <quit> to shutdown the db.\n");
 
-        Scanner scanner = new Scanner( System.in );
+        Scanner scanner = new Scanner(System.in);
 
         QueryParser parser = new QueryParser();
-        while(true){
+        while (true) {
             System.out.print("JottQL $ ");
             String input = "";
-            while(!input.endsWith( "; " ) && !input.equals( "<quit> " ) ) {
-                //needs to do this to ensure spacing is correct when inputting multiline commands.
+            while (!input.endsWith("; ") && !input.equals("<quit> ")) {
+                // needs to do this to ensure spacing is correct when inputting multiline
+                // commands.
                 input += scanner.next().trim() + " ";
             }
 
-            if(input.trim().equals( "<quit>" )){
+            if (input.trim().equals("<quit>")) {
                 System.out.println("Exiting the database...");
                 Catalog.instance.writeCatalogToFile();
                 StorageManager.instance.writeOutBuffer();
                 break;
             }
 
-            Query query = parser.CommandParse( input );
+            Query query = parser.CommandParse(input);
 
             if (query != null) {
-                // Individual query objects all have an execute method that defines what steps should be taken to execute
-                // that query. Having that logic here (switched on the query type) would be a code smell.
-                query.execute();  // where all the magic happens!
+                // Individual query objects all have an execute method that defines what steps
+                // should be taken to execute
+                // that query. Having that logic here (switched on the query type) would be a
+                // code smell.
+                query.execute(); // where all the magic happens!
 
-            }
-            else{
+            } else {
                 System.out.println("ERROR\n");
             }
 
-    
         }
     }
 }

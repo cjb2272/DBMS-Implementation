@@ -16,14 +16,14 @@ public class AttributeSchema {
 
     /**
      *
-     * @param name : name of attribute
-     * @param type : int representing type of attribute.
-     *               1 - integer
-     *               2 - double
-     *               3 - boolean
-     *               4 - char
-     *               5 - varchar
-     * @param size : Size in bytes.
+     * @param name         : name of attribute
+     * @param type         : int representing type of attribute.
+     *                     1 - integer
+     *                     2 - double
+     *                     3 - boolean
+     *                     4 - char
+     *                     5 - varchar
+     * @param size         : Size in bytes.
      * @param isPrimaryKey : True or false that this attribute is a primary key.
      */
     public AttributeSchema(String name, int type, int size, boolean isPrimaryKey) {
@@ -42,12 +42,14 @@ public class AttributeSchema {
     }
 
     /**
-     * Returns the type of attribute. The following are the recognized integer to type pairs:
+     * Returns the type of attribute. The following are the recognized integer to
+     * type pairs:
      * 1 - integer
      * 2 - double
      * 3 - boolean
      * 4 - char
      * 5 - varchar
+     * 
      * @return Integer between 1 - 5 to represent type.
      */
     public int getType() {
@@ -56,6 +58,7 @@ public class AttributeSchema {
 
     /**
      * Returns the size in bytes of attribute.
+     * 
      * @return Integer representing size in bytes.
      */
     public int getSize() {
@@ -64,6 +67,7 @@ public class AttributeSchema {
 
     /**
      * Returns True if this attribute is a primary key or false otherwise.
+     * 
      * @return True or False.
      */
     public boolean isPrimaryKey() {
@@ -72,6 +76,7 @@ public class AttributeSchema {
 
     /**
      * Returns the number of bytes needed to represent this attribute.
+     * 
      * @return Number of bytes needed to represent attribute.
      */
     protected int getSizeInBytes() {
@@ -82,6 +87,7 @@ public class AttributeSchema {
     /**
      * Creates the display string for this attribute.
      * Consists of attribute name, type and if primary key.
+     * 
      * @return a display string.
      */
     public String toString() {
@@ -90,9 +96,8 @@ public class AttributeSchema {
 
         if (type == 4 || type == 5) {
             typeStr = QueryParser.CodeToString(type).substring(0,
-                    QueryParser.CodeToString(type).length()-3).toLowerCase() + "(" + size + ")";
-        }
-        else {
+                    QueryParser.CodeToString(type).length() - 3).toLowerCase() + "(" + size + ")";
+        } else {
             typeStr = QueryParser.CodeToString(type).toLowerCase();
         }
 

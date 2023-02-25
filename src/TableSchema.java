@@ -7,29 +7,31 @@ import java.util.ArrayList;
 
 public class TableSchema {
 
-    //ArrayList of AttributeSchema
+    // ArrayList of AttributeSchema
     private ArrayList<AttributeSchema> attributes;
-    //Table name
+    // Table name
     private String tableName;
-    //Table Id number
+    // Table Id number
     private int tableId;
 
-    /* Page Ordering maps where a page is actually on the disk, because
-       we don't want to be shifting pages all around on disk, everytime
-       we add a page
-       Demo of page splitting page at index 1:
-       notice values remain same but index changes
-       Before: Index 0, 1,    2, 3, 4
-               Value 0, 1,    2, 3, 4
-       After:  Index 0, 1, 2, 3, 4, 5
-               Value 0, 1, 5, 2, 3, 4  */
+    /*
+     * Page Ordering maps where a page is actually on the disk, because
+     * we don't want to be shifting pages all around on disk, everytime
+     * we add a page
+     * Demo of page splitting page at index 1:
+     * notice values remain same but index changes
+     * Before: Index 0, 1, 2, 3, 4
+     * Value 0, 1, 2, 3, 4
+     * After: Index 0, 1, 2, 3, 4, 5
+     * Value 0, 1, 5, 2, 3, 4
+     */
     private ArrayList<Integer> pageOrder;
-
 
     /**
      * Creates an instance of the Table object.
+     * 
      * @param tableName : table name
-     * @param tableId : table id number
+     * @param tableId   : table id number
      */
     public TableSchema(String tableName, int tableId, ArrayList<Integer> pageOrder) {
         this.tableName = tableName;
@@ -40,9 +42,10 @@ public class TableSchema {
 
     /**
      * Adds an attribute schema to the table.
-     * @param name : attribute name
-     * @param type : attribute type
-     * @param size : size of attribute
+     * 
+     * @param name         : attribute name
+     * @param type         : attribute type
+     * @param size         : size of attribute
      * @param isPrimaryKey : True if attribute is a primary key, false otherwise.
      */
     public void addAttribute(String name, int type, int size, boolean isPrimaryKey) {
@@ -50,40 +53,44 @@ public class TableSchema {
         attributes.add(attribute);
     }
 
-
     /**
      * Method should return the pageNumber of where the page is stored sequentially
      * on the disk. This pageNumber should be the value at index for the page
-     * @param whereInitialPageOnDisk int representation of where this page is on disk
-     * @return where new page is sequentially on disk in terms of how many pages into table file
+     * 
+     * @param whereInitialPageOnDisk int representation of where this page is on
+     *                               disk
+     * @return where new page is sequentially on disk in terms of how many pages
+     *         into table file
      */
     public int changePageOrder(int whereInitialPageOnDisk) {
-        if (pageOrder.isEmpty()) { //same as if whereInitialPageOnDisk is 0
-            pageOrder.add(0); //value for first page in P.O is also 0th page sequentially
-            return 0;         //written on disk
+        if (pageOrder.isEmpty()) { // same as if whereInitialPageOnDisk is 0
+            pageOrder.add(0); // value for first page in P.O is also 0th page sequentially
+            return 0; // written on disk
         } else {
-            //indexNewPage will always be set accurately, only time this should be zero is in if^
-            int indexNewPage = 0; //need to initialize to prevent error
+            // indexNewPage will always be set accurately, only time this should be zero is
+            // in if^
+            int indexNewPage = 0; // need to initialize to prevent error
             int sizeBeforeAdd = pageOrder.size();
             for (int index = 0; index < sizeBeforeAdd; index++) {
                 if (pageOrder.get(index) == whereInitialPageOnDisk) {
                     indexNewPage = index + 1;
-                    //how many pages deep out new page is written on disk will ALWAYS be the
+                    // how many pages deep out new page is written on disk will ALWAYS be the
                     // size of P.O. bc if adding a page, page in data comes after all pages
                     // that already exist (all pages already in the P.O.)
                     int curPageOrderSize = pageOrder.size();
-                    //adding into arraylist at specific index will automatically shift all
-                    //following indexes and their corresponding values
+                    // adding into arraylist at specific index will automatically shift all
+                    // following indexes and their corresponding values
                     pageOrder.add(indexNewPage, curPageOrderSize);
-                    break; //if will never be true again, no need to run rest of loop though
+                    break; // if will never be true again, no need to run rest of loop though
                 }
             }
-            return pageOrder.get(indexNewPage); //same as returning curPageOrderSize
+            return pageOrder.get(indexNewPage); // same as returning curPageOrderSize
         }
     }
 
     /**
      * Returns the table name.
+     * 
      * @return table name as String.
      */
     public String getTableName() {
@@ -92,6 +99,7 @@ public class TableSchema {
 
     /**
      * Returns table id.
+     * 
      * @return numerical table id.
      */
     public int getTableId() {
@@ -100,6 +108,7 @@ public class TableSchema {
 
     /**
      * Returns ArrayList of AttributeSchemas.
+     * 
      * @return Array list Schemas.
      */
     public ArrayList<AttributeSchema> getAttributes() {
@@ -108,6 +117,7 @@ public class TableSchema {
 
     /**
      * Returns order of pages in the table.
+     * 
      * @return ArrayList of integers.
      */
     public ArrayList<Integer> getPageOrder() {
@@ -117,12 +127,14 @@ public class TableSchema {
     /**
      * Returns the size in bytes that is needed to represent this TableSchema.
      * Includes the sizes of its attributes.
-     * @return An integer of the number of bytes needed to represent this TableSchema.
+     * 
+     * @return An integer of the number of bytes needed to represent this
+     *         TableSchema.
      */
     protected int getSizeInBytes() {
         int size = Integer.BYTES + Integer.BYTES + (tableName.length() * Character.BYTES) + Integer.BYTES +
                 (pageOrder.size() * Integer.BYTES) + Integer.BYTES;
-        for (AttributeSchema attribute: attributes) {
+        for (AttributeSchema attribute : attributes) {
             size += attribute.getSizeInBytes();
         }
         return size;
@@ -131,8 +143,10 @@ public class TableSchema {
     /**
      * Checks if Object o is equal to this table schema.
      * Equal is both the table ids and table names are equal.
+     * 
      * @param o : TableSchema object
-     * @return returns True if o is equal to this tableSchema. Returns false otherwise.
+     * @return returns True if o is equal to this tableSchema. Returns false
+     *         otherwise.
      */
     @Override
     public boolean equals(Object o) {
@@ -149,7 +163,9 @@ public class TableSchema {
     }
 
     /**
-     * Returns a display string. Consists of table name and the display strings of its attributes.
+     * Returns a display string. Consists of table name and the display strings of
+     * its attributes.
+     * 
      * @return A display string.
      */
     @Override
@@ -161,7 +177,7 @@ public class TableSchema {
         for (AttributeSchema attribute : attributes) {
             sb.append("\t");
             sb.append(attribute.toString());
-            if (count != attributes.size()-1) {
+            if (count != attributes.size() - 1) {
                 sb.append("\n");
             }
             count++;

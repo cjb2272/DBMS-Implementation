@@ -23,14 +23,13 @@ public class Table {
     // the number of pages currently held in this table file
     private int numPages;
 
-    public Table( int id, String name, ArrayList<String> columnNames, ArrayList<Integer> dataTypes) {
+    public Table(int id, String name, ArrayList<String> columnNames, ArrayList<Integer> dataTypes) {
         this.id = id;
         this.name = name;
         this.columnNames = columnNames;
         this.dataTypes = dataTypes;
         this.numPages = 0;
     }
-
 
     public String getName() {
         return this.name;

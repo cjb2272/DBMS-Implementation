@@ -6,27 +6,28 @@ package src;
 
 import java.util.ArrayList;
 
-
 public abstract class Query {
 
-    public Query() {}
+    public Query() {
+    }
 
     public abstract void execute();
 
 }
 
-class SelectQuery extends Query{
+class SelectQuery extends Query {
     ArrayList<String> colNames;
     String table;
 
-    public SelectQuery(ArrayList<String> colNames, String table){
+    public SelectQuery(ArrayList<String> colNames, String table) {
         this.colNames = colNames;
         this.table = table;
     }
 
     @Override
     public void execute() {
-        // ask the storage manager for this data. It will in turn ask the buffer first, but that's
+        // ask the storage manager for this data. It will in turn ask the buffer first,
+        // but that's
         // abstracted away from this point in the code
 
         int tableNum = Catalog.instance.getTableIdByName(table);
@@ -37,39 +38,39 @@ class SelectQuery extends Query{
         }
         ArrayList<Record> records = StorageManager.instance.selectData(tableNum, colNames);
 
-        if(colNames.size() == 1 && colNames.get( 0 ).equals( "*" )){
-            colNames = Catalog.instance.getAttributeNames( table );
+        if (colNames.size() == 1 && colNames.get(0).equals("*")) {
+            colNames = Catalog.instance.getAttributeNames(table);
         }
 
         int max = 8;
-        for (String col : colNames){
-            if( col.length() > max){
+        for (String col : colNames) {
+            if (col.length() > max) {
                 max = col.length();
             }
         }
 
-        String padding = " ".repeat( max + 2);
-        String line = "-".repeat( max + 2 );
+        String padding = " ".repeat(max + 2);
+        String line = "-".repeat(max + 2);
         StringBuilder spacer = new StringBuilder();
         StringBuilder columns = new StringBuilder();
 
-        spacer.append( " " );
-        for(String col : colNames){
-            if(col.length() == max){
+        spacer.append(" ");
+        for (String col : colNames) {
+            if (col.length() == max) {
                 columns.append(" |").append(col);
-                spacer.append( line);
+                spacer.append(line);
             } else {
                 columns.append(" |").append(padding, 0, max - col.length() - 1).append(col);
                 spacer.append(line);
             }
         }
 
-        System.out.println( spacer);
+        System.out.println(spacer);
         System.out.println(columns + " |");
-        System.out.println( spacer );
+        System.out.println(spacer);
 
         for (Record record : records) {
-            System.out.println(record.displayRecords( max ));
+            System.out.println(record.displayRecords(max));
         }
         System.out.println(spacer);
         System.out.println("\nSUCCESS\n");
@@ -77,11 +78,11 @@ class SelectQuery extends Query{
     }
 }
 
-class InsertQuery extends Query{
+class InsertQuery extends Query {
     ArrayList<Record> values = new ArrayList<>();
     String table;
 
-    public InsertQuery(String table, ArrayList<ArrayList<Object>> val){
+    public InsertQuery(String table, ArrayList<ArrayList<Object>> val) {
         this.table = table;
 
         int pkIndex = Catalog.instance.getTablePKIndex(Catalog.instance.getTableIdByName(this.table));
@@ -96,7 +97,7 @@ class InsertQuery extends Query{
 
     @Override
     public void execute() {
-        int tableID =  Catalog.instance.getTableIdByName(this.table);
+        int tableID = Catalog.instance.getTableIdByName(this.table);
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
 
         for (Record r : values) {
@@ -105,7 +106,7 @@ class InsertQuery extends Query{
             int attemptToInsert = StorageManager.instance.insertRecord(tableID, r);
             if (attemptToInsert < 0) {
                 int row = -1 * attemptToInsert;
-                System.out.println("row ("+ row + "): Duplicate  primary key for row ("+ row+")");
+                System.out.println("row (" + row + "): Duplicate  primary key for row (" + row + ")");
                 System.out.println("ERROR\n");
                 return;
             }
@@ -115,7 +116,7 @@ class InsertQuery extends Query{
     }
 }
 
-class CreateQuery extends Query{
+class CreateQuery extends Query {
 
     String tableName;
     ArrayList<String> columnNames; // name of attributes
@@ -123,7 +124,8 @@ class CreateQuery extends Query{
     ArrayList<Integer> varLengthSizes;
     String primaryKey;
 
-    public CreateQuery(String table, ArrayList<String> colNames, ArrayList<Integer> dt, ArrayList<Integer> varLengthSizes, String primaryKey) {
+    public CreateQuery(String table, ArrayList<String> colNames, ArrayList<Integer> dt,
+            ArrayList<Integer> varLengthSizes, String primaryKey) {
         this.tableName = table;
         this.columnNames = colNames;
         this.dataTypes = dt;
@@ -134,22 +136,22 @@ class CreateQuery extends Query{
     @Override
     public void execute() {
 
-        // build the attributeInfo arraylist that the schema needs to record the new table
+        // build the attributeInfo arraylist that the schema needs to record the new
+        // table
         ArrayList<Object> attributeInfo = new ArrayList<>();
 
         int index = 0;
         for (int i = 0; i < 4 * columnNames.size(); i += 4) {
             attributeInfo.add(i, columnNames.get(index));
-            attributeInfo.add(i+1, dataTypes.get(index));
+            attributeInfo.add(i + 1, dataTypes.get(index));
 
             if (dataTypes.get(index) == 5 || dataTypes.get(index) == 4) { // varchar or char
-                attributeInfo.add(i+2, varLengthSizes.get(index));
-            }
-            else {
-                attributeInfo.add(i+2, QueryParser.getDataTypeSize(dataTypes.get(index)));
+                attributeInfo.add(i + 2, varLengthSizes.get(index));
+            } else {
+                attributeInfo.add(i + 2, QueryParser.getDataTypeSize(dataTypes.get(index)));
             }
 
-            attributeInfo.add(i+3, columnNames.get(index).equals(primaryKey));
+            attributeInfo.add(i + 3, columnNames.get(index).equals(primaryKey));
 
             index++;
         }
@@ -161,7 +163,6 @@ class CreateQuery extends Query{
             return;
         }
 
-
         int availableId = Catalog.instance.getNumOfTables() + 1;
         StorageManager.instance.createTable(availableId, tableName, columnNames, dataTypes);
         Catalog.instance.addTableSchema(availableId, tableName, attributeInfo);
@@ -169,15 +170,15 @@ class CreateQuery extends Query{
     }
 }
 
-class DisplayQuery extends Query{
-    //If table == null, then it is a display schema command,
-    //  else it is a display info <table> command
+class DisplayQuery extends Query {
+    // If table == null, then it is a display schema command,
+    // else it is a display info <table> command
     String table = null;
 
     public DisplayQuery() {
     }
 
-    public DisplayQuery(String table){
+    public DisplayQuery(String table) {
         this.table = table;
     }
 
@@ -187,13 +188,12 @@ class DisplayQuery extends Query{
         if (table == null) {
             System.out.println(Catalog.instance.getDisplayString());
             System.out.println(String.format("Buffer Size: %d\n", Main.bufferSizeLimit));
-            
+
             if (StorageManager.instance.getNumberOfTables() == 0) {
                 System.out.println("No tables to display");
                 System.out.println("SUCCESS\n");
                 return;
-            }
-            else {
+            } else {
                 ArrayList<TableSchema> allTableSchemas = Catalog.instance.getTableSchemas();
                 System.out.println("Tables:\n");
                 for (TableSchema schema : allTableSchemas) {
@@ -224,5 +224,3 @@ class DisplayQuery extends Query{
         System.out.println(String.format("Records: %d\n", StorageManager.instance.getRecordCountForTable(tableID)));
     }
 }
-
-
