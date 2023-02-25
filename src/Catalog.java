@@ -53,6 +53,11 @@ public class Catalog {
         tableSchemas.add(tableSchema);
     }
 
+    public void removeTableSchema(int tableNum) {
+        tableSchemas.remove(getTableSchemaById(tableNum));
+    }
+
+
     /**
      * Returns the stored size of the database's pages. Size represents number of
      * bytes.

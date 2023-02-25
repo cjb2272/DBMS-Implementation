@@ -170,6 +170,29 @@ class CreateQuery extends Query {
     }
 }
 
+class DropQuery extends Query {
+
+    String tableName;
+    public DropQuery(String tableName) {
+        this.tableName = tableName;
+    }
+
+    @Override
+    public void execute() {
+        int tableID = Catalog.instance.getTableIdByName(tableName);
+        if (tableID == -1) {
+            System.out.println("One cannot drop a table that never existed in the first place.");
+            System.out.println("ERROR\n");
+            return;
+        }
+
+        Catalog.instance.removeTableSchema(tableID);
+        StorageManager.instance.dropTable(tableID);
+        System.out.println("SUCCESS\n");
+
+    }
+}
+
 class DisplayQuery extends Query {
     // If table == null, then it is a display schema command,
     // else it is a display info <table> command

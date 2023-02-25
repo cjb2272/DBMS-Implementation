@@ -72,6 +72,11 @@ public class StorageManager {
         return null;
     }
 
+    public boolean dropTable(int ID) {
+        File file = new File(Paths.get(tablesRootPath, String.valueOf(ID)).toString());
+        return file.delete();
+    }
+
     /*
      * Returns the requested row(s) of data. The Query object calling this is
      * expected to print it out.

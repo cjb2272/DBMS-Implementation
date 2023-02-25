@@ -45,6 +45,25 @@ class QueryParser {
         return null;
     }
 
+    public DropQuery ParseDrop(String input) {
+        String[] tokens = input.split(" ");
+
+        if (tokens.length == 3) {
+            if (tokens[1].toLowerCase(Locale.ROOT).equals("table")) {
+                String tableName = tokens[2];
+                return new DropQuery(tableName);
+            }
+            else {
+                System.out.println("Expected 'table' got: " + tokens[1]);
+                return null;
+            }
+        }
+        else {
+            System.out.println("Expected 'drop table <name>'");
+            return null;
+        }
+    }
+
     // SELECT * FROM <table>;
 
     /**
@@ -506,6 +525,8 @@ class QueryParser {
                 return ParseCreate(input);
             case "display":
                 return ParseDisplay(input);
+            case "drop":
+                return ParseDrop(input);
             default:
                 System.out.println("Error, command not recognized. Received: " + command);
                 return null;
