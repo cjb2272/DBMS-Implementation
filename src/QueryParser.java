@@ -112,7 +112,7 @@ class QueryParser{
 
         String tableName = keywords[2];
 
-        if (Catalog.instance.getTableByName(tableName) == null) {
+        if (Catalog.instance.getTableSchemaByName(tableName) == null) {
             System.out.println("No such table " + tableName);
             return null;
         }

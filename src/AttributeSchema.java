@@ -1,20 +1,30 @@
+/**
+ * Authors Tristan Hoenninger, Austin Cepalia.
+ */
 package src;
-
-import java.nio.ByteBuffer;
 
 public class AttributeSchema {
 
+    // Name of attribute.
     private String name;
+    // type of attribute.
     private int type;
+    // Size of attribute.
     private int size;
+    // If attribute is a primary key.
     private boolean isPrimaryKey;
 
     /**
      *
-     * @param name
-     * @param type
-     * @param size
-     * @param isPrimaryKey
+     * @param name : name of attribute
+     * @param type : int representing type of attribute.
+     *               1 - integer
+     *               2 - double
+     *               3 - boolean
+     *               4 - char
+     *               5 - varchar
+     * @param size : Size in bytes.
+     * @param isPrimaryKey : True or false that this attribute is a primary key.
      */
     public AttributeSchema(String name, int type, int size, boolean isPrimaryKey) {
         this.name = name;
@@ -32,32 +42,37 @@ public class AttributeSchema {
     }
 
     /**
-     *
-     * @return
+     * Returns the type of attribute. The following are the recognized integer to type pairs:
+     * 1 - integer
+     * 2 - double
+     * 3 - boolean
+     * 4 - char
+     * 5 - varchar
+     * @return Integer between 1 - 5 to represent type.
      */
     public int getType() {
         return type;
     }
 
     /**
-     *
-     * @return
+     * Returns the size in bytes of attribute.
+     * @return Integer representing size in bytes.
      */
     public int getSize() {
         return size;
     }
 
     /**
-     *
-     * @return
+     * Returns True if this attribute is a primary key or false otherwise.
+     * @return True or False.
      */
     public boolean isPrimaryKey() {
         return isPrimaryKey;
     }
 
     /**
-     *
-     * @return
+     * Returns the number of bytes needed to represent this attribute.
+     * @return Number of bytes needed to represent attribute.
      */
     protected int getSizeInBytes() {
         int size = Integer.BYTES + (name.length() * Character.BYTES) + Integer.BYTES + Integer.BYTES + Character.BYTES;
@@ -65,8 +80,9 @@ public class AttributeSchema {
     }
 
     /**
-     *
-     * @return
+     * Creates the display string for this attribute.
+     * Consists of attribute name, type and if primary key.
+     * @return a display string.
      */
     public String toString() {
 

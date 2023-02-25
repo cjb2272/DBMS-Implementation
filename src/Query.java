@@ -29,7 +29,7 @@ class SelectQuery extends Query{
         // ask the storage manager for this data. It will in turn ask the buffer first, but that's
         // abstracted away from this point in the code
 
-        int tableNum = Catalog.instance.getTableIntByName(table);
+        int tableNum = Catalog.instance.getTableIdByName(table);
         if (tableNum == -1) {
             System.out.println("No such table " + table);
             System.out.println("ERROR\n");
@@ -84,7 +84,7 @@ class InsertQuery extends Query{
     public InsertQuery(String table, ArrayList<ArrayList<Object>> val){
         this.table = table;
 
-        int pkIndex = Catalog.instance.getTablePKIndex(Catalog.instance.getTableIntByName(this.table));
+        int pkIndex = Catalog.instance.getTablePKIndex(Catalog.instance.getTableIdByName(this.table));
 
         for (ArrayList<Object> row : val) {
             Record r = new Record();
@@ -96,8 +96,8 @@ class InsertQuery extends Query{
 
     @Override
     public void execute() {
-        int tableID =  Catalog.instance.getTableIntByName(this.table);
-        TableSchema table = Catalog.instance.getTableSchemaByInt(tableID);
+        int tableID =  Catalog.instance.getTableIdByName(this.table);
+        TableSchema table = Catalog.instance.getTableSchemaById(tableID);
 
         for (Record r : values) {
 
@@ -154,7 +154,7 @@ class CreateQuery extends Query{
             index++;
         }
 
-        if (Catalog.instance.getTableByName(tableName) != null) {
+        if (Catalog.instance.getTableSchemaByName(tableName) != null) {
             // table already exists, error out
             System.out.println("Table with name \"" + tableName + "\" already exists in the database.");
             System.out.println("ERROR\n");
@@ -162,7 +162,7 @@ class CreateQuery extends Query{
         }
 
 
-        int availableId = Catalog.instance.getTablesSize() + 1;
+        int availableId = Catalog.instance.getNumOfTables() + 1;
         StorageManager.instance.createTable(availableId, tableName, columnNames, dataTypes);
         Catalog.instance.addTableSchema(availableId, tableName, attributeInfo);
         System.out.println("SUCCESS\n");
@@ -197,7 +197,7 @@ class DisplayQuery extends Query{
                 ArrayList<TableSchema> allTableSchemas = Catalog.instance.getTableSchemas();
                 System.out.println("Tables:\n");
                 for (TableSchema schema : allTableSchemas) {
-                    displayTableSchema(schema.getTableNum());
+                    displayTableSchema(schema.getTableId());
                 }
             }
             System.out.println("SUCCESS\n");
@@ -205,7 +205,7 @@ class DisplayQuery extends Query{
 
         }
 
-        int tableID = Catalog.instance.getTableIntByName(table);
+        int tableID = Catalog.instance.getTableIdByName(table);
 
         if (tableID == -1) {
             System.out.println("No such table " + table);
@@ -219,7 +219,7 @@ class DisplayQuery extends Query{
     }
 
     private void displayTableSchema(int tableID) {
-        System.out.println(Catalog.instance.getTableSchemaByInt(tableID));
+        System.out.println(Catalog.instance.getTableSchemaById(tableID));
         System.out.println(String.format("Pages: %d", StorageManager.instance.getPageCountForTable(tableID)));
         System.out.println(String.format("Records: %d\n", StorageManager.instance.getRecordCountForTable(tableID)));
     }

@@ -74,7 +74,7 @@ public class StorageManager {
     Returns the requested row(s) of data. The Query object calling this is expected to print it out.
      */
     public ArrayList<Record> selectData(int tableID, ArrayList<String> colNames) {
-        ArrayList<Integer> arrayOfPageLocationsOnDisk = Catalog.instance.getTableSchemaByInt(tableID).getPageOrder(); //need the P.O. itself
+        ArrayList<Integer> arrayOfPageLocationsOnDisk = Catalog.instance.getTableSchemaById(tableID).getPageOrder(); //need the P.O. itself
         int pageCount = arrayOfPageLocationsOnDisk.size();
         ArrayList<Record> results = new ArrayList<>();
 
@@ -90,7 +90,7 @@ public class StorageManager {
                     continue;
                 }
 
-                ArrayList<AttributeSchema> columns = Catalog.instance.getTableSchemaByInt(tableID).getAttributes();
+                ArrayList<AttributeSchema> columns = Catalog.instance.getTableSchemaById(tableID).getAttributes();
 
                 ArrayList<Integer> indexes = new ArrayList<>();
                 int i = 0;
@@ -142,7 +142,7 @@ public class StorageManager {
      * @param recordToInsert the record to insert
      */
     public int insertRecord(int tableID, Record recordToInsert) {
-        TableSchema table = Catalog.instance.getTableSchemaByInt(tableID);
+        TableSchema table = Catalog.instance.getTableSchemaById(tableID);
 
         ArrayList<Integer> pageOrder = table.getPageOrder();
         if (0 == pageOrder.size()) {
@@ -202,11 +202,26 @@ public class StorageManager {
      * @return number of pages in a table
      */
     public int getPageCountForTable(int tableID) {
-        return Catalog.instance.getTableSchemaByInt(tableID).getPageOrder().size();
+        return Catalog.instance.getTableSchemaById(tableID).getPageOrder().size();
+        /*
+        String tableFilePath = Paths.get(tablesRootPath, String.valueOf(tableID)).toString();
+        RandomAccessFile file;
+        try {
+            file = new RandomAccessFile(tableFilePath, "r");
+            file.seek(0);
+            byte[] pageByteArray = new byte[4];
+            file.read(pageByteArray, 0, 4);
+            file.close();
+            return ByteBuffer.wrap(pageByteArray).getInt();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return -1;
+         */
     }
 
     public int getRecordCountForTable(int tableID) {
-        ArrayList<Integer> arrayOfPageLocationsOnDisk = Catalog.instance.getTableSchemaByInt(tableID).getPageOrder();
+        ArrayList<Integer> arrayOfPageLocationsOnDisk = Catalog.instance.getTableSchemaById(tableID).getPageOrder();
         int numPages = arrayOfPageLocationsOnDisk.size();
         int sum = 0;
         for (int i = 0; i < numPages; i++) {
@@ -366,7 +381,7 @@ public class StorageManager {
          * @return empty page that is now in the buffer
          */
         public Page CreateNewPage(int tableNumber, int priorPageDiskPosition) throws IOException {
-            TableSchema table = Catalog.instance.getTableSchemaByInt(tableNumber);
+            TableSchema table = Catalog.instance.getTableSchemaById(tableNumber);
             // insert page into P.O. using proper method calls
             int locOnDisk = table.changePageOrder(priorPageDiskPosition);
             return AddToBufferLogic(tableNumber, locOnDisk, true);

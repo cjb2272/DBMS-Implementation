@@ -1,12 +1,18 @@
+/**
+ * Authors Tristan Hoennigner, Austin Cepalia.
+ */
 package src;
 
 import java.util.ArrayList;
 
 public class TableSchema {
 
+    //ArrayList of AttributeSchema
     private ArrayList<AttributeSchema> attributes;
+    //Table name
     private String tableName;
-    private int tableNum;
+    //Table Id number
+    private int tableId;
 
     /* Page Ordering maps where a page is actually on the disk, because
        we don't want to be shifting pages all around on disk, everytime
@@ -21,23 +27,23 @@ public class TableSchema {
 
 
     /**
-     *
-     * @param tableName
-     * @param tableNum
+     * Creates an instance of the Table object.
+     * @param tableName : table name
+     * @param tableId : table id number
      */
-    public TableSchema(String tableName, int tableNum, ArrayList<Integer> pageOrder) {
+    public TableSchema(String tableName, int tableId, ArrayList<Integer> pageOrder) {
         this.tableName = tableName;
-        this.tableNum = tableNum;
+        this.tableId = tableId;
         this.attributes = new ArrayList<>();
         this.pageOrder = pageOrder;
     }
 
     /**
-     *
-     * @param name
-     * @param type
-     * @param size
-     * @param isPrimaryKey
+     * Adds an attribute schema to the table.
+     * @param name : attribute name
+     * @param type : attribute type
+     * @param size : size of attribute
+     * @param isPrimaryKey : True if attribute is a primary key, false otherwise.
      */
     public void addAttribute(String name, int type, int size, boolean isPrimaryKey) {
         AttributeSchema attribute = new AttributeSchema(name, type, size, isPrimaryKey);
@@ -77,40 +83,41 @@ public class TableSchema {
     }
 
     /**
-     *
-     * @return
+     * Returns the table name.
+     * @return table name as String.
      */
     public String getTableName() {
         return tableName;
     }
 
     /**
-     *
-     * @return
+     * Returns table id.
+     * @return numerical table id.
      */
-    public int getTableNum() {
-        return tableNum;
+    public int getTableId() {
+        return tableId;
     }
 
     /**
-     *
-     * @return
+     * Returns ArrayList of AttributeSchemas.
+     * @return Array list Schemas.
      */
     public ArrayList<AttributeSchema> getAttributes() {
         return attributes;
     }
 
     /**
-     *
-     * @return
+     * Returns order of pages in the table.
+     * @return ArrayList of integers.
      */
     public ArrayList<Integer> getPageOrder() {
         return pageOrder;
     }
 
     /**
-     *
-     * @return
+     * Returns the size in bytes that is needed to represent this TableSchema.
+     * Includes the sizes of its attributes.
+     * @return An integer of the number of bytes needed to represent this TableSchema.
      */
     protected int getSizeInBytes() {
         int size = Integer.BYTES + Integer.BYTES + (tableName.length() * Character.BYTES) + Integer.BYTES +
@@ -122,9 +129,10 @@ public class TableSchema {
     }
 
     /**
-     *
-     * @param o
-     * @return
+     * Checks if Object o is equal to this table schema.
+     * Equal is both the table ids and table names are equal.
+     * @param o : TableSchema object
+     * @return returns True if o is equal to this tableSchema. Returns false otherwise.
      */
     @Override
     public boolean equals(Object o) {
@@ -137,12 +145,12 @@ public class TableSchema {
         }
         TableSchema tableSchema = (TableSchema) o;
 
-        return this.tableNum == tableSchema.tableNum && this.tableName.equals(tableSchema.tableName);
+        return this.tableId == tableSchema.tableId && this.tableName.equals(tableSchema.tableName);
     }
 
     /**
-     *
-     * @return
+     * Returns a display string. Consists of table name and the display strings of its attributes.
+     * @return A display string.
      */
     @Override
     public String toString() {
