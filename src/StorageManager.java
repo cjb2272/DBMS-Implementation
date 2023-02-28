@@ -89,58 +89,56 @@ public class StorageManager {
         int pageCount = arrayOfPageLocationsOnDisk.size();
         ArrayList<Record> results = new ArrayList<>();
 
-        for (int pageNum = 0; pageNum < pageCount; pageNum++) {
-            int locationOnDisk = arrayOfPageLocationsOnDisk.get(pageNum);
-
+        for ( int locationOnDisk : arrayOfPageLocationsOnDisk ) {
             try {
-                Page page = buffer.GetPage(tableID, locationOnDisk); // the buffer will read from disk if it doesn't
-                                                                     // have the page
+                Page page = buffer.GetPage( tableID, locationOnDisk ); // the buffer will read from disk if it doesn't
+                // have the page
                 ArrayList<Record> records = page.getRecordsInPage();
 
-                if (colNames.size() == 1 && colNames.get(0).equals("*")) {
-                    results.addAll(records);
+                if ( colNames.size() == 1 && colNames.get( 0 ).equals( "*" ) ) {
+                    results.addAll( records );
                     continue;
                 }
 
-                ArrayList<AttributeSchema> columns = Catalog.instance.getTableSchemaById(tableID).getAttributes();
+                ArrayList<AttributeSchema> columns = Catalog.instance.getTableSchemaById( tableID ).getAttributes();
 
                 ArrayList<Integer> indexes = new ArrayList<>();
                 int i = 0;
-                for (AttributeSchema column : columns) {
-                    if (column.getName().equals(columns.get(i).getName())) {
-                        indexes.add(i);
+                for ( AttributeSchema column : columns ) {
+                    if ( column.getName().equals( columns.get( i ).getName() ) ) {
+                        indexes.add( i );
                     }
                     i++;
                 }
 
                 int[] colIdxs = new int[indexes.size()];
                 i = 0;
-                for (Integer index : indexes) {
+                for ( Integer index : indexes ) {
                     colIdxs[i] = index;
                     i++;
                 }
 
-                int pkIndex = Catalog.instance.getTablePKIndex(tableID);
+                int pkIndex = Catalog.instance.getTablePKIndex( tableID );
 
-                for (Record record : records) {
+                for ( Record record : records ) {
 
                     ArrayList<Object> originalRecordData = record.getRecordContents();
 
                     ArrayList<Object> filteredRecordData = new ArrayList<>();
-                    for (int idx : colIdxs) {
-                        filteredRecordData.add(originalRecordData.get(idx));
+                    for ( int idx : colIdxs ) {
+                        filteredRecordData.add( originalRecordData.get( idx ) );
                     }
 
                     Record newRecord = new Record();
-                    newRecord.setRecordContents(filteredRecordData);
-                    newRecord.setPkIndex(pkIndex);
-                    results.add(newRecord);
+                    newRecord.setRecordContents( filteredRecordData );
+                    newRecord.setPkIndex( pkIndex );
+                    results.add( newRecord );
                 }
 
                 return results;
 
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException( e );
             }
         }
 
@@ -190,7 +188,7 @@ public class StorageManager {
                             }
                             break;
                         }
-                        if (index == numPagesInTable - 1 && idx == numRecordsInPage - 1 && comparison > 0) {
+                        if (index == numPagesInTable - 1 && idx == numRecordsInPage - 1) {
                             pageReference.getRecordsInPage().add(idx + 1, recordToInsert);
                             pageReference.setIsModified(true);
                             if (pageReference.computeSizeInBytes() > Main.pageSize) {
@@ -237,12 +235,11 @@ public class StorageManager {
 
     public int getRecordCountForTable(int tableID) {
         ArrayList<Integer> arrayOfPageLocationsOnDisk = Catalog.instance.getTableSchemaById(tableID).getPageOrder();
-        int numPages = arrayOfPageLocationsOnDisk.size();
         int sum = 0;
-        for (int i = 0; i < numPages; i++) {
+        for ( Integer integer : arrayOfPageLocationsOnDisk ) {
             try {
-                int locationOnDisk = arrayOfPageLocationsOnDisk.get(i);
-                sum += buffer.GetPage(tableID, locationOnDisk).getRecordCount();
+                int locationOnDisk = integer;
+                sum += buffer.GetPage( tableID, locationOnDisk ).getRecordCount();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -282,7 +279,7 @@ public class StorageManager {
         // will increase indefinitely (long better than int...)
         private long counterForLRU = 0;
         // The Program Wide Buffer Itself
-        ArrayList<Page> PageBuffer = new ArrayList<Page>();
+        ArrayList<Page> PageBuffer = new ArrayList<>();
 
         /**
          * Request A page by table number id and page number
@@ -425,27 +422,17 @@ public class StorageManager {
             ArrayList<Record> secondPageRecords = new ArrayList<>();
             ArrayList<Record> overFullPageRecords = overFullPage.getRecordsInPage();
             int numberOfRecordsInPage = overFullPageRecords.size();
-            if ((numberOfRecordsInPage % 2) == 0) { // if even num of records
-                int numRecordsToCopy = numberOfRecordsInPage / 2;
-                for (int rec = 0; rec < numRecordsToCopy; rec++) {
-                    firstPageRecords.add(overFullPageRecords.get(rec));
-                }
-                overFullPage.setRecordsInPage(firstPageRecords);
-                for (int r = numRecordsToCopy; r < numberOfRecordsInPage; r++) {
-                    secondPageRecords.add(overFullPageRecords.get(r));
-                }
-                newEmptyPage.setRecordsInPage(secondPageRecords);
-            } else { // number of records is odd
-                int numRecordsForFirstPage = (int) Math.ceil(numberOfRecordsInPage / 2);
-                for (int rec = 0; rec < numRecordsForFirstPage; rec++) {
-                    firstPageRecords.add(overFullPageRecords.get(rec));
-                }
-                overFullPage.setRecordsInPage(firstPageRecords);
-                for (int r = numRecordsForFirstPage; r < numberOfRecordsInPage; r++) {
-                    secondPageRecords.add(overFullPageRecords.get(r));
-                }
-                newEmptyPage.setRecordsInPage(secondPageRecords);
+            // if even number of records then divide by two, if odd number then divide by two and round up
+            int numRecordsToCopy = ((numberOfRecordsInPage % 2) == 0) ? numberOfRecordsInPage / 2: (int) Math.ceil(numberOfRecordsInPage / 2);
+
+            for (int rec = 0; rec < numRecordsToCopy; rec++) {
+                firstPageRecords.add(overFullPageRecords.get(rec));
             }
+            overFullPage.setRecordsInPage(firstPageRecords);
+            for (int r = numRecordsToCopy; r < numberOfRecordsInPage; r++) {
+                secondPageRecords.add(overFullPageRecords.get(r));
+            }
+            newEmptyPage.setRecordsInPage(secondPageRecords);
             // page has been split appropriately
         }
 

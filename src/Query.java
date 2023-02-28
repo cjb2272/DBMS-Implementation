@@ -58,11 +58,10 @@ class SelectQuery extends Query {
         for(String col : colNames){
             if(col.length() == max){
                 columns.append(" |").append(col);
-                spacer.append( line);
             } else {
                 columns.append(" |").append(padding, 0, max - col.length() - 1).append(col);
-                spacer.append(line);
             }
+            spacer.append( line);
         }
 
         System.out.println( spacer);
@@ -98,11 +97,9 @@ class InsertQuery extends Query {
     @Override
     public void execute() {
         int tableID = Catalog.instance.getTableIdByName(this.table);
-        TableSchema table = Catalog.instance.getTableSchemaById(tableID);
 
         for (Record r : values) {
 
-            int pkIndex = r.getPkIndex();
             int attemptToInsert = StorageManager.instance.insertRecord(tableID, r);
             if (attemptToInsert < 0) {
                 int row = -1 * attemptToInsert;
@@ -251,7 +248,7 @@ class DisplayQuery extends Query {
 
         if (table == null) {
             System.out.println(Catalog.instance.getDisplayString());
-            System.out.println(String.format("Buffer Size: %d\n", Main.bufferSizeLimit));
+            System.out.printf( "Buffer Size: %d\n%n", Main.bufferSizeLimit);
 
             if (StorageManager.instance.getNumberOfTables() == 0) {
                 System.out.println("No tables to display");
@@ -284,7 +281,7 @@ class DisplayQuery extends Query {
 
     private void displayTableSchema(int tableID) {
         System.out.println(Catalog.instance.getTableSchemaById(tableID));
-        System.out.println(String.format("Pages: %d", StorageManager.instance.getPageCountForTable(tableID)));
-        System.out.println(String.format("Records: %d\n", StorageManager.instance.getRecordCountForTable(tableID)));
+        System.out.printf( "Pages: %d%n", StorageManager.instance.getPageCountForTable(tableID));
+        System.out.printf( "Records: %d\n%n", StorageManager.instance.getRecordCountForTable(tableID));
     }
 }

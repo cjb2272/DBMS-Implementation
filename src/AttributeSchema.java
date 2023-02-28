@@ -1,4 +1,4 @@
-/**
+/*
  * Authors Tristan Hoenninger, Austin Cepalia.
  */
 package src;
@@ -35,7 +35,7 @@ public class AttributeSchema {
 
     /**
      *
-     * @return
+     * @return Name of attribute
      */
     public String getName() {
         return name;
@@ -80,8 +80,7 @@ public class AttributeSchema {
      * @return Number of bytes needed to represent attribute.
      */
     protected int getSizeInBytes() {
-        int size = Integer.BYTES + (name.length() * Character.BYTES) + Integer.BYTES + Integer.BYTES + Character.BYTES;
-        return size;
+        return Integer.BYTES + (name.length() * Character.BYTES) + Integer.BYTES + Integer.BYTES + Character.BYTES;
     }
 
     /**

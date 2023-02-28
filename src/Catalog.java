@@ -1,4 +1,4 @@
-/**
+/*
  * Author Tristan Hoenninger, Charlie Baker, Austin Cepalia.
  */
 package src;
@@ -44,7 +44,7 @@ public class Catalog {
      *                      objects: String name, int type, int size, and boolean
      *                      isPrimaryKey.
      */
-    public void addTableSchema(int tableNum, String tableName, ArrayList attributeInfo) {
+    public void addTableSchema(int tableNum, String tableName, ArrayList<Object> attributeInfo) {
         TableSchema tableSchema = new TableSchema(tableName, tableNum, new ArrayList<>());
         for (int i = 0; i < attributeInfo.size(); i += 4) {
             tableSchema.addAttribute((String) attributeInfo.get(i), (int) attributeInfo.get(i + 1),
@@ -228,10 +228,8 @@ public class Catalog {
      * @return A display string.
      */
     public String getDisplayString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("DB location: " + this.rootPath + "\n");
-        sb.append(String.format("Page Size: %d", getPageSize()));
-        return sb.toString();
+        return "DB location: " + this.rootPath + "\n" +
+                String.format( "Page Size: %d", getPageSize() );
     }
 
     /**
@@ -271,9 +269,9 @@ public class Catalog {
                 // Reads in the table id and table name
                 int tableId = byteProcessor.readInt();
                 int tableNameLen = byteProcessor.readInt();
-                String tableName = "";
+                StringBuilder tableName = new StringBuilder();
                 for (int j = 0; j < tableNameLen; j++) {
-                    tableName += byteProcessor.readChar();
+                    tableName.append( byteProcessor.readChar() );
                 }
 
                 // Reads in the pageOrder int array
@@ -282,24 +280,24 @@ public class Catalog {
                 for (int j = 0; j < pageOrderLen; j++) {
                     pageOrder.add(byteProcessor.readInt());
                 }
-                TableSchema tableSchema = new TableSchema(tableName, tableId, pageOrder);
+                TableSchema tableSchema = new TableSchema( tableName.toString(), tableId, pageOrder);
 
                 // Reads in number of attributes
                 int numOfAttributes = byteProcessor.readInt();
                 // Reads in an attribute and adds it to the table schema
                 for (int j = 0; j < numOfAttributes; j++) {
                     int attrNameLen = byteProcessor.readInt();
-                    String attrName = "";
+                    StringBuilder attrName = new StringBuilder();
                     for (int k = 0; k < attrNameLen; k++) {
-                        attrName += byteProcessor.readChar();
+                        attrName.append( byteProcessor.readChar() );
                     }
                     int type = byteProcessor.readInt();
                     int size = byteProcessor.readInt();
                     char isPrimary = byteProcessor.readChar();
                     if (isPrimary == 't') {
-                        tableSchema.addAttribute(attrName, type, size, Boolean.TRUE);
+                        tableSchema.addAttribute( attrName.toString(), type, size, Boolean.TRUE);
                     } else {
-                        tableSchema.addAttribute(attrName, type, size, Boolean.FALSE);
+                        tableSchema.addAttribute( attrName.toString(), type, size, Boolean.FALSE);
                     }
                 }
                 catalog.tableSchemas.add(tableSchema);
