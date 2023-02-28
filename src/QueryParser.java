@@ -49,7 +49,7 @@ class QueryParser {
     //alter table <name> add <a_name> <a_type>;
     //alter table <name> add <a_name> <a_type> default <value>
 
-    private Query ParseAlter( String input ) {
+    public Query ParseAlter( String input ) {
         String[] tokens = input.split( " " , 8);
 
 
@@ -313,6 +313,118 @@ class QueryParser {
     }
 
     /**
+     * This function parses a create table command into a CreateQuery object
+     *
+     * @param input The command being parsed
+     * @return a CreateQuery representing the command given, null if there is an
+     *         error
+     */
+    public CreateQuery ParseCreate(String input) {
+        if (!input.endsWith(")")) {
+            System.out.println( """
+                    Missing closing Parenthesis. Must use this format:
+                    CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,
+                        <attr_name2> <attr_type2>, <attr_nameN> <attr_typeN>);""" );
+            return null;
+        }
+
+        String[] chunks = input.split("[(]", 2);
+        if (chunks.length < 2) {
+            System.out.println( """
+                    Missing opening Parenthesis. Must use this format:
+                    CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,
+                        <attr_name2> <attr_type2>, <attr_nameN> <attr_typeN>);""" );
+            return null;
+        }
+
+        String[] keywords = chunks[0].split(" ");
+
+        if (keywords.length < 3) {
+            System.out.println("Missing arguments for CREATE command.");
+            return null;
+        }
+        if (!keywords[1].toLowerCase(Locale.ROOT).equals("table")) {
+            System.out.println("Missing TABLE keyword.");
+            return null;
+        }
+
+        String[] attributes = chunks[1].split(",");
+
+        ArrayList<String> columnNames = new ArrayList<>();
+        ArrayList<Integer> dataTypes = new ArrayList<>();
+        ArrayList<Integer> varLengthSizes = new ArrayList<>();
+        String pk = null;
+
+        for (String attr : attributes) {
+            attr = attr.strip();
+            String[] temp = attr.split(" ");
+
+            if (temp.length == 1) {
+
+                if (dataTypes.size() == 0 && temp[0].equals(")")) {
+                    System.out.println("Missing attributes from CREATE command.");
+                } else {
+                    System.out.println("Too few arguments for attribute. Got: " + attr);
+                }
+                return null;
+            } else if (temp.length == 3) {
+                // Primary key
+                if (temp[2].replace(")", "").equals("primarykey")) {
+                    if (pk == null) {
+                        pk = temp[0];
+                    } else {
+                        System.out.println("Primary key already exists, it was named: " + pk);
+                        return null;
+                    }
+
+                } else {
+                    System.out.println("Too many arguments: Expected primary key, got: " + temp[2]);
+                    return null;
+                }
+            } else if (temp.length > 3) {
+                System.out.println( """
+                        Please ensure that attributes are in the following format:
+                        <name> <type>     -or-
+                        <name> <type> primarykey""" );
+                return null;
+            }
+
+            String name = temp[0];
+            if (columnNames.contains(name)) {
+                System.out.println("Duplicate attribute name \"" + name + "\"");
+                return null;
+            }
+
+            int result = StringToCode(temp[1]);
+            if (result == -1) {
+                System.out.println(
+                        "You must give one of the accepted types for an attribute:\n Integer, Double, Boolean, Char(x), or Varchar(x).");
+                System.out.println("Received: " + temp[1]);
+                return null;
+            }
+
+            columnNames.add(name);
+            dataTypes.add(result);
+
+            if (result == 4 || result == 5) {
+                int charLength = GetLength(temp[1]);
+                varLengthSizes.add(charLength);
+                dataTypes.add(charLength);
+            } else {
+                varLengthSizes.add(-1);
+            }
+
+        }
+
+        if (pk == null) {
+            System.out.println("No primary key defined.");
+            return null;
+        }
+
+        return new CreateQuery(keywords[2], columnNames, dataTypes, varLengthSizes, pk);
+    }
+
+    /**
      * This function compares two lists of data types to ensure that data being
      * inserted into a table matches the columns
      * 
@@ -448,117 +560,7 @@ class QueryParser {
     // CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,
     // <attr_name2> <attr_type2>, <attr_nameN> <attr_typeN>);
 
-    /**
-     * This function parses a create table command into a CreateQuery object
-     * 
-     * @param input The command being parsed
-     * @return a CreateQuery representing the command given, null if there is an
-     *         error
-     */
-    public CreateQuery ParseCreate(String input) {
-        if (!input.endsWith(")")) {
-            System.out.println( """
-                    Missing closing Parenthesis. Must use this format:
-                    CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,
-                        <attr_name2> <attr_type2>, <attr_nameN> <attr_typeN>);""" );
-            return null;
-        }
 
-        String[] chunks = input.split("[(]", 2);
-        if (chunks.length < 2) {
-            System.out.println( """
-                    Missing opening Parenthesis. Must use this format:
-                    CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,
-                        <attr_name2> <attr_type2>, <attr_nameN> <attr_typeN>);""" );
-            return null;
-        }
-
-        String[] keywords = chunks[0].split(" ");
-
-        if (keywords.length < 3) {
-            System.out.println("Missing arguments for CREATE command.");
-            return null;
-        }
-        if (!keywords[1].toLowerCase(Locale.ROOT).equals("table")) {
-            System.out.println("Missing TABLE keyword.");
-            return null;
-        }
-
-        String[] attributes = chunks[1].split(",");
-
-        ArrayList<String> columnNames = new ArrayList<>();
-        ArrayList<Integer> dataTypes = new ArrayList<>();
-        ArrayList<Integer> varLengthSizes = new ArrayList<>();
-        String pk = null;
-
-        for (String attr : attributes) {
-            attr = attr.strip();
-            String[] temp = attr.split(" ");
-
-            if (temp.length == 1) {
-
-                if (dataTypes.size() == 0 && temp[0].equals(")")) {
-                    System.out.println("Missing attributes from CREATE command.");
-                } else {
-                    System.out.println("Too few arguments for attribute. Got: " + attr);
-                }
-                return null;
-            } else if (temp.length == 3) {
-                // Primary key
-                if (temp[2].replace(")", "").equals("primarykey")) {
-                    if (pk == null) {
-                        pk = temp[0];
-                    } else {
-                        System.out.println("Primary key already exists, it was named: " + pk);
-                        return null;
-                    }
-
-                } else {
-                    System.out.println("Too many arguments: Expected primary key, got: " + temp[2]);
-                    return null;
-                }
-            } else if (temp.length > 3) {
-                System.out.println( """
-                        Please ensure that attributes are in the following format:
-                        <name> <type>     -or-
-                        <name> <type> primarykey""" );
-                return null;
-            }
-
-            String name = temp[0];
-            if (columnNames.contains(name)) {
-                System.out.println("Duplicate attribute name \"" + name + "\"");
-                return null;
-            }
-
-            int result = StringToCode(temp[1]);
-            if (result == -1) {
-                System.out.println(
-                        "You must give one of the accepted types for an attribute:\n Integer, Double, Boolean, Char(x), or Varchar(x).");
-                System.out.println("Received: " + temp[1]);
-                return null;
-            }
-
-            columnNames.add(name);
-            dataTypes.add(result);
-
-            if (result == 4 || result == 5) {
-                int charLength = GetLength(temp[1]);
-                varLengthSizes.add(charLength);
-                dataTypes.add(charLength);
-            } else {
-                varLengthSizes.add(-1);
-            }
-
-        }
-
-        if (pk == null) {
-            System.out.println("No primary key defined.");
-            return null;
-        }
-
-        return new CreateQuery(keywords[2], columnNames, dataTypes, varLengthSizes, pk);
-    }
 
     /**
      * This function takes a given piece of data as a string, like an integer
