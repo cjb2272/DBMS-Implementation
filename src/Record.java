@@ -8,7 +8,7 @@ import src.*;
 
 /**
  * representative of an individual record
- * 
+ *
  * @author Charlie Baker, Duncan Small, Kevin Martin
  */
 public class Record {
@@ -52,7 +52,7 @@ public class Record {
      * pre-condition: Record that we are computing size for is composed of data
      * Method Called by Page's computeSizeInBytes
      * Also Called by Page's parse_bytes
-     * 
+     *
      * @return How many bytes this record consists of.
      *         Size returned includes the bytes used to represent ints
      *         telling how many chars are in a varchar or char
@@ -85,7 +85,7 @@ public class Record {
      * Parses a byte array representation of a record and returns the Record
      * representation of the data
      * to be used with the Page object
-     * 
+     *
      * @param tableNumber   the table number corresponding to the record
      * @param recordInBytes the Page's ByteBuffer with the pointer at the beginning
      *                      of this record's data
@@ -139,7 +139,7 @@ public class Record {
     /**
      * Converts the object representation of a record into the byte representation
      * to be stored on disk
-     * 
+     *
      * @param tableNum the table number corresponding to this record
      * @return a byte array containing all the record's data in byte form
      */
@@ -199,17 +199,17 @@ public class Record {
         return this.recordContents.equals(rec.recordContents);
     }
 
-    public String displayRecords(int padLen) {
-        String result = "";
+    public String displayRecords(int padLen){
+        StringBuilder result = new StringBuilder();
 
-        String padding = "                 ".substring(0, padLen);
+        String padding = " ".repeat( padLen );
 
         for (Object obj : this.recordContents) {
             String temp = obj.toString();
-            if (temp.length() >= padding.length()) {
-                result += " |" + temp;
+            if(temp.length() >= padding.length()){
+                result.append( " |" ).append( temp );
             } else {
-                result += " |" + padding.substring(0, padding.length() - temp.length()) + temp;
+                result.append( " |" ).append( padding, 0, padLen - temp.length() ).append( temp );
             }
         }
 
