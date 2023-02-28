@@ -170,9 +170,50 @@ class CreateQuery extends Query {
     }
 }
 
+class AlterQuery extends Query{
+
+    String tableName;
+    String columnName;
+    int columnType;
+    Object defaultValue;
+
+    //0 means drop column
+    //1 means alter column
+    //2 means alter column with a default value
+    int alterType;
+
+    public AlterQuery(String table, String colName){
+        this.tableName = table;
+        this.columnName = colName;
+        this.alterType = 0;
+    }
+
+    public AlterQuery(String table, String colName, int colType){
+        this.tableName = table;
+        this.columnName = colName;
+        this.columnType = colType;
+        this.alterType = 1;
+    }
+
+    public AlterQuery(String table, String colName, int colType, Object defaultVal){
+        this.tableName = table;
+        this.columnName = colName;
+        this.columnType = colType;
+        this.defaultValue = defaultVal;
+        this.alterType = 2;
+    }
+
+    public void execute(){
+        //TODO
+    }
+
+}
+
+
 class DropQuery extends Query {
 
     String tableName;
+
     public DropQuery(String tableName) {
         this.tableName = tableName;
     }

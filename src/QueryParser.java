@@ -45,6 +45,97 @@ class QueryParser {
         return null;
     }
 
+    //alter table <name> drop <a_name>;
+    //alter table <name> add <a_name> <a_type>;
+    //alter table <name> add <a_name> <a_type> default <value>
+
+    private Query ParseAlter( String input ) {
+        String[] tokens = input.split( " " , 8);
+
+
+        if(tokens.length < 5){
+            System.out.println( "Expected 'alter table <name> drop <a_name>;' or " +
+                    "'alter table <name> add <a_name> <a_type> [optional: default <value>];'" );
+            return null;
+        }
+        else if(!tokens[1].equalsIgnoreCase( "table" )){
+            System.out.println("Missing Table keyword.");
+            return null;
+        }
+
+        String tableName = tokens[2];
+
+        if (tokens.length == 5){
+            //drop
+            if(!tokens[3].equalsIgnoreCase( "drop" )){
+                System.out.println("Expected drop command, got: " + tokens[3]);
+                System.out.println( "Use the format 'alter table <name> drop <a_name>;' or " +
+                        "'alter table <name> add <a_name> <a_type> [optional: default <value>];'" );
+                return null;
+            }
+
+            return new AlterQuery(tableName, tokens[4]);
+        }
+        else if (tokens.length == 6){
+            //alter no default
+            if(!tokens[3].equalsIgnoreCase( "add" )){
+                System.out.println("Expected add command, got: " + tokens[3]);
+                System.out.println( "Use the format 'alter table <name> drop <a_name>;' or " +
+                        "'alter table <name> add <a_name> <a_type> [optional: default <value>];'" );
+                return null;
+            }
+            else if(StringToCode( tokens[5] ) == -1){
+                System.out.println("Must use a valid column type, got: " + tokens[5]);
+                return null;
+            }
+
+            return new AlterQuery( tableName, tokens[4], StringToCode( tokens[5] ));
+
+        }
+        else if (tokens.length == 8) {
+            //alter with default
+            int typeCode = StringToCode( tokens[5] );
+            if(!tokens[3].equalsIgnoreCase( "add" )){
+                System.out.println("Expected add command, got: " + tokens[3]);
+                System.out.println( "Use the format 'alter table <name> drop <a_name>;' or " +
+                        "'alter table <name> add <a_name> <a_type> [optional: default <value>];'" );
+                return null;
+            }
+            else if(typeCode == -1){
+                System.out.println("Must use a valid column type, got: " + tokens[5]);
+                return null;
+            }
+
+            List typeInfo = TypeCast( tokens[7] );
+            int defaultType = (int) typeInfo.get( 0 );
+            if((defaultType == 0 && (typeCode == 4 || typeCode == 5))){
+                String defaultStr = (String) typeInfo.get( 1 );
+                int strLen = GetLength( tokens[5] );
+                if(strLen != defaultStr.length() && typeCode == 4){
+                    System.out.println("Default Value must follow type constraint: " + tokens[5]);
+                    return null;
+                }
+                else if(defaultStr.length() > strLen){
+                    System.out.println("Default Value must follow type constraint: " + tokens[5]);
+                    return null;
+                }
+            }
+            else if (defaultType != typeCode){
+                System.out.println("Default value type must match column type given.");
+                System.out.println("Got (" + CodeToString( defaultType ) + ") Expected (" + CodeToString( typeCode ) + ").");
+                return null;
+            }
+
+            return new AlterQuery( tableName, tokens[4], typeCode, tokens[7]);
+        }
+        else{
+            System.out.println( "Expected 'alter table <name> drop <a_name>;' or " +
+                    "'alter table <name> add <a_name> <a_type> [optional: default <value>];'" );
+            return null;
+        }
+    }
+
+
     public DropQuery ParseDrop(String input) {
         String[] tokens = input.split(" ");
 
@@ -366,17 +457,19 @@ class QueryParser {
      */
     public CreateQuery ParseCreate(String input) {
         if (!input.endsWith(")")) {
-            System.out.println("Missing closing Parenthesis. Must use this format:\n" +
-                    "CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,\n" +
-                    "    <attr_name2> <attr_type2>, <attr_nameN> <attr_typeN>);");
+            System.out.println( """
+                    Missing closing Parenthesis. Must use this format:
+                    CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,
+                        <attr_name2> <attr_type2>, <attr_nameN> <attr_typeN>);""" );
             return null;
         }
 
         String[] chunks = input.split("[(]", 2);
         if (chunks.length < 2) {
-            System.out.println("Missing opening Parenthesis. Must use this format:\n" +
-                    "CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,\n" +
-                    "    <attr_name2> <attr_type2>, <attr_nameN> <attr_typeN>);");
+            System.out.println( """
+                    Missing opening Parenthesis. Must use this format:
+                    CREATE TABLE <name> (<attr_name1> <attr_type1> primarykey,
+                        <attr_name2> <attr_type2>, <attr_nameN> <attr_typeN>);""" );
             return null;
         }
 
@@ -425,9 +518,10 @@ class QueryParser {
                     return null;
                 }
             } else if (temp.length > 3) {
-                System.out.println("Please ensure that attributes are in the following format:\n" +
-                        "<name> <type>     -or-\n" +
-                        "<name> <type> primarykey");
+                System.out.println( """
+                        Please ensure that attributes are in the following format:
+                        <name> <type>     -or-
+                        <name> <type> primarykey""" );
                 return null;
             }
 
@@ -527,6 +621,8 @@ class QueryParser {
                 return ParseDisplay(input);
             case "drop":
                 return ParseDrop(input);
+            case "alter":
+                return ParseAlter(input);
             default:
                 System.out.println("Error, command not recognized. Received: " + command);
                 return null;
