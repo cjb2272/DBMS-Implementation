@@ -119,15 +119,17 @@ class CreateQuery extends Query {
     ArrayList<String> columnNames; // name of attributes
     ArrayList<Integer> dataTypes;
     ArrayList<Integer> varLengthSizes;
+    ArrayList<Integer> constraints;
     String primaryKey;
 
     public CreateQuery(String table, ArrayList<String> colNames, ArrayList<Integer> dt,
-            ArrayList<Integer> varLengthSizes, String primaryKey) {
+            ArrayList<Integer> varLengthSizes, String primaryKey, ArrayList<Integer> constraintList) {
         this.tableName = table;
         this.columnNames = colNames;
         this.dataTypes = dt;
         this.varLengthSizes = varLengthSizes;
         this.primaryKey = primaryKey;
+        this.constraints = constraintList;
     }
 
     @Override
@@ -138,7 +140,7 @@ class CreateQuery extends Query {
         ArrayList<Object> attributeInfo = new ArrayList<>();
 
         int index = 0;
-        for (int i = 0; i < 4 * columnNames.size(); i += 4) {
+        for (int i = 0; i < 5 * columnNames.size(); i += 5) {
             attributeInfo.add(i, columnNames.get(index));
             attributeInfo.add(i + 1, dataTypes.get(index));
 
@@ -149,6 +151,8 @@ class CreateQuery extends Query {
             }
 
             attributeInfo.add(i + 3, columnNames.get(index).equals(primaryKey));
+
+            attributeInfo.add( i + 4, constraints.get(index) );
 
             index++;
         }

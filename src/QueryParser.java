@@ -343,7 +343,7 @@ class QueryParser {
             System.out.println("Missing arguments for CREATE command.");
             return null;
         }
-        if (!keywords[1].toLowerCase(Locale.ROOT).equals("table")) {
+        if (!keywords[1].equalsIgnoreCase("table")) {
             System.out.println("Missing TABLE keyword.");
             return null;
         }
@@ -353,11 +353,14 @@ class QueryParser {
         ArrayList<String> columnNames = new ArrayList<>();
         ArrayList<Integer> dataTypes = new ArrayList<>();
         ArrayList<Integer> varLengthSizes = new ArrayList<>();
+        ArrayList<Integer> constraints = new ArrayList<>();
         String pk = null;
 
         for (String attr : attributes) {
             attr = attr.strip();
             String[] temp = attr.split(" ");
+
+            int constraintCode = 0;
 
             if (temp.length == 1) {
 
@@ -369,19 +372,32 @@ class QueryParser {
                 return null;
             } else if (temp.length == 3) {
                 // Primary key
-                if (temp[2].replace(")", "").equals("primarykey")) {
+                String constraint = temp[2].replace(")", "");
+                if (constraint.equalsIgnoreCase("primarykey")) {
+                    constraintCode = 3;
                     if (pk == null) {
                         pk = temp[0];
                     } else {
                         System.out.println("Primary key already exists, it was named: " + pk);
                         return null;
                     }
-
+                } else if(constraint.equalsIgnoreCase( "notnull" )){
+                    constraintCode = 2;
+                } else if(constraint.equalsIgnoreCase( "unique" )){
+                    constraintCode = 1;
                 } else {
-                    System.out.println("Too many arguments: Expected primary key, got: " + temp[2]);
+                    System.out.println("Too many arguments: Expected constraint, got: " + temp[2]);
                     return null;
                 }
-            } else if (temp.length > 3) {
+            } else if (temp.length == 4){
+                if((temp[2].equalsIgnoreCase( "unique" ) && temp[3].equalsIgnoreCase( "notnull" )) || (temp[3].equalsIgnoreCase( "unique" ) && temp[2].equalsIgnoreCase( "notnull" ))){
+                    constraintCode = 3;
+                } else{
+                    System.out.println("Too many arguments: Expected constraints, got: " + temp[2] + " and " + temp[3]);
+                    return null;
+                }
+            } else if (temp.length > 4) {
+                //TODO fix usage method
                 System.out.println( """
                         Please ensure that attributes are in the following format:
                         <name> <type>     -or-
@@ -414,6 +430,8 @@ class QueryParser {
                 varLengthSizes.add(-1);
             }
 
+            constraints.add( constraintCode );
+
         }
 
         if (pk == null) {
@@ -421,7 +439,7 @@ class QueryParser {
             return null;
         }
 
-        return new CreateQuery(keywords[2], columnNames, dataTypes, varLengthSizes, pk);
+        return new CreateQuery(keywords[2], columnNames, dataTypes, varLengthSizes, pk, constraints);
     }
 
     /**
