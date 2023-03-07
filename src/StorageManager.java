@@ -214,9 +214,10 @@ public class StorageManager {
      *      which actual adding/removing of value is done in this method.
      * @param newTableID id of new table we want to copy records over too
      * @param tableID id of table 'alter' requested on
+     * @param defaultVal null if not specified or dropping, value if default provided
      * @return some integer indicating success
      */
-    public int alterTable(int newTableID, int tableID) throws IOException {
+    public int alterTable(int newTableID, int tableID, Object defaultVal) throws IOException {
         TableSchema oldTable = Catalog.instance.getTableSchemaById(tableID);
         TableSchema newTable = Catalog.instance.getTableSchemaById(newTableID);
         //at this point, newTable has NO PAGES
@@ -226,13 +227,10 @@ public class StorageManager {
         //we alter table before any records exist simply return
         ArrayList<AttributeSchema> newTableAttributes = newTable.getAttributes();
         ArrayList<AttributeSchema> oldTableAttributes = oldTable.getAttributes();
-        boolean droppingCol = false; //false indicated adding column, if not dropping, then adding
         //if we are dropping column, find out which column
         // ... this could probably be done in schema much easier somehow
-        int indexOfColumnToDrop = -1;
+        int indexOfColumnToDrop = -1; // if this value remains -1 then we are adding a column since not dropping
         if (newTableAttributes.size() < oldTableAttributes.size()) {
-            droppingCol = true;
-            indexOfColumnToDrop = -1;
             for (int attrIndex = 0; attrIndex < newTableAttributes.size(); attrIndex++) {
                 //if the attribute name is different for this attribute then we dropped column at that index
                 if (!Objects.equals(newTableAttributes.get(attrIndex).getName(), oldTableAttributes.get(attrIndex).getName())) {
@@ -253,7 +251,7 @@ public class StorageManager {
                     for (int idx = 0; idx < numRecordsInPage; idx++) {
                         Record recordToCopyOver = oldPageReference.getRecordsInPage().get(idx);
                         Record newRecord = new Record();
-                        if (droppingCol) {
+                        if (indexOfColumnToDrop != -1) { //if we are dropping a column
                             ArrayList<Object> oldRecordContents = recordToCopyOver.getRecordContents();
                             //remove the attribute value for column we are dropping
                             oldRecordContents.remove(indexOfColumnToDrop);
@@ -271,7 +269,7 @@ public class StorageManager {
                             }
                         } else { //we are adding a column
                             //add column work
-                                //if we have a default value, use that, if not use null
+                                //add the default value being null or some value
                         }
 
                     }
