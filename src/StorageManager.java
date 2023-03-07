@@ -207,6 +207,8 @@ public class StorageManager {
     }
 
     /**
+     * todo remember the second 4 bytes of a page contain the num of records, check
+     *  that this is being handled
      * CALLED in execute method
      * FOR ALL ALTER TABLE COMMANDS
      * Pre: In alter table query's execute, we have created the new table for which we are
@@ -240,7 +242,7 @@ public class StorageManager {
             if (indexOfColumnToDrop == -1) { indexOfColumnToDrop = newTableAttributes.size();}
         }
         if (0 == oldTablePageOrder.size()) {
-            return 0;
+            return 1;
         } else {
             ArrayList<Record> newRecordsArray = new ArrayList<>();
             int numPagesInTable = oldTablePageOrder.size();
@@ -251,25 +253,22 @@ public class StorageManager {
                     for (int idx = 0; idx < numRecordsInPage; idx++) {
                         Record recordToCopyOver = oldPageReference.getRecordsInPage().get(idx);
                         Record newRecord = new Record();
+                        ArrayList<Object> oldRecordContents = recordToCopyOver.getRecordContents();
                         if (indexOfColumnToDrop != -1) { //if we are dropping a column
-                            ArrayList<Object> oldRecordContents = recordToCopyOver.getRecordContents();
                             //remove the attribute value for column we are dropping
                             oldRecordContents.remove(indexOfColumnToDrop);
                             newRecord.setRecordContents(oldRecordContents);
-                            newRecordsArray.add(newRecord);
-                            workingPageOfNewTable.setRecordsInPage(newRecordsArray); //very redundant resetting whole thing
-                            if (workingPageOfNewTable.computeSizeInBytes() > Main.pageSize) {
-                                buffer.PageSplit(workingPageOfNewTable, newTableID);
-                                //we still have more records to add, now what?
-                                //todo approach is way more bulky than i thought. maybe i cant think of better way,
-                                // we must maintain order of records being copied over
-                                //SO ON SPLIT we have to continue w adding to the NEW page post split
-                                //use Page ordering to grab and RESET what page workingPageOfNewTable
-                                // is a reference too.
-                            }
+                            insertRecord(newTableID, newRecord);
                         } else { //we are adding a column
-                            //add column work
-                                //add the default value being null or some value
+                            //add the default value being null or some value
+                            if (defaultVal == null) {
+                                oldRecordContents.add(null);
+                                newRecord.setRecordContents(oldRecordContents);
+                            } else {
+                                oldRecordContents.add(defaultVal);
+                                newRecord.setRecordContents(oldRecordContents);
+                            }
+                            insertRecord(newTableID, newRecord);
                         }
 
                     }
@@ -277,10 +276,7 @@ public class StorageManager {
                     throw new RuntimeException(e);
                 }
             }
-            //return 0;
         }
-
-
         //WE HAVE SUCCESS! so purge all pages for the tableID still in buffer
         buffer.PurgeTableFromBuffer(tableID);
         return 1;
