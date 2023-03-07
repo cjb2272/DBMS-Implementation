@@ -207,6 +207,88 @@ public class StorageManager {
     }
 
     /**
+     * CALLED in execute method
+     * FOR ALL ALTER TABLE COMMANDS
+     * Pre: In alter table query's execute, we have created the new table for which we are
+     *      copying records over toos here (now including/discluding value to be added, dropped),
+     *      which actual adding/removing of value is done in this method.
+     * @param newTableID id of new table we want to copy records over too
+     * @param tableID id of table 'alter' requested on
+     * @return some integer indicating success
+     */
+    public int alterTable(int newTableID, int tableID) throws IOException {
+        TableSchema oldTable = Catalog.instance.getTableSchemaById(tableID);
+        TableSchema newTable = Catalog.instance.getTableSchemaById(newTableID);
+        //at this point, newTable has NO PAGES
+        Page workingPageOfNewTable = buffer.CreateNewPage(newTableID, 0);
+        ArrayList<Record> newTableRecords = new ArrayList<>();
+        ArrayList<Integer> oldTablePageOrder = oldTable.getPageOrder();
+        //we alter table before any records exist simply return
+        ArrayList<AttributeSchema> newTableAttributes = newTable.getAttributes();
+        ArrayList<AttributeSchema> oldTableAttributes = oldTable.getAttributes();
+        boolean droppingCol = false; //false indicated adding column, if not dropping, then adding
+        //if we are dropping column, find out which column
+        // ... this could probably be done in schema much easier somehow
+        int indexOfColumnToDrop = -1;
+        if (newTableAttributes.size() < oldTableAttributes.size()) {
+            droppingCol = true;
+            indexOfColumnToDrop = -1;
+            for (int attrIndex = 0; attrIndex < newTableAttributes.size(); attrIndex++) {
+                //if the attribute name is different for this attribute then we dropped column at that index
+                if (!Objects.equals(newTableAttributes.get(attrIndex).getName(), oldTableAttributes.get(attrIndex).getName())) {
+                    indexOfColumnToDrop = attrIndex;
+                }
+            } //if this checks out, we are dropping last column in old table
+            if (indexOfColumnToDrop == -1) { indexOfColumnToDrop = newTableAttributes.size();}
+        }
+        if (0 == oldTablePageOrder.size()) {
+            return 0;
+        } else {
+            ArrayList<Record> newRecordsArray = new ArrayList<>();
+            int numPagesInTable = oldTablePageOrder.size();
+            for (int index = 0; index < numPagesInTable; index++) { //iterating pages
+                try {
+                    Page oldPageReference = buffer.GetPage(tableID, oldTablePageOrder.get(index));
+                    int numRecordsInPage = oldPageReference.getRecordCount();
+                    for (int idx = 0; idx < numRecordsInPage; idx++) {
+                        Record recordToCopyOver = oldPageReference.getRecordsInPage().get(idx);
+                        Record newRecord = new Record();
+                        if (droppingCol) {
+                            ArrayList<Object> oldRecordContents = recordToCopyOver.getRecordContents();
+                            //remove the attribute value for column we are dropping
+                            oldRecordContents.remove(indexOfColumnToDrop);
+                            newRecord.setRecordContents(oldRecordContents);
+                            newRecordsArray.add(newRecord);
+                            workingPageOfNewTable.setRecordsInPage(newRecordsArray); //very redundant resetting whole thing
+                            if (workingPageOfNewTable.computeSizeInBytes() > Main.pageSize) {
+                                buffer.PageSplit(workingPageOfNewTable, newTableID);
+                                //we still have more records to add, now what?
+                                //todo approach is way more bulky than i thought. maybe i cant think of better way,
+                                // we must maintain order of records being copied over
+                                //SO ON SPLIT we have to continue w adding to the NEW page post split
+                                //use Page ordering to grab and RESET what page workingPageOfNewTable
+                                // is a reference too.
+                            }
+                        } else { //we are adding a column
+                            //add column work
+                                //if we have a default value, use that, if not use null
+                        }
+
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            //return 0;
+        }
+
+
+        //WE HAVE SUCCESS! so purge all pages for the tableID still in buffer
+        buffer.PurgeTableFromBuffer(tableID);
+        return 1;
+    }
+
+    /**
      * Table should always know how many pages it has through
      * Page Ordering
      * 
@@ -481,6 +563,21 @@ public class StorageManager {
             file.seek((long) pageNumber * Main.pageSize);
             file.write(Page.parsePage(pageToWrite)); // still need to write out page size worth of bytes
             file.close();
+        }
+
+        /**
+         * We DO NOT want to write the records for this table that are
+         * present to disk, because our records are different now
+         * @param tableId the table to remove all corresponding pages
+         *                from the buffer
+         * @throws IOException
+         */
+        public void PurgeTableFromBuffer(int tableId) throws IOException {
+            for (Page page : PageBuffer) {
+                if (tableId == page.getTableNumber()) {
+                    PageBuffer.remove(page);
+                }
+            }
         }
 
         /**
