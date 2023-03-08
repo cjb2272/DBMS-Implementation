@@ -118,9 +118,16 @@ class Page {
         int sizeOfPageInBytes = byteBuffer.getInt(); // read first 4 bytes
         int numRecords = byteBuffer.getInt(); // read second 4 bytes
         ArrayList<Integer> typeIntegers = Catalog.instance.getSolelyTableAttributeTypes(tableNumber);
+        //TODO add logic that gets the byte array of null/not null flags and passes it to record
+        byte[] nullBytes = new byte[typeIntegers.size()]; //the size of typeints is the num of attributes
+        //TODO wrap in buffer?
+        for (int i = 0; i < nullBytes.length; i++) {
+            nullBytes[i] = byteBuffer.get();
+        }
+        ByteBuffer nullBytesBuffer = ByteBuffer.wrap(nullBytes);
         ArrayList<Record> records = new ArrayList<>();
         for (int rcrd = 0; rcrd < numRecords; rcrd++) {
-            Record record = Record.parseRecordBytes(tableNumber, byteBuffer);
+            Record record = Record.parseRecordBytes(tableNumber, nullBytesBuffer, byteBuffer);
             records.add(record);
         }
         returnPage.setRecordsInPage(records);

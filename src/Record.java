@@ -92,7 +92,7 @@ public class Record {
      * @return a complete Record object that represents the parsed data as an
      *         ArrayList of Objects
      */
-    public static Record parseRecordBytes(int tableNumber, ByteBuffer recordInBytes) {
+    public static Record parseRecordBytes(int tableNumber, ByteBuffer nullBytes, ByteBuffer recordInBytes) {
         // Iterate through Bytes, getting varying data types and appending to
         // returnRecord
         Record returnRecord = new Record();
@@ -102,6 +102,11 @@ public class Record {
         // page
         ArrayList<Integer> typeIntegers = Catalog.instance.getSolelyTableAttributeTypes(tableNumber);
         for (int typeInt : typeIntegers) {
+            byte isNull = nullBytes.get();
+            if (isNull == (byte) 0) {
+                returnRecord.recordContents.add(null);
+                continue;
+            }
             switch (typeInt) {
                 case 1 -> // Integer
                     returnRecord.recordContents.add(recordInBytes.getInt()); // get next 4 BYTES
@@ -144,40 +149,49 @@ public class Record {
      * @return a byte array containing all the record's data in byte form
      */
     public byte[] toBytes(int tableNum) {
-        byte[] bytes = new byte[this.compute_size()];
-        ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
+        byte[] bytes = new byte[this.recordContents.size() + this.compute_size()];
+        ByteBuffer bytesBuffer = ByteBuffer.wrap(bytes);
+        byte[] attrBytes = new byte[this.compute_size()];
+        ByteBuffer attrBytesBuffer = ByteBuffer.wrap(attrBytes);
         ArrayList<Integer> typeIntegers = Catalog.instance.getSolelyTableAttributeTypes(tableNum);
         int i = 0;
         for (int typeInt : typeIntegers) {
+            if (this.recordContents.get(i) == null) {
+                bytesBuffer.put((byte) 0);
+                ++i;
+                continue;
+            }
+            bytesBuffer.put((byte) 1);
             switch (typeInt) {
                 case 1 -> // Integer
-                    byteBuffer.putInt((Integer) this.recordContents.get(i)); // get next 4 BYTES
+                    attrBytesBuffer.putInt((Integer) this.recordContents.get(i)); // get next 4 BYTES
                 case 2 -> // Double
-                    byteBuffer.putDouble((Double) this.recordContents.get(i)); // get next 8 BYTES
+                    attrBytesBuffer.putDouble((Double) this.recordContents.get(i)); // get next 8 BYTES
                 case 3 -> { // Boolean
                     boolean val = (boolean) this.recordContents.get(i);
                     if (val) // A Boolean is either 't' or 'f' on disk
-                        byteBuffer.putChar('t');
+                        attrBytesBuffer.putChar('t');
                     else
-                        byteBuffer.putChar('f');
+                        attrBytesBuffer.putChar('f');
                 }
                 case 4 -> { // Char(x) standard string fixed array of len x
                     String chars = (String) this.recordContents.get(i);
-                    byteBuffer.putInt(chars.length());
+                    attrBytesBuffer.putInt(chars.length());
                     for (int j = 0; j < chars.length(); ++j) {
-                        byteBuffer.putChar(chars.charAt(j));
+                        attrBytesBuffer.putChar(chars.charAt(j));
                     }
                 }
                 case 5 -> { // Varchar(x) variable size array of max len x NOT Padded
                     String chars = (String) this.recordContents.get(i);
-                    byteBuffer.putInt(chars.length());
+                    attrBytesBuffer.putInt(chars.length());
                     for (int j = 0; j < chars.length(); ++j) {
-                        byteBuffer.putChar(chars.charAt(j));
+                        attrBytesBuffer.putChar(chars.charAt(j));
                     }
                 }
             }
             ++i;
         } // END LOOP
+        bytesBuffer.put(attrBytes); //Take the arr of attr values and append it to the arr of null flags
         return bytes;
     }
 
