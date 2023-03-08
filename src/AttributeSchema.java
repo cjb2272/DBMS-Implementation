@@ -93,7 +93,8 @@ public class AttributeSchema {
      * @return Number of bytes needed to represent attribute.
      */
     protected int getSizeInBytes() {
-        return Integer.BYTES + (name.length() * Character.BYTES) + Integer.BYTES + Integer.BYTES + Character.BYTES;
+        return Integer.BYTES + (name.length() * Character.BYTES) + Integer.BYTES + Integer.BYTES + Character.BYTES
+                + Integer.BYTES;
     }
 
     /**
