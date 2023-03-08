@@ -48,9 +48,13 @@ public class TableSchema {
      * @param size         : size of attribute
      * @param isPrimaryKey : True if attribute is a primary key, false otherwise.
      */
-    public void addAttribute(String name, int type, int size, boolean isPrimaryKey) {
-        AttributeSchema attribute = new AttributeSchema(name, type, size, isPrimaryKey);
+    public void addAttribute(String name, int type, int size, boolean isPrimaryKey, int constraints) {
+        AttributeSchema attribute = new AttributeSchema(name, type, size, isPrimaryKey, constraints);
         attributes.add(attribute);
+    }
+
+    protected void setAttributes(ArrayList<AttributeSchema> attributes) {
+        this.attributes = attributes;
     }
 
     /**

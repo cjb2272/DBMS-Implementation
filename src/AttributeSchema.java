@@ -14,6 +14,8 @@ public class AttributeSchema {
     // If attribute is a primary key.
     private boolean isPrimaryKey;
 
+    private int constraints;
+
     /**
      *
      * @param name         : name of attribute
@@ -26,11 +28,22 @@ public class AttributeSchema {
      * @param size         : Size in bytes.
      * @param isPrimaryKey : True or false that this attribute is a primary key.
      */
-    public AttributeSchema(String name, int type, int size, boolean isPrimaryKey) {
+    public AttributeSchema(String name, int type, int size, boolean isPrimaryKey, int constraints) {
         this.name = name;
         this.type = type;
         this.size = size;
         this.isPrimaryKey = isPrimaryKey;
+        this.constraints = constraints;
+    }
+
+
+
+    /**
+     *
+     * @return
+     */
+    public int getConstraints() {
+        return constraints;
     }
 
     /**

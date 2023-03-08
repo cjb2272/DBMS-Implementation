@@ -37,24 +37,95 @@ public class Catalog {
     /**
      * Adds a tableSchema to the tableSchema array.
      * 
-     * @param tableNum      : Table number
+     * @param tableId      : Table number
      * @param tableName     : Table Name
      * @param attributeInfo : Ordered array of parameters to create attributes. An
      *                      attribute is done in a set of four
      *                      objects: String name, int type, int size, and boolean
      *                      isPrimaryKey.
      */
-    public void addTableSchema(int tableNum, String tableName, ArrayList<Object> attributeInfo) {
-        TableSchema tableSchema = new TableSchema(tableName, tableNum, new ArrayList<>());
-        for (int i = 0; i < attributeInfo.size(); i += 4) {
+    public void addTableSchema(int tableId, String tableName, ArrayList<Object> attributeInfo) {
+        TableSchema tableSchema = new TableSchema(tableName, tableId, new ArrayList<>());
+        for (int i = 0; i < attributeInfo.size(); i += 5) {
             tableSchema.addAttribute((String) attributeInfo.get(i), (int) attributeInfo.get(i + 1),
-                    (int) attributeInfo.get(i + 2), (boolean) attributeInfo.get(i + 3));
+                    (int) attributeInfo.get(i + 2), (boolean) attributeInfo.get(i + 3), (int) attributeInfo.get(i + 4));
         }
         tableSchemas.add(tableSchema);
     }
 
     public void removeTableSchema(int tableNum) {
         tableSchemas.remove(getTableSchemaById(tableNum));
+    }
+
+    /**
+     * Returns the indexes of attributes that meet the given constraints.
+     * @param tableId : id of given table
+     * @param isUnique : if the attribute is unique
+     * @param isNotNull : if the attribute is not null
+     * @return an array of indexes of attributes that meet the constraints
+     */
+    public ArrayList<Integer> getIndexOfTableAttributesWithConstraints(int tableId, boolean isUnique,
+                                                                       boolean isNotNull) {
+        ArrayList<Integer> indexes = new ArrayList<>();
+        TableSchema table = getTableSchemaById(tableId);
+        ArrayList<AttributeSchema> attributes = table.getAttributes();
+        for (int i = 0; i < attributes.size(); i++) {
+            if (isUnique && isNotNull) {
+                if (attributes.get(i).getConstraints() == 3) {
+                    indexes.add(i);
+                }
+            } else if (isNotNull) {
+                if (attributes.get(i).getConstraints() == 2) {
+                    indexes.add(i);
+                }
+            } else if (isUnique) {
+                if (attributes.get(i).getConstraints() == 1) {
+                    indexes.add(i);
+                }
+            }
+        }
+        return indexes;
+    }
+
+    /**
+     * Creates a new table that is a copy of the given tableSchema with the given attribute dropped.
+     * Table is added to array of tableSchemas
+     * @param tableId : Given tableId
+     * @param attrName : Given attribute name to drop
+     */
+    public void updateTableDropColumn(int tableId, String attrName) {
+        int nextTableId = getNumOfTables() + 1;
+        TableSchema originTable = getTableSchemaById(tableId);
+        TableSchema newTable = new TableSchema(originTable.getTableName(), nextTableId, new ArrayList<>());
+        ArrayList<AttributeSchema> attributes = originTable.getAttributes();
+        for (int i = 0; i < attributes.size(); i++) {
+            if (!attributes.get(i).getName().equals(attrName)) {
+                AttributeSchema attribute = attributes.get(i);
+                newTable.addAttribute(attribute.getName(), attribute.getType(), attribute.getSize(),
+                        attribute.isPrimaryKey(), attribute.getConstraints());
+            }
+        }
+        tableSchemas.add(newTable);
+    }
+
+    /**
+     * Creates a copy of a given tableSchema and adds a given attribute. Adds table to array of tableSchema.
+     * @param tableId : Given tableId
+     * @param attrInfo : given attribute info
+     */
+    public void updateTableAddColumn(int tableId, ArrayList attrInfo) {
+        int nextTableId = getNumOfTables() + 1;
+        TableSchema originTable = getTableSchemaById(tableId);
+        TableSchema newTable = new TableSchema(originTable.getTableName(), nextTableId, new ArrayList<>());
+        ArrayList<AttributeSchema> attributes = originTable.getAttributes();
+        for (int i = 0; i < attributes.size(); i++) {
+            AttributeSchema attribute = attributes.get(i);
+            newTable.addAttribute(attribute.getName(), attribute.getType(), attribute.getSize(),
+                    attribute.isPrimaryKey(), attribute.getConstraints());
+        }
+        newTable.addAttribute((String) attrInfo.get(0), (int) attrInfo.get(1), (int) attrInfo.get(2),
+                (boolean) attrInfo.get(3), (int) attrInfo.get(4));
+        tableSchemas.add(newTable);
     }
 
 
@@ -294,10 +365,11 @@ public class Catalog {
                     int type = byteProcessor.readInt();
                     int size = byteProcessor.readInt();
                     char isPrimary = byteProcessor.readChar();
+                    int constraints = byteProcessor.readInt();
                     if (isPrimary == 't') {
-                        tableSchema.addAttribute( attrName.toString(), type, size, Boolean.TRUE);
+                        tableSchema.addAttribute( attrName.toString(), type, size, Boolean.TRUE, constraints);
                     } else {
-                        tableSchema.addAttribute( attrName.toString(), type, size, Boolean.FALSE);
+                        tableSchema.addAttribute( attrName.toString(), type, size, Boolean.FALSE, constraints);
                     }
                 }
                 catalog.tableSchemas.add(tableSchema);
@@ -355,6 +427,7 @@ public class Catalog {
                 } else {
                     buffer.putChar('f');
                 }
+                buffer.putInt(attribute.getConstraints());
             }
         }
         try {
