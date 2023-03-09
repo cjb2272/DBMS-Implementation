@@ -207,31 +207,26 @@ public class StorageManager {
     }
 
     /**
-     * todo remember the second 4 bytes of a page contain the num of records, check
-     *  that this is being handled
-     * CALLED in execute method
-     * FOR ALL ALTER TABLE COMMANDS
+     * This method handles all alter table commands
      * Pre: In alter table query's execute, we have created the new table for which we are
      *      copying records over toos here (now including/discluding value to be added, dropped),
      *      which actual adding/removing of value is done in this method.
      * @param newTableID id of new table we want to copy records over too
      * @param tableID id of table 'alter' requested on
-     * @param defaultVal null if not specified or dropping, value if default provided
+     * @param defaultVal null if not specified or dropping, value if default provided or
+     *                   empty string "" on no default provided for added column
      * @return some integer indicating success
      */
     public int alterTable(int newTableID, int tableID, Object defaultVal) throws IOException {
         TableSchema oldTable = Catalog.instance.getTableSchemaById(tableID);
         TableSchema newTable = Catalog.instance.getTableSchemaById(newTableID);
         //at this point, newTable has NO PAGES
-        Page workingPageOfNewTable = buffer.CreateNewPage(newTableID, 0);
-        ArrayList<Record> newTableRecords = new ArrayList<>();
         ArrayList<Integer> oldTablePageOrder = oldTable.getPageOrder();
-        //we alter table before any records exist simply return
         ArrayList<AttributeSchema> newTableAttributes = newTable.getAttributes();
         ArrayList<AttributeSchema> oldTableAttributes = oldTable.getAttributes();
+        int indexOfColumnToDrop = -1; // if this value remains -1 then we are adding a column since not dropping
         //if we are dropping column, find out which column
         // ... this could probably be done in schema much easier somehow
-        int indexOfColumnToDrop = -1; // if this value remains -1 then we are adding a column since not dropping
         if (newTableAttributes.size() < oldTableAttributes.size()) {
             for (int attrIndex = 0; attrIndex < newTableAttributes.size(); attrIndex++) {
                 //if the attribute name is different for this attribute then we dropped column at that index
@@ -241,10 +236,9 @@ public class StorageManager {
             } //if this checks out, we are dropping last column in old table
             if (indexOfColumnToDrop == -1) { indexOfColumnToDrop = newTableAttributes.size();}
         }
-        if (0 == oldTablePageOrder.size()) {
+        if (0 == oldTablePageOrder.size()) { // if altered table has no existing records simply return
             return 1;
         } else {
-            ArrayList<Record> newRecordsArray = new ArrayList<>();
             int numPagesInTable = oldTablePageOrder.size();
             for (int index = 0; index < numPagesInTable; index++) { //iterating pages
                 try {
@@ -261,7 +255,7 @@ public class StorageManager {
                             insertRecord(newTableID, newRecord);
                         } else { //we are adding a column
                             //add the default value being null or some value
-                            if (defaultVal == null) {
+                            if (defaultVal == "") {
                                 oldRecordContents.add(null);
                                 newRecord.setRecordContents(oldRecordContents);
                             } else {

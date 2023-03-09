@@ -206,6 +206,13 @@ class AlterQuery extends Query{
 
     public void execute(){
         //TODO
+        //create new table , this table can have temporary name of originalname + "Altered" or something
+        //call alter method with provided value adding, use empty string "" for no default val specifie
+        //                                                                   meaning i will add nulls
+        //                                              use value if specified,
+        //                                              use NULL if it is a drop command
+        //run drop table on old table given all records have successfully copied over
+        //rename new table from orginalname + "Altered" back to just original name
     }
 
 }
