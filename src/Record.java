@@ -61,17 +61,19 @@ public class Record {
         int sizeOfRecordInBytes = 0;
         for (Object obj : this.recordContents) {
             // not sure if this will work todo
-            if (obj instanceof Integer) {
+            if (obj == null)
+                continue; //do nothing, null does not add to size
+            else if (obj instanceof Integer) {
                 sizeOfRecordInBytes = sizeOfRecordInBytes + Integer.BYTES;
             }
-            if (obj instanceof Double) {
+            else if (obj instanceof Double) {
                 sizeOfRecordInBytes = sizeOfRecordInBytes + Double.BYTES;
             }
-            if (obj instanceof Boolean) {
+            else if (obj instanceof Boolean) {
                 sizeOfRecordInBytes = sizeOfRecordInBytes + Character.BYTES;
             }
             // case for char(x) and varchar(x), add 2 bytes for each char
-            if (obj instanceof String) {
+            else if (obj instanceof String) {
                 sizeOfRecordInBytes = sizeOfRecordInBytes + Integer.BYTES; // 4 bytes for each int that comes
                 int numCharsInString = obj.toString().length(); // before char or varchar
                 int charBytes = numCharsInString * Character.BYTES;
