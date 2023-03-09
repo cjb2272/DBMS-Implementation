@@ -60,6 +60,7 @@ public class Record {
     int compute_size() {
         int sizeOfRecordInBytes = 0;
         for (Object obj : this.recordContents) {
+            sizeOfRecordInBytes += 1; //for each attribute, a byte is needed to signify if it's null or not
             // not sure if this will work todo
             if (obj == null)
                 continue; //do nothing, null does not add to size
