@@ -239,35 +239,27 @@ public class StorageManager {
         if (0 == oldTablePageOrder.size()) { // if altered table has no existing records simply return
             return 1;
         } else {
-            int numPagesInTable = oldTablePageOrder.size();
-            for (int index = 0; index < numPagesInTable; index++) { //iterating pages
-                try {
-                    Page oldPageReference = buffer.GetPage(tableID, oldTablePageOrder.get(index));
-                    int numRecordsInPage = oldPageReference.getRecordCount();
-                    for (int idx = 0; idx < numRecordsInPage; idx++) {
-                        Record recordToCopyOver = oldPageReference.getRecordsInPage().get(idx);
-                        Record newRecord = new Record();
-                        ArrayList<Object> oldRecordContents = recordToCopyOver.getRecordContents();
-                        if (indexOfColumnToDrop != -1) { //if we are dropping a column
-                            //remove the attribute value for column we are dropping
-                            oldRecordContents.remove(indexOfColumnToDrop);
-                            newRecord.setRecordContents(oldRecordContents);
-                            insertRecord(newTableID, newRecord);
-                        } else { //we are adding a column
-                            //add the default value being null or some value
-                            if (defaultVal == "") {
-                                oldRecordContents.add(null);
-                                newRecord.setRecordContents(oldRecordContents);
-                            } else {
-                                oldRecordContents.add(defaultVal);
-                                newRecord.setRecordContents(oldRecordContents);
-                            }
-                            insertRecord(newTableID, newRecord);
-                        }
-
+            ArrayList<String> all = new ArrayList<>();
+            all.add("*");
+            ArrayList<Record> allRecordInOldTable = selectData(tableID, all);
+            for (Record recordToCopyOver : allRecordInOldTable) {
+                Record newRecord = new Record();
+                ArrayList<Object> oldRecordContents = recordToCopyOver.getRecordContents();
+                if (indexOfColumnToDrop != -1) { //if we are dropping a column
+                    //remove the attribute value for column we are dropping
+                    oldRecordContents.remove(indexOfColumnToDrop);
+                    newRecord.setRecordContents(oldRecordContents);
+                    insertRecord(newTableID, newRecord);
+                } else { //we are adding a column
+                    //add the default value being null or some value
+                    if (defaultVal == "") {
+                        oldRecordContents.add(null);
+                        newRecord.setRecordContents(oldRecordContents);
+                    } else {
+                        oldRecordContents.add(defaultVal);
+                        newRecord.setRecordContents(oldRecordContents);
                     }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    insertRecord(newTableID, newRecord);
                 }
             }
         }
