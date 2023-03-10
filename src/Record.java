@@ -222,7 +222,13 @@ public class Record {
         String padding = " ".repeat( padLen );
 
         for (Object obj : this.recordContents) {
-            String temp = obj.toString();
+            String temp;
+            if (obj == null) {
+
+                temp = "null";
+            } else {
+                temp = obj.toString();
+            }
             if(temp.length() >= padding.length()){
                 result.append( " |" ).append( temp );
             } else {
