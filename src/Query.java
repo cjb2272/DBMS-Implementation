@@ -205,7 +205,20 @@ class AlterQuery extends Query{
     }
 
     public void execute(){
-        //TODO
+        switch (this.alterType){
+            case 0:
+                //Drop column
+                break;
+            case 1:
+                //No default value new col
+                break;
+            case 2:
+                //Default value new col
+                break;
+            default:
+                System.out.println("There was an error in parsing. Abort");
+                return;
+        }
         //create new table , this table can have temporary name of originalname + "Altered" or something
         //call alter method with provided value adding, use empty string "" for no default val specifie
         //                                                                   meaning i will add nulls
