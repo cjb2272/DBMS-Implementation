@@ -177,6 +177,20 @@ public class Catalog {
     }
 
     /**
+     *
+     * @param tableId
+     * @return
+     */
+    protected ArrayList<Integer> getConstraintsOfTableById(int tableId) {
+        ArrayList<Integer> constraints = new ArrayList<>();
+        TableSchema tableSchema = getTableSchemaById(tableId);
+        for (AttributeSchema attributeSchema: tableSchema.getAttributes()) {
+            constraints.add(attributeSchema.getConstraints());
+        }
+        return constraints;
+    }
+
+    /**
      * Returns a tableSchema that matches the given id. If no table matches the id
      * then it returns null.
      * 
