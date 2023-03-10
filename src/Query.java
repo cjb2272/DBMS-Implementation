@@ -100,6 +100,8 @@ class InsertQuery extends Query {
 
         for (Record r : values) {
 
+
+
             int attemptToInsert = StorageManager.instance.insertRecord(tableID, r);
             if (attemptToInsert < 0) {
                 int row = -1 * attemptToInsert;
@@ -217,7 +219,6 @@ class AlterQuery extends Query{
                 break;
             default:
                 System.out.println("There was an error in parsing. Abort");
-                return;
         }
         //create new table , this table can have temporary name of originalname + "Altered" or something
         //call alter method with provided value adding, use empty string "" for no default val specifie

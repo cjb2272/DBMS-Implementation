@@ -222,7 +222,13 @@ public class Record {
         String padding = " ".repeat( padLen );
 
         for (Object obj : this.recordContents) {
-            String temp = obj.toString();
+            String temp;
+            if (obj == null) {
+
+                temp = "null";
+            } else {
+                temp = obj.toString();
+            }
             if(temp.length() >= padding.length()){
                 result.append( " |" ).append( temp );
             } else {
@@ -237,6 +243,8 @@ public class Record {
 
 class RecordSort implements Comparator<Record> {
     public int compare(Record a, Record b) {
+
+
 
         if (a.equals(b))
             return 0;
