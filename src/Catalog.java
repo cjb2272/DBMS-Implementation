@@ -93,7 +93,7 @@ public class Catalog {
      * @param tableId : Given tableId
      * @param attrName : Given attribute name to drop
      */
-    public void updateTableDropColumn(int tableId, String attrName) {
+    public TableSchema updateTableDropColumn(int tableId, String attrName) {
         int nextTableId = getNumOfTables() + 1;
         TableSchema originTable = getTableSchemaById(tableId);
         TableSchema newTable = new TableSchema(originTable.getTableName(), nextTableId, new ArrayList<>());
@@ -106,6 +106,7 @@ public class Catalog {
             }
         }
         tableSchemas.add(newTable);
+        return newTable;
     }
 
     /**
@@ -113,7 +114,7 @@ public class Catalog {
      * @param tableId : Given tableId
      * @param attrInfo : given attribute info
      */
-    public void updateTableAddColumn(int tableId, ArrayList attrInfo) {
+    public TableSchema updateTableAddColumn(int tableId, ArrayList attrInfo) {
         int nextTableId = getNumOfTables() + 1;
         TableSchema originTable = getTableSchemaById(tableId);
         TableSchema newTable = new TableSchema(originTable.getTableName(), nextTableId, new ArrayList<>());
@@ -126,6 +127,7 @@ public class Catalog {
         newTable.addAttribute((String) attrInfo.get(0), (int) attrInfo.get(1), (int) attrInfo.get(2),
                 (boolean) attrInfo.get(3), (int) attrInfo.get(4));
         tableSchemas.add(newTable);
+        return newTable;
     }
 
 
