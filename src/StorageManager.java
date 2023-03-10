@@ -74,6 +74,7 @@ public class StorageManager {
 
     public boolean dropTable(int ID) {
         File file = new File(Paths.get(tablesRootPath, String.valueOf(ID)).toString());
+        Catalog.instance.dropTableSchema(ID);
         return file.delete();
     }
 

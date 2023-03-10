@@ -4,7 +4,9 @@ package src;
  * @author Duncan Small, Austin Cepalia
  */
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public abstract class Query {
 
@@ -166,7 +168,7 @@ class CreateQuery extends Query {
             return;
         }
 
-        int availableId = Catalog.instance.getNumOfTables() + 1;
+        int availableId = Catalog.instance.getNextAvailableId();
         StorageManager.instance.createTable(availableId, tableName, columnNames, dataTypes);
         Catalog.instance.addTableSchema(availableId, tableName, attributeInfo);
         System.out.println("SUCCESS\n");
@@ -178,6 +180,7 @@ class AlterQuery extends Query{
     String tableName;
     String columnName;
     int columnType;
+    int columnSize;
     Object defaultValue;
 
     //0 means drop column
@@ -191,31 +194,71 @@ class AlterQuery extends Query{
         this.alterType = 0;
     }
 
-    public AlterQuery(String table, String colName, int colType){
+    public AlterQuery(String table, String colName, int colType, int colSize){
         this.tableName = table;
         this.columnName = colName;
         this.columnType = colType;
+        this.columnSize = colSize;
         this.alterType = 1;
     }
 
-    public AlterQuery(String table, String colName, int colType, Object defaultVal){
+    public AlterQuery(String table, String colName, int colType, int colSize, Object defaultVal){
         this.tableName = table;
         this.columnName = colName;
         this.columnType = colType;
+        this.columnSize = colSize;
         this.defaultValue = defaultVal;
         this.alterType = 2;
     }
 
     public void execute(){
+        int oldTableId = Catalog.instance.getTableIdByName(tableName);
+        TableSchema temp;
+        ArrayList<Object> attrInfo;
         switch (this.alterType){
             case 0:
                 //Drop column
+                temp = Catalog.instance.updateTableDropColumn(oldTableId, columnName);
+                try {
+                    StorageManager.instance.alterTable(temp.getTableId(),
+                            oldTableId, "");
+                    StorageManager.instance.dropTable(oldTableId);
+                    temp.setTableName(tableName);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("SUCCESS\n");
                 break;
             case 1:
                 //No default value new col
+                attrInfo = new ArrayList<>(Arrays.asList(columnName, columnType, columnSize,
+                        false, 0));
+                temp = Catalog.instance.updateTableAddColumn(oldTableId, attrInfo);
+                try {
+                    StorageManager.instance.alterTable(temp.getTableId(),
+                            oldTableId, "");
+                    StorageManager.instance.dropTable(oldTableId);
+
+                    temp.setTableName(tableName);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("SUCCESS\n");
                 break;
             case 2:
                 //Default value new col
+                attrInfo = new ArrayList<>(Arrays.asList(columnName, columnType, columnSize,
+                        false, 0));
+                temp = Catalog.instance.updateTableAddColumn(oldTableId, attrInfo);
+                try {
+                    StorageManager.instance.alterTable(temp.getTableId(),
+                            oldTableId, defaultValue);
+                    StorageManager.instance.dropTable(oldTableId);
+                    temp.setTableName(tableName);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("SUCCESS\n");
                 break;
             default:
                 System.out.println("There was an error in parsing. Abort");

@@ -88,8 +88,19 @@ class QueryParser {
                 System.out.println("Must use a valid column type, got: " + tokens[5]);
                 return null;
             }
+            int type = StringToCode( tokens[5] );
+            int size;
+            if (type == 4 || type == 5) {
+                size = GetLength(tokens[5]);
+            } else if (type == 3){
+                size = Character.BYTES;
+            } else if (type == 2) {
+                size = Double.BYTES;
+            } else {
+                size = Integer.BYTES;
+            }
 
-            return new AlterQuery( tableName, tokens[4], StringToCode( tokens[5] ));
+            return new AlterQuery( tableName, tokens[4], type, size);
 
         }
         else if (tokens.length == 8) {
@@ -126,7 +137,18 @@ class QueryParser {
                 return null;
             }
 
-            return new AlterQuery( tableName, tokens[4], typeCode, tokens[7]);
+            int size;
+            if (typeCode == 4 || typeCode == 5) {
+                size = GetLength(tokens[5]);
+            } else if (typeCode == 3){
+                size = Character.BYTES;
+            } else if (typeCode == 2) {
+                size = Double.BYTES;
+            } else {
+                size = Integer.BYTES;
+            }
+
+            return new AlterQuery( tableName, tokens[4], typeCode,size, tokens[7]);
         }
         else{
             System.out.println( "Expected 'alter table <name> drop <a_name>;' or " +

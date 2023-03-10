@@ -57,6 +57,14 @@ public class TableSchema {
         this.attributes = attributes;
     }
 
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
+
+    public void setTableId(int tableId) {
+        this.tableId = tableId;
+    }
+
     /**
      * Method should return the pageNumber of where the page is stored sequentially
      * on the disk. This pageNumber should be the value at index for the page

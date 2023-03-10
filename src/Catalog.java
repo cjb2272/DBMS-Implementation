@@ -89,14 +89,14 @@ public class Catalog {
 
     /**
      * Creates a new table that is a copy of the given tableSchema with the given attribute dropped.
-     * Table is added to array of tableSchemas
+     * Table is added to array of tableSchemas and a new table file is created.
      * @param tableId : Given tableId
      * @param attrName : Given attribute name to drop
      */
     public TableSchema updateTableDropColumn(int tableId, String attrName) {
-        int nextTableId = getNumOfTables() + 1;
+        int nextTableId = getNextAvailableId();
         TableSchema originTable = getTableSchemaById(tableId);
-        TableSchema newTable = new TableSchema(originTable.getTableName(), nextTableId, new ArrayList<>());
+        TableSchema newTable = new TableSchema("temp", nextTableId, new ArrayList<>());
         ArrayList<AttributeSchema> attributes = originTable.getAttributes();
         for (int i = 0; i < attributes.size(); i++) {
             if (!attributes.get(i).getName().equals(attrName)) {
@@ -105,19 +105,27 @@ public class Catalog {
                         attribute.isPrimaryKey(), attribute.getConstraints());
             }
         }
+        ArrayList<String> columnNames = new ArrayList<>();
+        ArrayList<Integer> dataTypes = new ArrayList<>();
+        for (AttributeSchema attributeSchema: newTable.getAttributes()) {
+            columnNames.add(attributeSchema.getName());
+            dataTypes.add(attributeSchema.getType());
+        }
+        StorageManager.instance.createTable(nextTableId, newTable.getTableName(), columnNames, dataTypes);
         tableSchemas.add(newTable);
         return newTable;
     }
 
     /**
      * Creates a copy of a given tableSchema and adds a given attribute. Adds table to array of tableSchema.
+     * A new table file is created.
      * @param tableId : Given tableId
      * @param attrInfo : given attribute info
      */
     public TableSchema updateTableAddColumn(int tableId, ArrayList attrInfo) {
-        int nextTableId = getNumOfTables() + 1;
+        int nextTableId = getNextAvailableId();
         TableSchema originTable = getTableSchemaById(tableId);
-        TableSchema newTable = new TableSchema(originTable.getTableName(), nextTableId, new ArrayList<>());
+        TableSchema newTable = new TableSchema("temp", nextTableId, new ArrayList<>());
         ArrayList<AttributeSchema> attributes = originTable.getAttributes();
         for (int i = 0; i < attributes.size(); i++) {
             AttributeSchema attribute = attributes.get(i);
@@ -126,8 +134,19 @@ public class Catalog {
         }
         newTable.addAttribute((String) attrInfo.get(0), (int) attrInfo.get(1), (int) attrInfo.get(2),
                 (boolean) attrInfo.get(3), (int) attrInfo.get(4));
+        ArrayList<String> columnNames = new ArrayList<>();
+        ArrayList<Integer> dataTypes = new ArrayList<>();
+        for (AttributeSchema attributeSchema: newTable.getAttributes()) {
+            columnNames.add(attributeSchema.getName());
+            dataTypes.add(attributeSchema.getType());
+        }
+        StorageManager.instance.createTable(nextTableId, newTable.getTableName(), columnNames, dataTypes);
         tableSchemas.add(newTable);
         return newTable;
+    }
+
+    public void dropTableSchema(int tableId) {
+        tableSchemas.remove(getTableSchemaById(tableId));
     }
 
 
@@ -150,6 +169,22 @@ public class Catalog {
         return tableSchemas.size();
     }
 
+    /**
+     * Get then next available id for a tableSchema.
+     * @return the current highest table id plus 1.
+     */
+    public int getNextAvailableId() {
+        int maxId = 1;
+        if (!tableSchemas.isEmpty()) {
+            for (TableSchema tableSchema : tableSchemas) {
+                if (tableSchema.getTableId() > maxId) {
+                    maxId = tableSchema.getTableId();
+                }
+            }
+            maxId += 1;
+        }
+        return maxId;
+    }
     /**
      * Returns an array list of table schemas.
      * 
