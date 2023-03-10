@@ -453,7 +453,7 @@ class QueryParser {
      *         discrepancy's
      */
     public boolean AttributeMatch(ArrayList<Integer> tableAttrList, ArrayList<Integer> dataAttrList) {
-        if (tableAttrList.size() != dataAttrList.size()) {
+        if (tableAttrList.size() != dataAttrList.size() && !dataAttrList.contains( 6 )) {
             System.out.println("Error! Table and Data Attribute list do not match with length!");
             return false;
         }
@@ -461,12 +461,21 @@ class QueryParser {
         Integer code = -1;
         Integer expected = -1;
 
-        for (int i = 0; i < tableAttrList.size(); i++) {
-            if (dataAttrList.get(i) == 0 && tableAttrList.get(i) == 4) {
+        //offset for when a string is expected; skips over the expected char length
+        int j = 0;
+
+        for (int i = 0; i < dataAttrList.size(); i++) {
+            if(dataAttrList.get( i ) == 6){
+                if(tableAttrList.get( i + j) == 4 || tableAttrList.get( i + j) == 6){
+                    j++;
+                }
+                continue;
+            }
+            else if (dataAttrList.get(i) == 0 && tableAttrList.get(i + j) == 4) {
                 try {
-                    if (!dataAttrList.get(i + 1).equals(tableAttrList.get(i + 1))) {
+                    if (!dataAttrList.get(i + 1).equals(tableAttrList.get(i + j + 1))) {
                         System.out.println("Error! Got Char with length " + dataAttrList.get(i + 1).toString()
-                                + ", expected Char with length " + tableAttrList.get(i + 1).toString());
+                                + ", expected Char with length " + tableAttrList.get(i + j + 1).toString());
                         return false;
                     }
                 } catch (ArrayIndexOutOfBoundsException e) {
@@ -475,11 +484,11 @@ class QueryParser {
                 }
                 i++;
                 continue;
-            } else if (dataAttrList.get(i) == 0 && tableAttrList.get(i) == 5) {
+            } else if (dataAttrList.get(i) == 0 && tableAttrList.get(i + j) == 5) {
                 try {
-                    if (dataAttrList.get(i + 1) > tableAttrList.get(i + 1)) {
+                    if (dataAttrList.get(i + 1) > tableAttrList.get(i + j + 1)) {
                         System.out.println("Error! Got VarChar with length " + dataAttrList.get(i + 1).toString()
-                                + ", expected Char with length up to" + tableAttrList.get(i + 1).toString());
+                                + ", expected Char with length up to" + tableAttrList.get(i + j + 1).toString());
                         return false;
                     }
                 } catch (ArrayIndexOutOfBoundsException e) {
@@ -489,9 +498,9 @@ class QueryParser {
                 i++;
                 continue;
             }
-            if (!dataAttrList.get(i).equals(tableAttrList.get(i))) {
+            if (!dataAttrList.get(i).equals(tableAttrList.get(i + j))) {
                 code = dataAttrList.get(i);
-                expected = tableAttrList.get(i);
+                expected = tableAttrList.get(i + j);
                 break;
 
             }
@@ -520,6 +529,7 @@ class QueryParser {
             case 3 -> "Boolean";
             case 4 -> "Char(x)";
             case 5 -> "VarChar(x)";
+            case 6 -> "null";
             default -> "Data-type not recognized";
         };
     }
@@ -539,6 +549,7 @@ class QueryParser {
             case "boolean" -> 3;
             case "char" -> 4;
             case "varchar" -> 5;
+            case "null" -> 6;
             default -> -1;
         };
     }
@@ -602,7 +613,11 @@ class QueryParser {
             } catch (NumberFormatException e1) {
                 if (input.equalsIgnoreCase("true") || input.equalsIgnoreCase("false")) {
                     return Arrays.asList(3, Boolean.parseBoolean(input));
-                } else {
+                }
+                else if(input.equals("null")){
+                    return Arrays.asList( 6, null );
+                }
+                else {
                     return Arrays.asList(0, input);
                 }
             }
