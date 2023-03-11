@@ -630,6 +630,7 @@ public class StorageManager {
             for (Page page : PageBuffer) {
                 if (tableId == page.getTableNumber()) {
                     PageBuffer.remove(page);
+                    if (PageBuffer.isEmpty()) {return;}
                 }
             }
         }
