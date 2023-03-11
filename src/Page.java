@@ -122,12 +122,17 @@ class Page {
         for (int rcrd = 0; rcrd < numRecords; rcrd++) {
             //gets the byte array of null/not null flags and passes it to record
             byte[] nullBytes = new byte[typeIntegers.size()]; //the size of typeints is the num of attributes
+            //char[] nullBytes = new char[typeIntegers.size()];
             //wrap in buffer
             for (int i = 0; i < nullBytes.length; i++) {
                 nullBytes[i] = byteBuffer.get();
             }
+            //for (int i = 0; i < nullBytes.length; i++) {
+            //    nullBytes[i] = byteBuffer.getChar();
+            //}
             ByteBuffer nullBytesBuffer = ByteBuffer.wrap(nullBytes);
             Record record = Record.parseRecordBytes(tableNumber, nullBytesBuffer, byteBuffer);
+            //Record record = Record.parseRecordBytes(tableNumber, nullBytes, byteBuffer);
             records.add(record);
         }
         returnPage.setRecordsInPage(records);

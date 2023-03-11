@@ -61,6 +61,7 @@ public class Record {
         int sizeOfRecordInBytes = 0;
         for (Object obj : this.recordContents) {
             sizeOfRecordInBytes += 1; //for each attribute, a byte is needed to signify if it's null or not
+            //sizeOfRecordInBytes = sizeOfRecordInBytes + Character.BYTES;
             // not sure if this will work todo
             if (obj == null)
                 continue; //do nothing, null does not add to size
@@ -96,6 +97,7 @@ public class Record {
      *         ArrayList of Objects
      */
     public static Record parseRecordBytes(int tableNumber, ByteBuffer nullBytes, ByteBuffer recordInBytes) {
+    //public static Record parseRecordBytes(int tableNumber, char[] nullBytes, ByteBuffer recordInBytes) {
         // Iterate through Bytes, getting varying data types and appending to
         // returnRecord
         Record returnRecord = new Record();
@@ -104,8 +106,12 @@ public class Record {
         // Loop in the order of data types expected - stored in Catalog ONLY for a given
         // page
         ArrayList<Integer> typeIntegers = Catalog.instance.getSolelyTableAttributeTypes(tableNumber);
+        //int counter = 0;
         for (int typeInt : typeIntegers) {
             byte isNull = nullBytes.get();
+            //char isNull = nullBytes[counter];
+            //counter++;
+            //if (isNull == 'f') {
             if (isNull == (byte) 0) {
                 returnRecord.recordContents.add(null);
                 continue;
@@ -152,7 +158,8 @@ public class Record {
      * @return a byte array containing all the record's data in byte form
      */
     public byte[] toBytes(int tableNum) {
-        byte[] bytes = new byte[this.recordContents.size() + this.compute_size()];
+        byte[] bytes = new byte[this.recordContents.size() + this.compute_size()]; //todo commented out line should be correct not this one
+        //byte[] bytes = new byte[this.compute_size()];
         ByteBuffer bytesBuffer = ByteBuffer.wrap(bytes);
         byte[] attrBytes = new byte[this.compute_size()];
         ByteBuffer attrBytesBuffer = ByteBuffer.wrap(attrBytes);
@@ -161,10 +168,12 @@ public class Record {
         for (int typeInt : typeIntegers) {
             if (this.recordContents.get(i) == null) {
                 bytesBuffer.put((byte) 0);
+                //bytesBuffer.putChar('f');
                 ++i;
                 continue;
             }
             bytesBuffer.put((byte) 1);
+            //bytesBuffer.putChar('t');
             switch (typeInt) {
                 case 1 -> // Integer
                     attrBytesBuffer.putInt((Integer) this.recordContents.get(i)); // get next 4 BYTES
