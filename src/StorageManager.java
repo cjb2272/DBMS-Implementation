@@ -165,13 +165,24 @@ public class StorageManager {
      * @return
      */
     private int compareOnIndex(Object a, Object b, int index) {
-        if (a.equals(b))
+        if (a.equals(b)) {
             return 0;
-
+        }
 
         Object objA = ((Record) a).getRecordContents().get(index);
 
         Object objB = ((Record) b).getRecordContents().get(index);
+
+        if (objA == null && objB != null) {
+            return 1;
+        }
+        if (objA != null && objB == null) {
+            return -1;
+        }
+
+        if (objA == null && objB == null) {
+            return 0;
+        }
 
         return switch (objA.getClass().getSimpleName()) {
             case "String" -> CharSequence.compare((String) objA, (String) objB);
@@ -270,7 +281,7 @@ public class StorageManager {
      *                   empty string "" on no default provided for added column
      * @return some integer indicating success
      */
-    public int alterTable(int newTableID, int tableID, Object defaultVal) throws IOException {
+    public int alterTable(int newTableID, int tableID, String defaultVal) throws IOException {
         TableSchema oldTable = Catalog.instance.getTableSchemaById(tableID);
         TableSchema newTable = Catalog.instance.getTableSchemaById(newTableID);
         //at this point, newTable has NO PAGES
@@ -312,15 +323,15 @@ public class StorageManager {
                     int typeInt = newTableAttributes.get(indexOfLastColumn).getType();
                     switch (typeInt) {
                         case 1 -> {
-                            Integer intValue = (Integer) defaultVal;
+                            Integer intValue = Integer.valueOf(defaultVal);
                             oldRecordContents.add(intValue);
                         }
                         case 2 -> {
-                            Double doubleValue = Double.valueOf((String) defaultVal);
+                            Double doubleValue = Double.valueOf(defaultVal);
                             oldRecordContents.add(doubleValue);
                         }
                         case 3 -> {
-                            Boolean boolValue = (Boolean) defaultVal;
+                            Boolean boolValue = Boolean.valueOf(defaultVal);
                             oldRecordContents.add(boolValue);
                         }
                         case 4, 5 -> {

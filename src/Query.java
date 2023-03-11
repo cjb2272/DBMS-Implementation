@@ -192,7 +192,7 @@ class AlterQuery extends Query{
     String columnName;
     int columnType;
     int columnSize;
-    Object defaultValue;
+    String defaultValue;
 
     //0 means drop column
     //1 means alter column
@@ -213,7 +213,7 @@ class AlterQuery extends Query{
         this.alterType = 1;
     }
 
-    public AlterQuery(String table, String colName, int colType, int colSize, Object defaultVal){
+    public AlterQuery(String table, String colName, int colType, int colSize, String defaultVal){
         this.tableName = table;
         this.columnName = colName;
         this.columnType = colType;
@@ -228,19 +228,24 @@ class AlterQuery extends Query{
             switch (columnType) {
                 case 1 -> {
                     type = "Integer";
-                    Integer intValue = (Integer) this.defaultValue;
+                    Integer intValue = Integer.valueOf(this.defaultValue);
                 }
                 case 2 -> {
                     type = "Double";
-                    Double doubleValue = Double.valueOf((String) this.defaultValue);
+                    Double doubleValue = Double.valueOf(this.defaultValue);
                 }
                 case 3 -> {
                     type = "Boolean";
-                    Boolean boolValue = (Boolean) this.defaultValue;
+                    Boolean boolValue = Boolean.valueOf(this.defaultValue);
                 }
                 case 4 -> {
                     type = "char("+ columnSize+")";
-                    String charValue = this.defaultValue.toString();
+                    try {
+
+                    } catch (Exception e){
+
+                    }
+                    String charValue = this.defaultValue;
                 }
                 case 5 -> {
                     type = "varchar("+ columnSize+")";

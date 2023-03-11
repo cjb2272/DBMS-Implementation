@@ -412,6 +412,7 @@ class QueryParser {
                     return null;
                 }
             } else if (temp.length == 4){
+                temp[3] = temp[3].replace(")", "");
                 if((temp[2].equalsIgnoreCase( "unique" ) && temp[3].equalsIgnoreCase( "notnull" )) || (temp[3].equalsIgnoreCase( "unique" ) && temp[2].equalsIgnoreCase( "notnull" ))){
                     constraintCode = 3;
                 } else{
