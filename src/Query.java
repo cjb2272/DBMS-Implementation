@@ -102,6 +102,14 @@ class InsertQuery extends Query {
         TableSchema tableSchema = Catalog.instance.getTableSchemaById(tableID);
 
         for (Record r : values) {
+            for (int i = 0; i < r.getRecordContents().size(); i++) {
+                AttributeSchema attribute = tableSchema.getAttributes().get(i);
+                if (r.getRecordContents().get(i) == null && (attribute.getConstraints() == 2 ||
+                        attribute.getConstraints() == 3)) {
+                    System.out.println("Cannot insert a null value into column("+ attribute.getName() +")");
+                    return;
+                }
+            }
             int[] attemptToInsert = StorageManager.instance.insertRecord(tableID, r);
             if (attemptToInsert.length > 1) {
                 int row = attemptToInsert[0];
