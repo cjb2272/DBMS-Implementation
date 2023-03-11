@@ -174,6 +174,14 @@ public class StorageManager {
                 try {
                     Page pageReference = buffer.GetPage(tableID, pageOrder.get(index));
                     int numRecordsInPage = pageReference.getRecordCount();
+                    if (numRecordsInPage == 0) {
+                        pageReference.getRecordsInPage().add(0, recordToInsert);
+                        pageReference.setIsModified(true);
+                        if (pageReference.computeSizeInBytes() > Main.pageSize) {
+                            buffer.PageSplit(pageReference, tableID);
+                        }
+                        break;
+                    }
                     RecordSort sorter = new RecordSort();
                     for (int idx = 0; idx < numRecordsInPage; idx++) {
                         Record curRecord = pageReference.getRecordsInPage().get(idx);
@@ -237,9 +245,6 @@ public class StorageManager {
             } //if this checks out, we are dropping last column in old table
             if (indexOfColumnToDrop == -1) { indexOfColumnToDrop = newTableAttributes.size();}
         }
-        if (0 == oldTablePageOrder.size()) { // if altered table has no existing records simply return
-            return 1;
-        } else {
             ArrayList<String> all = new ArrayList<>();
             all.add("*");
             ArrayList<Record> allRecordInOldTable = selectData(tableID, all);
@@ -263,7 +268,6 @@ public class StorageManager {
                     insertRecord(newTableID, newRecord);
                 }
             }
-        }
         //WE HAVE SUCCESS! so purge all pages for the tableID still in buffer
         buffer.PurgeTableFromBuffer(tableID);
         return 1;
