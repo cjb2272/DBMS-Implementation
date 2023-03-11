@@ -267,15 +267,18 @@ public class StorageManager {
                         int typeInt = newTableAttributes.get(indexOfLastColumn).getType();
                         switch (typeInt) {
                             case 1:
-                                Integer intValue = (Integer) defaultVal;
+                                Integer intValue = Integer.parseInt((String) defaultVal);
                                 oldRecordContents.add(intValue);
                             case 2:
-                                Double doubleValue = (Double) defaultVal;
+                                Double doubleValue = Double.valueOf((String) defaultVal);
                                 oldRecordContents.add(doubleValue);
                             case 3:
-                                Boolean boolValue = (Boolean) defaultVal;
+                                Boolean boolValue = Boolean.valueOf((String) defaultVal);
                                 oldRecordContents.add(boolValue);
-                            case 4, 5:
+                            case 4:
+                                String charValue = defaultVal.toString();
+                                oldRecordContents.add(charValue);
+                            case 5:
                                 String stringValue = defaultVal.toString();
                                 oldRecordContents.add(stringValue);
                         }
