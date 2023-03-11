@@ -222,42 +222,6 @@ class AlterQuery extends Query{
         this.alterType = 2;
     }
 
-    private int defaultValueMatchesGivenType() {
-        String type = "";
-        try {
-            switch (columnType) {
-                case 1 -> {
-                    type = "Integer";
-                    Integer intValue = Integer.valueOf(this.defaultValue);
-                }
-                case 2 -> {
-                    type = "Double";
-                    Double doubleValue = Double.valueOf(this.defaultValue);
-                }
-                case 3 -> {
-                    type = "Boolean";
-                    Boolean boolValue = Boolean.valueOf(this.defaultValue);
-                }
-                case 4 -> {
-                    type = "char("+ columnSize+")";
-                    try {
-
-                    } catch (Exception e){
-
-                    }
-                    String charValue = this.defaultValue;
-                }
-                case 5 -> {
-                    type = "varchar("+ columnSize+")";
-                    String charValue = this.defaultValue.toString();
-                }
-            }
-        } catch (Exception e) {
-            System.out.println("Default value does not match type "+ type);
-            return -1;
-        }
-        return 1;
-    }
 
     public void execute(){
         int oldTableId = Catalog.instance.getTableIdByName(tableName);
@@ -309,10 +273,6 @@ class AlterQuery extends Query{
                 //Default value new col
                 if (oldTableAttributeNames.contains(columnName)) {
                     System.out.println("Duplicate attribute name \"" + columnName + "\"");
-                    System.out.println("ERROR\n");
-                    return;
-                }
-                if (defaultValueMatchesGivenType() != 1) {
                     System.out.println("ERROR\n");
                     return;
                 }

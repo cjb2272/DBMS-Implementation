@@ -121,6 +121,7 @@ class QueryParser {
             int defaultType = (int) typeInfo.get( 0 );
             if((defaultType == 0 && (typeCode == 4 || typeCode == 5))){
                 String defaultStr = (String) typeInfo.get( 1 );
+                defaultStr = defaultStr.substring(1, defaultStr.length() - 1);
                 int strLen = GetLength( tokens[5] );
                 if(strLen != defaultStr.length() && typeCode == 4){
                     System.out.println("Default Value must follow type constraint: " + tokens[5]);
