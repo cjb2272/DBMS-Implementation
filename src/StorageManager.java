@@ -147,13 +147,31 @@ public class StorageManager {
 
     }
 
+    private int compareOnIndex(Object a, Object b, int index) {
+        if (a.equals(b))
+            return 0;
+
+
+        Object objA = ((Record) a).getRecordContents().get(index);
+
+        Object objB = ((Record) b).getRecordContents().get(index);
+
+        return switch (objA.getClass().getSimpleName()) {
+            case "String" -> CharSequence.compare((String) objA, (String) objB);
+            case "Integer" -> Integer.compare((int) objA, (int) objB);
+            case "Boolean" -> Boolean.compare((boolean) objA, (boolean) objB);
+            case "Double" -> Double.compare((double) objA, (double) objB);
+            default -> 0;
+        };
+    }
+
     /**
      *
      * @param tableID        the table for which we want to insert a record into its
      *                       pages
      * @param recordToInsert the record to insert
      */
-    public int insertRecord(int tableID, Record recordToInsert) {
+    public int[] insertRecord(int tableID, Record recordToInsert) {
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
 
         ArrayList<Integer> pageOrder = table.getPageOrder();
@@ -163,7 +181,7 @@ public class StorageManager {
                 // insert the record, no comparator needed here, because this is the
                 // first record of the table
                 emptyPageInbuffer.getRecordsInPage().add(recordToInsert);
-                return 1;
+                return new int[]{1};
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -187,7 +205,16 @@ public class StorageManager {
                         Record curRecord = pageReference.getRecordsInPage().get(idx);
                         int comparison = sorter.compare(recordToInsert, curRecord);
                         if (comparison == 0) {
-                            return -1 * totalRecords;
+                            return new int[]{totalRecords, curRecord.getPkIndex()};
+                        }
+                        for (int i = 0; i < table.getAttributes().size(); i++) {
+                            AttributeSchema attribute = table.getAttributes().get(i);
+                            if ((attribute.getConstraints() == 1 || attribute.getConstraints() == 3)
+                                    && i != Catalog.instance.getTablePKIndex(tableID)) {
+                                if (compareOnIndex(recordToInsert, curRecord, i) == 0) {
+                                    return new int[]{totalRecords, i};
+                                }
+                            }
                         }
                         if (comparison < 0) {
                             pageReference.getRecordsInPage().add(idx, recordToInsert);
@@ -211,7 +238,7 @@ public class StorageManager {
                     throw new RuntimeException(e);
                 }
             }
-            return 1;
+            return new int[]{1};
         }
     }
 
@@ -255,6 +282,7 @@ public class StorageManager {
                 //remove the attribute value for column we are dropping
                 oldRecordContents.remove(indexOfColumnToDrop);
                 newRecord.setRecordContents(oldRecordContents);
+                newRecord.setPkIndex(Catalog.instance.getTablePKIndex(newTableID));
                 insertRecord(newTableID, newRecord);
             } else { //we are adding a column
                 //add the default value being null or some value
@@ -285,6 +313,7 @@ public class StorageManager {
                     }
                     newRecord.setRecordContents(oldRecordContents);
                 }
+                newRecord.setPkIndex(Catalog.instance.getTablePKIndex(newTableID));
                 insertRecord(newTableID, newRecord);
             }
         }

@@ -39,7 +39,10 @@ public class AttributeSchema {
 
 
     /**
-     *
+     * 0 - no constraints
+     * 1 - unique
+     * 2 - not null
+     * 3 - not null and unique
      * @return
      */
     public int getConstraints() {

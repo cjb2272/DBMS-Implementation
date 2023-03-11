@@ -57,11 +57,13 @@ public class Record {
      *         Size returned includes the bytes used to represent ints
      *         telling how many chars are in a varchar or char
      */
-    int compute_size() {
+    int compute_size(Boolean includeNullChars) {
         int sizeOfRecordInBytes = 0;
         for (Object obj : this.recordContents) {
-            sizeOfRecordInBytes += 1; //for each attribute, a byte is needed to signify if it's null or not
-            //sizeOfRecordInBytes = sizeOfRecordInBytes + Character.BYTES;
+            //sizeOfRecordInBytes += 1; //for each attribute, a byte is needed to signify if it's null or not
+            if (includeNullChars) {
+                sizeOfRecordInBytes = sizeOfRecordInBytes + Character.BYTES;
+            }
             // not sure if this will work todo
             if (obj == null)
                 continue; //do nothing, null does not add to size
@@ -90,29 +92,30 @@ public class Record {
      * representation of the data
      * to be used with the Page object
      *
-     * @param tableNumber   the table number corresponding to the record
+     * @param tableId   the table id corresponding to the record
      * @param recordInBytes the Page's ByteBuffer with the pointer at the beginning
      *                      of this record's data
      * @return a complete Record object that represents the parsed data as an
      *         ArrayList of Objects
      */
-    public static Record parseRecordBytes(int tableNumber, ByteBuffer nullBytes, ByteBuffer recordInBytes) {
-    //public static Record parseRecordBytes(int tableNumber, char[] nullBytes, ByteBuffer recordInBytes) {
+    //public static Record parseRecordBytes(int tableNumber, ByteBuffer nullBytes, ByteBuffer recordInBytes) {
+    public static Record parseRecordBytes(int tableId, char[] nullBytes, ByteBuffer recordInBytes) {
         // Iterate through Bytes, getting varying data types and appending to
         // returnRecord
         Record returnRecord = new Record();
-        returnRecord.tableNumber = tableNumber;
+        returnRecord.tableNumber = tableId;
+        returnRecord.setPkIndex(Catalog.instance.getTablePKIndex(tableId));
         // refrains appending int(s) telling the amount of chars in varchar or char
         // Loop in the order of data types expected - stored in Catalog ONLY for a given
         // page
-        ArrayList<Integer> typeIntegers = Catalog.instance.getSolelyTableAttributeTypes(tableNumber);
-        //int counter = 0;
+        ArrayList<Integer> typeIntegers = Catalog.instance.getSolelyTableAttributeTypes(tableId);
+        int counter = 0;
         for (int typeInt : typeIntegers) {
-            byte isNull = nullBytes.get();
-            //char isNull = nullBytes[counter];
-            //counter++;
-            //if (isNull == 'f') {
-            if (isNull == (byte) 0) {
+            //byte isNull = nullBytes.get();
+            char isNull = nullBytes[counter];
+            counter++;
+            if (isNull == 'f') {
+            //if (isNull == (byte) 0) {
                 returnRecord.recordContents.add(null);
                 continue;
             }
@@ -158,22 +161,22 @@ public class Record {
      * @return a byte array containing all the record's data in byte form
      */
     public byte[] toBytes(int tableNum) {
-        byte[] bytes = new byte[this.recordContents.size() + this.compute_size()]; //todo commented out line should be correct not this one
-        //byte[] bytes = new byte[this.compute_size()];
+        //byte[] bytes = new byte[(this.recordContents.size() * Character.BYTES) + this.compute_size()]; //todo commented out line should be correct not this one
+        byte[] bytes = new byte[this.compute_size(true)];
         ByteBuffer bytesBuffer = ByteBuffer.wrap(bytes);
-        byte[] attrBytes = new byte[this.compute_size()];
+        byte[] attrBytes = new byte[this.compute_size(false)];
         ByteBuffer attrBytesBuffer = ByteBuffer.wrap(attrBytes);
         ArrayList<Integer> typeIntegers = Catalog.instance.getSolelyTableAttributeTypes(tableNum);
         int i = 0;
         for (int typeInt : typeIntegers) {
             if (this.recordContents.get(i) == null) {
-                bytesBuffer.put((byte) 0);
-                //bytesBuffer.putChar('f');
+                //bytesBuffer.put((byte) 0);
+                bytesBuffer.putChar('f');
                 ++i;
                 continue;
             }
-            bytesBuffer.put((byte) 1);
-            //bytesBuffer.putChar('t');
+            //bytesBuffer.put((byte) 1);
+            bytesBuffer.putChar('t');
             switch (typeInt) {
                 case 1 -> // Integer
                     attrBytesBuffer.putInt((Integer) this.recordContents.get(i)); // get next 4 BYTES
@@ -218,7 +221,7 @@ public class Record {
             return false;
         }
 
-        if (this.compute_size() != rec.compute_size()) {
+        if (this.compute_size(true) != rec.compute_size(true)) {
             return false;
         }
 
