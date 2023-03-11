@@ -256,7 +256,23 @@ public class StorageManager {
                         oldRecordContents.add(null);
                         newRecord.setRecordContents(oldRecordContents);
                     } else {
-                        oldRecordContents.add(defaultVal);
+                        //determining type of default value
+                        int indexOfLastColumn = newTableAttributes.size() - 1;
+                        int typeInt = newTableAttributes.get(indexOfLastColumn).getType();
+                        switch (typeInt) {
+                            case 1:
+                                Integer intValue = (Integer) defaultVal;
+                                oldRecordContents.add(intValue);
+                            case 2:
+                                Double doubleValue = (Double) defaultVal;
+                                oldRecordContents.add(doubleValue);
+                            case 3:
+                                Boolean boolValue = (Boolean) defaultVal;
+                                oldRecordContents.add(boolValue);
+                            case 4, 5:
+                                String stringValue = defaultVal.toString();
+                                oldRecordContents.add(stringValue);
+                        }
                         newRecord.setRecordContents(oldRecordContents);
                     }
                     insertRecord(newTableID, newRecord);
