@@ -2,7 +2,7 @@ package src;
 /*
  * This file represents the Storage Manager as Whole,
  * Which includes the Buffer Manager within
- * @author(s) Charlie Baker, Austin Cepalia, Duncan Small (barely)
+ * @author(s) Charlie Baker, Austin Cepalia, Duncan Small (barely), Tristan Hoenninger
  */
 
 import java.io.*;
@@ -72,7 +72,17 @@ public class StorageManager {
         return null;
     }
 
+    /**
+     *
+     * @param ID
+     * @return
+     */
     public boolean dropTable(int ID) {
+        try {
+            buffer.PurgeTableFromBuffer(ID);
+        } catch (IOException e) {
+            return false;
+        }
         File file = new File(Paths.get(tablesRootPath, String.valueOf(ID)).toString());
         Catalog.instance.dropTableSchema(ID);
         return file.delete();
@@ -147,6 +157,13 @@ public class StorageManager {
 
     }
 
+    /**
+     *
+     * @param a
+     * @param b
+     * @param index
+     * @return
+     */
     private int compareOnIndex(Object a, Object b, int index) {
         if (a.equals(b))
             return 0;
@@ -318,7 +335,6 @@ public class StorageManager {
             }
         }
         //WE HAVE SUCCESS! so purge all pages for the tableID still in buffer
-        buffer.PurgeTableFromBuffer(tableID);
         return 1;
     }
 
@@ -331,24 +347,13 @@ public class StorageManager {
      */
     public int getPageCountForTable(int tableID) {
         return Catalog.instance.getTableSchemaById(tableID).getPageOrder().size();
-        /*
-         * String tableFilePath = Paths.get(tablesRootPath,
-         * String.valueOf(tableID)).toString();
-         * RandomAccessFile file;
-         * try {
-         * file = new RandomAccessFile(tableFilePath, "r");
-         * file.seek(0);
-         * byte[] pageByteArray = new byte[4];
-         * file.read(pageByteArray, 0, 4);
-         * file.close();
-         * return ByteBuffer.wrap(pageByteArray).getInt();
-         * } catch (Exception e) {
-         * e.printStackTrace();
-         * }
-         * return -1;
-         */
     }
 
+    /**
+     *
+     * @param tableID
+     * @return
+     */
     public int getRecordCountForTable(int tableID) {
         ArrayList<Integer> arrayOfPageLocationsOnDisk = Catalog.instance.getTableSchemaById(tableID).getPageOrder();
         int sum = 0;
@@ -367,6 +372,10 @@ public class StorageManager {
         return buffer.PageBuffer.size();
     }
 
+    /**
+     *
+     * @return
+     */
     public int getNumberOfTables() {
         return Catalog.instance.getTableSchemas().size();
     }

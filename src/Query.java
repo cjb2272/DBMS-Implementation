@@ -348,8 +348,11 @@ class DropQuery extends Query {
             return;
         }
 
-        Catalog.instance.removeTableSchema(tableID);
-        StorageManager.instance.dropTable(tableID);
+        Boolean successfulDrop = StorageManager.instance.dropTable(tableID);
+        if (!successfulDrop) {
+            System.out.println("Failed to drop table "+ tableName+".");
+            return;
+        }
         System.out.println("SUCCESS\n");
 
     }
