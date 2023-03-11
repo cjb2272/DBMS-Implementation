@@ -245,48 +245,49 @@ public class StorageManager {
             } //if this checks out, we are dropping last column in old table
             if (indexOfColumnToDrop == -1) { indexOfColumnToDrop = newTableAttributes.size();}
         }
-            ArrayList<String> all = new ArrayList<>();
-            all.add("*");
-            ArrayList<Record> allRecordInOldTable = selectData(tableID, all);
-            for (Record recordToCopyOver : allRecordInOldTable) {
-                Record newRecord = new Record();
-                ArrayList<Object> oldRecordContents = recordToCopyOver.getRecordContents();
-                if (indexOfColumnToDrop != -1) { //if we are dropping a column
-                    //remove the attribute value for column we are dropping
-                    oldRecordContents.remove(indexOfColumnToDrop);
+        ArrayList<String> all = new ArrayList<>();
+        all.add("*");
+        ArrayList<Record> allRecordInOldTable = selectData(tableID, all);
+        for (Record recordToCopyOver : allRecordInOldTable) {
+            Record newRecord = new Record();
+            ArrayList<Object> oldRecordContents = recordToCopyOver.getRecordContents();
+            if (indexOfColumnToDrop != -1) { //if we are dropping a column
+                //remove the attribute value for column we are dropping
+                oldRecordContents.remove(indexOfColumnToDrop);
+                newRecord.setRecordContents(oldRecordContents);
+                insertRecord(newTableID, newRecord);
+            } else { //we are adding a column
+                //add the default value being null or some value
+                if (defaultVal == "") {
+                    oldRecordContents.add(null);
                     newRecord.setRecordContents(oldRecordContents);
-                    insertRecord(newTableID, newRecord);
-                } else { //we are adding a column
-                    //add the default value being null or some value
-                    if (defaultVal == "") {
-                        oldRecordContents.add(null);
-                        newRecord.setRecordContents(oldRecordContents);
-                    } else {
-                        //determining type of default value
-                        int indexOfLastColumn = newTableAttributes.size() - 1;
-                        int typeInt = newTableAttributes.get(indexOfLastColumn).getType();
-                        switch (typeInt) {
-                            case 1:
-                                Integer intValue = Integer.parseInt((String) defaultVal);
-                                oldRecordContents.add(intValue);
-                            case 2:
-                                Double doubleValue = Double.valueOf((String) defaultVal);
-                                oldRecordContents.add(doubleValue);
-                            case 3:
-                                Boolean boolValue = Boolean.valueOf((String) defaultVal);
-                                oldRecordContents.add(boolValue);
-                            case 4:
-                                String charValue = defaultVal.toString();
-                                oldRecordContents.add(charValue);
-                            case 5:
-                                String stringValue = defaultVal.toString();
-                                oldRecordContents.add(stringValue);
+                } else {
+                    //determining type of default value
+                    int indexOfLastColumn = newTableAttributes.size() - 1;
+                    int typeInt = newTableAttributes.get(indexOfLastColumn).getType();
+                    switch (typeInt) {
+                        case 1 -> {
+                            Integer intValue = (Integer) defaultVal;
+                            oldRecordContents.add(intValue);
                         }
-                        newRecord.setRecordContents(oldRecordContents);
+                        case 2 -> {
+                            Double doubleValue = Double.valueOf((String) defaultVal);
+                            oldRecordContents.add(doubleValue);
+                        }
+                        case 3 -> {
+                            Boolean boolValue = (Boolean) defaultVal;
+                            oldRecordContents.add(boolValue);
+                        }
+                        case 4, 5 -> {
+                            String charValue = defaultVal.toString();
+                            oldRecordContents.add(charValue);
+                        }
                     }
-                    insertRecord(newTableID, newRecord);
+                    newRecord.setRecordContents(oldRecordContents);
                 }
+                insertRecord(newTableID, newRecord);
             }
+        }
         //WE HAVE SUCCESS! so purge all pages for the tableID still in buffer
         buffer.PurgeTableFromBuffer(tableID);
         return 1;
