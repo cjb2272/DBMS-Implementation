@@ -118,9 +118,10 @@ class QueryParser {
             }
 
             List typeInfo = TypeCast( tokens[7] );
+            String defaultStr = tokens[7];
             int defaultType = (int) typeInfo.get( 0 );
             if((defaultType == 0 && (typeCode == 4 || typeCode == 5))){
-                String defaultStr = (String) typeInfo.get( 1 );
+                defaultStr = (String) typeInfo.get( 1 );
                 defaultStr = defaultStr.substring(1, defaultStr.length() - 1);
                 int strLen = GetLength( tokens[5] );
                 if(strLen != defaultStr.length() && typeCode == 4){
@@ -149,7 +150,7 @@ class QueryParser {
                 size = Integer.BYTES;
             }
 
-            return new AlterQuery( tableName, tokens[4], typeCode,size, tokens[7]);
+            return new AlterQuery( tableName, tokens[4], typeCode,size, defaultStr);
         }
         else{
             System.out.println( "Expected 'alter table <name> drop <a_name>;' or " +
