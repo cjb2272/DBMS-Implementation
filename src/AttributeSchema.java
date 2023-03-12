@@ -36,8 +36,6 @@ public class AttributeSchema {
         this.constraints = constraints;
     }
 
-
-
     /**
      * 0 - no constraints
      * 1 - unique

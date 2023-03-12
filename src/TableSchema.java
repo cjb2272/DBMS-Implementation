@@ -53,14 +53,26 @@ public class TableSchema {
         attributes.add(attribute);
     }
 
+    /**
+     * Sets the attributes of a given table to given Array of attributeSchemas
+     * @param attributes
+     */
     protected void setAttributes(ArrayList<AttributeSchema> attributes) {
         this.attributes = attributes;
     }
 
+    /**
+     * Sets the name of the tableschema to given table name
+     * @param tableName: Given name
+     */
     public void setTableName(String tableName) {
         this.tableName = tableName;
     }
 
+    /**
+     * Sets the table id of a tableschema to given table id
+     * @param tableId : Given id
+     */
     public void setTableId(int tableId) {
         this.tableId = tableId;
     }

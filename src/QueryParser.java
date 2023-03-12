@@ -133,6 +133,7 @@ class QueryParser {
             List typeInfo = TypeCast( tokens[7] );
             String defaultStr = tokens[7];
             int defaultType = (int) typeInfo.get( 0 );
+            //Mates sure string type matches and string length is correct
             if((defaultType == 0 && (typeCode == 4 || typeCode == 5))){
                 defaultStr = (String) typeInfo.get( 1 );
                 defaultStr = defaultStr.substring(1, defaultStr.length() - 1);
@@ -146,12 +147,14 @@ class QueryParser {
                     return null;
                 }
             }
+            //Makes sure type matches
             else if (defaultType != typeCode){
                 System.out.println("Default value type must match column type given.");
                 System.out.println("Got (" + CodeToString( defaultType ) + ") Expected (" + CodeToString( typeCode ) + ").");
                 return null;
             }
 
+            //sets size
             int size;
             if (typeCode == 4 || typeCode == 5) {
                 size = GetLength(tokens[5]);
@@ -172,7 +175,13 @@ class QueryParser {
         }
     }
 
-
+    /**
+     * Processes a drop query.
+     * Handles:
+     * drop table <name>
+     * @param input : drop query
+     * @return DropQuery if successful and null if unsuccessful.
+     */
     public DropQuery ParseDrop(String input) {
         String[] tokens = input.split(" ");
 

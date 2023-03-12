@@ -73,9 +73,9 @@ public class StorageManager {
     }
 
     /**
-     *
-     * @param ID
-     * @return
+     * Drops the table with given table id, purges its pages from the buffer and deletes the related tableschema.
+     * @param ID : Id of table to drop
+     * @return True if dropped successfully, False if unsuccessful.
      */
     public boolean dropTable(int ID) {
         try {
@@ -158,11 +158,13 @@ public class StorageManager {
     }
 
     /**
-     *
-     * @param a
-     * @param b
-     * @param index
-     * @return
+     * Compares value in the given index in the record contents of two given records.
+     * @param a : Given record
+     * @param b : Given record
+     * @param index : given index
+     * @return -1 if record contents of record A at index is greater than record contents of record B at index.
+     *          1 if record contents of record B at index is greater than record contents of record A at index.
+     *          0 record contents of record A at index is equal to record contents of record B at index.
      */
     private int compareOnIndex(Object a, Object b, int index) {
         if (a.equals(b)) {
@@ -194,10 +196,12 @@ public class StorageManager {
     }
 
     /**
-     *
+     * Inserts the given record into the given table. Returns a length one int array to show if it succeeded, int array[1],
+     * or a length two int array with the row the insert failed on and the column that holds the value it failed on.
      * @param tableID        the table for which we want to insert a record into its
      *                       pages
      * @param recordToInsert the record to insert
+     * @return int[1] or int[2]
      */
     public int[] insertRecord(int tableID, Record recordToInsert) {
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
@@ -361,9 +365,9 @@ public class StorageManager {
     }
 
     /**
-     *
-     * @param tableID
-     * @return
+     * Returns the record count of table with given table id.
+     * @param tableID : Given table id.
+     * @return integer - number of records in table.
      */
     public int getRecordCountForTable(int tableID) {
         ArrayList<Integer> arrayOfPageLocationsOnDisk = Catalog.instance.getTableSchemaById(tableID).getPageOrder();
@@ -384,8 +388,8 @@ public class StorageManager {
     }
 
     /**
-     *
-     * @return
+     * Returns the number of tableschemas.
+     * @return integer - number of tableschemas.
      */
     public int getNumberOfTables() {
         return Catalog.instance.getTableSchemas().size();

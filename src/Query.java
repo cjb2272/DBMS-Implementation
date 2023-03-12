@@ -199,12 +199,14 @@ class AlterQuery extends Query{
     //2 means alter column with a default value
     int alterType;
 
+    //Alter drop
     public AlterQuery(String table, String colName){
         this.tableName = table;
         this.columnName = colName;
         this.alterType = 0;
     }
 
+    //Alter add with no default value
     public AlterQuery(String table, String colName, int colType, int colSize){
         this.tableName = table;
         this.columnName = colName;
@@ -213,6 +215,7 @@ class AlterQuery extends Query{
         this.alterType = 1;
     }
 
+    //Alter add with default value
     public AlterQuery(String table, String colName, int colType, int colSize, String defaultVal){
         this.tableName = table;
         this.columnName = colName;

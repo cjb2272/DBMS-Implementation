@@ -53,10 +53,6 @@ public class Catalog {
         tableSchemas.add(tableSchema);
     }
 
-    public void removeTableSchema(int tableNum) {
-        tableSchemas.remove(getTableSchemaById(tableNum));
-    }
-
     /**
      * Returns the indexes of attributes that meet the given constraints.
      * @param tableId : id of given table
@@ -145,6 +141,10 @@ public class Catalog {
         return newTable;
     }
 
+    /**
+     * Drops a table with the given table id from list of tableSchemas.
+     * @param tableId : Given table id
+     */
     public void dropTableSchema(int tableId) {
         tableSchemas.remove(getTableSchemaById(tableId));
     }
@@ -212,9 +212,9 @@ public class Catalog {
     }
 
     /**
-     *
-     * @param tableId
-     * @return
+     * Returns a list of the constraints for a given table.
+     * @param tableId : Given table id
+     * @return ArrayList<Integer> with int representing constraints of attributes.
      */
     protected ArrayList<Integer> getConstraintsOfTableById(int tableId) {
         ArrayList<Integer> constraints = new ArrayList<>();
