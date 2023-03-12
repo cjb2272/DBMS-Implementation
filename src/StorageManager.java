@@ -627,11 +627,20 @@ public class StorageManager {
          * @throws IOException
          */
         public void PurgeTableFromBuffer(int tableId) throws IOException {
-            for (Page page : PageBuffer) {
-                if (tableId == page.getTableNumber()) {
-                    PageBuffer.remove(page);
-                    if (PageBuffer.isEmpty()) {return;}
+            //an arraylist of all the buffer indexes where a page needs to be removed from
+            ArrayList<Integer> indexesofpagestoremove = new ArrayList<>();
+            int numPagesInBuffer = PageBuffer.size();
+            for (int pageIndex = 0; pageIndex < numPagesInBuffer; pageIndex++) {
+                Page pageref = PageBuffer.get(pageIndex);
+                if (tableId == pageref.getTableNumber()) {
+                    indexesofpagestoremove.add(pageIndex);
                 }
+            }
+            int numpagestoremove = indexesofpagestoremove.size();
+            for (int i = numpagestoremove-1; i >= 0; i--) {
+                int value = indexesofpagestoremove.get(i);
+                PageBuffer.remove(value);
+                if (PageBuffer.isEmpty()) {return;}
             }
         }
 
