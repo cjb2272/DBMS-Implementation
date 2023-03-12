@@ -49,6 +49,15 @@ class QueryParser {
     //alter table <name> add <a_name> <a_type>;
     //alter table <name> add <a_name> <a_type> default <value>
 
+    /**
+     * Takes in the query string for alter.
+     * Handles:
+     * alter table <name> drop <a_name>;
+     * alter table <name> add <a_name> <a_type>;
+     * alter table <name> add <a_name> <a_type> default <value>
+     * @param input :query string
+     * @return Either Null is failed or AlterQuery if successful.
+     */
     public Query ParseAlter( String input ) {
         String[] tokens = input.split( " " , 8);
 
@@ -114,6 +123,10 @@ class QueryParser {
             }
             else if(typeCode == -1){
                 System.out.println("Must use a valid column type, got: " + tokens[5]);
+                return null;
+            } else if (!tokens[6].equalsIgnoreCase("default")) {
+                System.out.println( "Use the format 'alter table <name> drop <a_name>;' or " +
+                        "'alter table <name> add <a_name> <a_type> [optional: default <value>];'" );
                 return null;
             }
 
