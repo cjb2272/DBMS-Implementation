@@ -225,6 +225,11 @@ class AlterQuery extends Query{
 
     public void execute(){
         int oldTableId = Catalog.instance.getTableIdByName(tableName);
+        if (oldTableId == -1) {
+            System.out.println("There is no such table "+ tableName);
+            System.out.println("ERROR\n");
+            return;
+        }
         TableSchema temp;
         ArrayList<Object> attrInfo;
         ArrayList<String> oldTableAttributeNames = Catalog.instance.getAttributeNames(tableName);
@@ -262,7 +267,6 @@ class AlterQuery extends Query{
                     StorageManager.instance.alterTable(temp.getTableId(),
                             oldTableId, "");
                     StorageManager.instance.dropTable(oldTableId);
-
                     temp.setTableName(tableName);
                 } catch (IOException e) {
                     e.printStackTrace();
