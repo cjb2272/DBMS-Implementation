@@ -5,6 +5,9 @@ package src;
  * @author(s) Charlie Baker, Austin Cepalia, Duncan Small (barely), Tristan Hoenninger
  */
 
+import src.ConditionalTreeNodes.AndNode;
+import src.ConditionalTreeNodes.ConditionTree;
+
 import java.io.*;
 import java.nio.file.Paths;
 import java.util.*;
@@ -351,6 +354,69 @@ public class StorageManager {
         }
         //WE HAVE SUCCESS! so purge all pages for the tableID still in buffer
         return 1;
+    }
+
+
+    /**
+     *
+     * @param obj TODO IS AN OBJECT Containing a list of tuples/records
+     *             for which we are working on and the appropriate
+     *             schemas needed
+     *             this obj is references as 'selectData' in google doc
+     *            - obj is created when evaluating 'from' part of select
+     *              and passed to this method by someone somehow
+     */
+    public void whereDriver(Object obj) {
+        //todo prep (build tree (includes shunting yard))
+        //before we evaluate our tuples, we need to have our conditionalTree Built
+        //first step in building this tree is calling our Shunting Yard algorithm
+        //which takes our list of tokens from the where clause condition(s).
+        //Not sure if this should happen higher up
+        //Shunting yard algorithm serves to convert our list of tokens in
+        // Infix Notation to Postfix Notation. Converting our list of tokens comprising the
+        // where clause into Postfix Notation is done because the postfix notation of tokens
+        // is easier to evaluate with our tree-
+        // todo use this arraylist of tokens to build ConditionTree
+        //  this would look something like   "ConditionTree root = parseConditionTree(conditionaltokensinPostfix)"
+        //  i could be wrong and the logic for shunting yard is the logic of the condition tree itself
+        //ex: in writeup using conditionaltree to parse "x > 0 and y < 3 or b = 5 and c = 2"
+        //would be difficult and require ALOT of lookahead i imagine, because we have to evaluate
+        //"and's" before "or's". I imagine this is why shunting yard is used
+        //
+
+        //todo
+        //for every tuple in list of tuples
+            //call evaluate tuple passing in tuple and according schema
+            //if return value from evaluate is false, we will remove this
+            //record from our list of records in obj
+    }
+
+    //todo takens in the array list of tokens and passes tokens along to call to new instance of
+    // whatever node is our root-per tokens
+    //
+    //todo change VOID to ConditionTree
+    public static void parseConditionTree() {
+        //in case of returning AndNode we would have "OperationNode leftOperation = new OperationNode(...);"
+        // and leftOperation would become our first param in AndNode below.
+        // to do this though we would need to instanciate the params of Operation Node calling parseValueNode ....
+        // which would get a bit messy
+        //return new AndNode();
+        //return new OrNode();
+    }
+
+    /**
+     *
+     * @param record TODO the record that will or will not be included in
+     *                our select data output
+     * @param schema
+     * @return todo true, this record does check out with 'where',
+     *              false, does not check out
+     */
+    public boolean evaluateRecord(Record record, TableSchema schema) {
+        //use the conditional tree to evaluate this tuple/record
+        //maybe this simply looks like calling validateTree of root node im not really sure
+
+        return true;
     }
 
     /**
