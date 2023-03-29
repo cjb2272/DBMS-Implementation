@@ -7,6 +7,7 @@ package src;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public abstract class Query {
 
@@ -18,8 +19,17 @@ public abstract class Query {
 }
 
 class UpdateQuery extends Query{
-    public UpdateQuery(){
 
+    public String table;
+    public String colName;
+    public List<Object> data;
+    public ArrayList<ArrayList<Conditional>> where;
+
+    public UpdateQuery( String table, String colName, List<Object> data, ArrayList<ArrayList<Conditional>> where ) {
+        this.table = table;
+        this.colName = colName;
+        this.data = data;
+        this.where = where;
     }
 
     @Override
@@ -30,8 +40,12 @@ class UpdateQuery extends Query{
 }
 
 class DeleteQuery extends Query{
-    public DeleteQuery(){
+    public String table;
+    public ArrayList<ArrayList<Conditional>> where;
 
+    public DeleteQuery( String tableName, ArrayList<ArrayList<Conditional>> where ){
+        this.table = tableName;
+        this.where = where;
     }
 
     @Override

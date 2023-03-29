@@ -14,19 +14,19 @@ class QueryParser {
 
 
     public Conditional ParseCond(String input){
-        String[] relSplit = input.split( "(?<=[<>=!]=)|(?=[<>=!]=)" );
+        String[] relSplit = input.trim().split( " " );
         String rel = "";
         if(relSplit.length != 3){
             System.out.println("Error parsing conditional: " + input);
             return null;
         } else{
             for(String s : relSplit){
-                if(s.matches( "(?<=[<>=!]=)|(?=[<>=!]=)" )){
+                if(s.matches( "[<>=!]=?|<=|>=" )){
                     rel = s;
                 }
             }
             if(rel.equals( "" )){
-                System.out.println("Missing relational operatorin conditional: " + input);
+                System.out.println("Missing relational operator in conditional: " + input);
                 return null;
             }
             String A = relSplit[0];
@@ -89,17 +89,15 @@ class QueryParser {
             return null;
         }
         String colName = equalSplit[0];
-        List<Object> data = TypeCast( equalSplit[1] );
-
-        if(whereSplit.length == 2){
+        List<Object> data = TypeCast( equalSplit[1].trim() );
+        ArrayList<ArrayList<Conditional>> where = null;
+        if(whereSplit.length != 1){
             //There is a where
             whereSplit[1].replace( "where", "" );
             //parse conditional
-            return new UpdateQuery();
-        } else{
-            //no Where
-            return new UpdateQuery();
+            where = ParseConditionalStatement( whereSplit[1] );
         }
+        return new UpdateQuery(tableName.trim(), colName.trim(), data, where);
     }
 
     public DeleteQuery ParseDelete(String input){
@@ -109,15 +107,13 @@ class QueryParser {
             return null;
         }
         String[] chunks = keywords[1].split( "where" );
-        if(chunks.length == 1){
-            //no where, so delete everything in table
-            //TODO grab table name
-            return new DeleteQuery();
-        } else {
+        ArrayList<ArrayList<Conditional>> where = null;
+        String tableName = chunks[0].replace( "from", "" );
+        if(chunks.length != 1){
             //Where is present so chunks[0] is table name, chunks[1] is conditional
-            //Conditional cond = ParseConditional(chunks[1])
-            return new DeleteQuery();
+            where = ParseConditionalStatement(chunks[1].replace( "where", "" ));
         }
+        return new DeleteQuery(tableName.trim(), where);
     }
 
     // display info <table>;
