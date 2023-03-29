@@ -278,7 +278,71 @@ public class StorageManager {
     }
 
     /**
-     * This method handles all alter table commands
+     * Called by deleteFrom()
+     * Deletes a single provided record from the table it belongs too. This method
+     * is used in both the 'delete from' statement and the 'update' statement
+     * todo deleting empty page from hardware should occur when buffer writes page out to hardware
+     * how does this t o d o come into play
+     * re-uses large portion of code from insertRecord
+     * @param tableID table for which we want to delete the record
+     * @param recordToDelete record to be deleted/removed from table
+     * @return .
+     */
+    public int[] deleteRecord(int tableID, Record recordToDelete) {
+        TableSchema table = Catalog.instance.getTableSchemaById(tableID);
+        //for each page in table
+            //for each record r in page
+                //if r's pk equals recordToDelete's pk
+                    //delete the record
+                    //"move all other records up to cover empty space" should be handled auto
+                    //update record count for page
+                    //if page is empty as a result of delete
+                        //Adjust P.O, removing reference to page and moving all other pages up in file
+                        //update page count for table
+                //if r's pk > recordToDelete's pk
+                    //record to delete does not exist?
+
+        return new int[]{1};
+    }
+
+    /**
+     * todo Called by Parser, or move into execute()?
+     * should take in table we are working with as well as the tokens for where condition
+     * @param tableID
+     * @return
+     */
+    public void deleteFrom(int tableID) {
+        //for each page in table
+            //for each record r in page
+                //call method(s) to evaluate a single tuple for meeting where condition
+                //call deleteRecord on record if condition was meet
+    }
+
+    //missing params
+    //todo calls DeleteRecord then InsertRecord with new copy!
+    //this will handle a change to primarykey resulting in that record moving to proper location
+    public int[] updateRecord(int tableID, Record recordToUpdate) {
+
+        //when a record is updated. size of page needs to be recomputed,
+        // determining if page split is needed
+
+        //if it is the primarykey that is updated!, then record might have to move
+        //to complete different page in table file.
+
+
+        return new int[]{1};
+    }
+
+    //todo indication of column and value to set passed in
+    // also deals with param holding token for where condition
+    public int updateTable() {
+        //todo makes repeated calls to updateRecord w proper commands
+        return 0;
+    }
+
+
+    /**
+     * This method handles all alter table commands (adding and removing columns)
      * Pre: In alter table query's execute, we have created the new table for which we are
      *      copying records over toos here (now including/discluding value to be added, dropped),
      *      which actual adding/removing of value is done in this method.
