@@ -12,6 +12,114 @@ class QueryParser {
     public QueryParser() {
     }
 
+
+    public Conditional ParseCond(String input){
+        String[] relSplit = input.split( "(?<=[<>=!]=)|(?=[<>=!]=)" );
+        String rel = "";
+        if(relSplit.length != 3){
+            System.out.println("Error parsing conditional: " + input);
+            return null;
+        } else{
+            for(String s : relSplit){
+                if(s.matches( "(?<=[<>=!]=)|(?=[<>=!]=)" )){
+                    rel = s;
+                }
+            }
+            if(rel.equals( "" )){
+                System.out.println("Missing relational operatorin conditional: " + input);
+                return null;
+            }
+            String A = relSplit[0];
+            String B = relSplit[2];
+            List<Object> ACode = TypeCast( A );
+            List<Object> BCode = TypeCast( B );
+            if((int) ACode.get( 0 ) == 0 && !A.contains( "\"" )){
+                ACode.set(0,7);
+            }
+            if((int) BCode.get( 0 ) == 0 && !B.contains( "\"" )){
+                BCode.set(0,7);
+            }
+            return new Conditional( ACode.get(1), BCode.get(1), (int) ACode.get( 0 ), (int) BCode.get( 0 ), ParseRelation( rel ) );
+        }
+    }
+
+    public ArrayList<ArrayList<Conditional>> ParseConditionalStatement( String input){
+        ArrayList<ArrayList<Conditional>> orClauses = new ArrayList<>();
+        String[] orSplit = input.split( "or" );
+        for(String o : orSplit){
+            ArrayList<Conditional> andClauses = new ArrayList<>();
+            String[] andSplit = o.split( "and" );
+            for ( String a : andSplit ) {
+                andClauses.add( ParseCond( a ) );
+            }
+            orClauses.add( andClauses );
+        }
+        return orClauses;
+    }
+
+    public int ParseRelation(String op){
+        return switch (op.trim()){
+            case "=" -> 0;
+            case ">" -> 1;
+            case "<" -> 2;
+            case "<=" -> 3;
+            case ">=" -> 4;
+            case "!=" -> 5;
+            default -> -1;
+        };
+    }
+
+
+    //update <name>
+    //set <column_1> = <value>
+    //where <condition>;
+    public UpdateQuery ParseUpdate(String input){
+        String[] setSplit = input.split( "set" );
+        if(setSplit.length < 2){
+            System.out.println("Missing SET keyword.");
+            return null;
+        }
+        String tableName = setSplit[0].replace( "update", "" );
+        setSplit[1].replace( "set", "");
+
+        String[] whereSplit = setSplit[1].split( "where" );
+        String[] equalSplit = whereSplit[0].split( "=" );
+        if(equalSplit.length < 2){
+            System.out.println("Missing equals sign after SET");
+            return null;
+        }
+        String colName = equalSplit[0];
+        List<Object> data = TypeCast( equalSplit[1] );
+
+        if(whereSplit.length == 2){
+            //There is a where
+            whereSplit[1].replace( "where", "" );
+            //parse conditional
+            return new UpdateQuery();
+        } else{
+            //no Where
+            return new UpdateQuery();
+        }
+    }
+
+    public DeleteQuery ParseDelete(String input){
+        String[] keywords = input.split( "from" );
+        if(keywords.length < 2){
+            System.out.println("Missing FROM keyword.");
+            return null;
+        }
+        String[] chunks = keywords[1].split( "where" );
+        if(chunks.length == 1){
+            //no where, so delete everything in table
+            //TODO grab table name
+            return new DeleteQuery();
+        } else {
+            //Where is present so chunks[0] is table name, chunks[1] is conditional
+            //Conditional cond = ParseConditional(chunks[1])
+            return new DeleteQuery();
+        }
+    }
+
     // display info <table>;
     // display schema;
 
@@ -658,6 +766,10 @@ class QueryParser {
                 return ParseDrop(input);
             case "alter":
                 return ParseAlter(input);
+            case "update":
+                return ParseUpdate(input);
+            case "delete":
+                return ParseDelete(input);
             default:
                 System.out.println("Error, command not recognized. Received: " + command);
                 return null;
