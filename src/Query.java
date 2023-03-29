@@ -4,7 +4,9 @@ package src;
  * @author Duncan Small, Austin Cepalia
  */
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public abstract class Query {
 
@@ -121,15 +123,26 @@ class InsertQuery extends Query {
     @Override
     public void execute() {
         int tableID = Catalog.instance.getTableIdByName(this.table);
+        TableSchema tableSchema = Catalog.instance.getTableSchemaById(tableID);
 
         for (Record r : values) {
-
-
-
-            int attemptToInsert = StorageManager.instance.insertRecord(tableID, r);
-            if (attemptToInsert < 0) {
-                int row = -1 * attemptToInsert;
-                System.out.println("row (" + row + "): Duplicate  primary key for row (" + row + ")");
+            for (int i = 0; i < r.getRecordContents().size(); i++) {
+                AttributeSchema attribute = tableSchema.getAttributes().get(i);
+                if (r.getRecordContents().get(i) == null && (attribute.getConstraints() == 2 ||
+                        attribute.getConstraints() == 3)) {
+                    System.out.println("Cannot insert a null value into column("+ attribute.getName() +")");
+                    return;
+                }
+            }
+            int[] attemptToInsert = StorageManager.instance.insertRecord(tableID, r);
+            if (attemptToInsert.length > 1) {
+                int row = attemptToInsert[0];
+                if (r.getPkIndex() != attemptToInsert[1]) {
+                    System.out.println("row (" + row + "): Duplicate unique key for row (" + row +
+                            ") at column("+tableSchema.getAttributes().get(attemptToInsert[1])+")");
+                } else {
+                    System.out.println("row (" + row + "): Duplicate primary key for row (" + row + ")");
+                }
                 System.out.println("ERROR\n");
                 return;
             }
@@ -190,7 +203,7 @@ class CreateQuery extends Query {
             return;
         }
 
-        int availableId = Catalog.instance.getNumOfTables() + 1;
+        int availableId = Catalog.instance.getNextAvailableId();
         StorageManager.instance.createTable(availableId, tableName, columnNames, dataTypes);
         Catalog.instance.addTableSchema(availableId, tableName, attributeInfo);
         System.out.println("SUCCESS\n");
@@ -202,44 +215,110 @@ class AlterQuery extends Query{
     String tableName;
     String columnName;
     int columnType;
-    Object defaultValue;
+    int columnSize;
+    String defaultValue;
 
     //0 means drop column
     //1 means alter column
     //2 means alter column with a default value
     int alterType;
 
+    //Alter drop
     public AlterQuery(String table, String colName){
         this.tableName = table;
         this.columnName = colName;
         this.alterType = 0;
     }
 
-    public AlterQuery(String table, String colName, int colType){
+    //Alter add with no default value
+    public AlterQuery(String table, String colName, int colType, int colSize){
         this.tableName = table;
         this.columnName = colName;
         this.columnType = colType;
+        this.columnSize = colSize;
         this.alterType = 1;
     }
 
-    public AlterQuery(String table, String colName, int colType, Object defaultVal){
+    //Alter add with default value
+    public AlterQuery(String table, String colName, int colType, int colSize, String defaultVal){
         this.tableName = table;
         this.columnName = colName;
         this.columnType = colType;
+        this.columnSize = colSize;
         this.defaultValue = defaultVal;
         this.alterType = 2;
     }
 
+
     public void execute(){
+        int oldTableId = Catalog.instance.getTableIdByName(tableName);
+        if (oldTableId == -1) {
+            System.out.println("There is no such table "+ tableName);
+            System.out.println("ERROR\n");
+            return;
+        }
+        TableSchema temp;
+        ArrayList<Object> attrInfo;
+        ArrayList<String> oldTableAttributeNames = Catalog.instance.getAttributeNames(tableName);
+        String pkName = oldTableAttributeNames.get(Catalog.instance.getTablePKIndex(oldTableId));
         switch (this.alterType){
             case 0:
                 //Drop column
+                if (pkName.equals(columnName)) {
+                    System.out.println("Primary key of table cannot be dropped.");
+                    System.out.println("ERROR\n");
+                    return;
+                }
+                temp = Catalog.instance.updateTableDropColumn(oldTableId, columnName);
+                try {
+                    StorageManager.instance.alterTable(temp.getTableId(),
+                            oldTableId, "");
+                    StorageManager.instance.dropTable(oldTableId);
+                    temp.setTableName(tableName);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("SUCCESS\n");
                 break;
             case 1:
                 //No default value new col
+                if (oldTableAttributeNames.contains(columnName)) {
+                    System.out.println("Duplicate attribute name \"" + columnName + "\"");
+                    System.out.println("ERROR\n");
+                    return;
+                }
+                attrInfo = new ArrayList<>(Arrays.asList(columnName, columnType, columnSize,
+                        false, 0));
+                temp = Catalog.instance.updateTableAddColumn(oldTableId, attrInfo);
+                try {
+                    StorageManager.instance.alterTable(temp.getTableId(),
+                            oldTableId, "");
+                    StorageManager.instance.dropTable(oldTableId);
+                    temp.setTableName(tableName);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("SUCCESS\n");
                 break;
             case 2:
                 //Default value new col
+                if (oldTableAttributeNames.contains(columnName)) {
+                    System.out.println("Duplicate attribute name \"" + columnName + "\"");
+                    System.out.println("ERROR\n");
+                    return;
+                }
+                attrInfo = new ArrayList<>(Arrays.asList(columnName, columnType, columnSize,
+                        false, 0));
+                temp = Catalog.instance.updateTableAddColumn(oldTableId, attrInfo);
+                try {
+                    StorageManager.instance.alterTable(temp.getTableId(),
+                            oldTableId, defaultValue);
+                    StorageManager.instance.dropTable(oldTableId);
+                    temp.setTableName(tableName);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("SUCCESS\n");
                 break;
             default:
                 System.out.println("There was an error in parsing. Abort");
@@ -273,8 +352,11 @@ class DropQuery extends Query {
             return;
         }
 
-        Catalog.instance.removeTableSchema(tableID);
-        StorageManager.instance.dropTable(tableID);
+        Boolean successfulDrop = StorageManager.instance.dropTable(tableID);
+        if (!successfulDrop) {
+            System.out.println("Failed to drop table "+ tableName+".");
+            return;
+        }
         System.out.println("SUCCESS\n");
 
     }

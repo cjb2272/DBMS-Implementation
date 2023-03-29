@@ -36,10 +36,11 @@ public class AttributeSchema {
         this.constraints = constraints;
     }
 
-
-
     /**
-     *
+     * 0 - no constraints
+     * 1 - unique
+     * 2 - not null
+     * 3 - not null and unique
      * @return
      */
     public int getConstraints() {
@@ -47,7 +48,7 @@ public class AttributeSchema {
     }
 
     /**
-     *
+     * Returns the name of the attribute.
      * @return Name of attribute
      */
     public String getName() {
@@ -113,7 +114,17 @@ public class AttributeSchema {
         } else {
             typeStr = QueryParser.CodeToString(type).toLowerCase();
         }
+        String line;
+        if (constraints == 1) {
+            line = String.format("%s:%s unique", name, typeStr);
+        } else if (constraints == 2) {
+            line = String.format("%s:%s notnull", name, typeStr);
+        } else if (constraints == 3 && !isPrimaryKey) {
+            line = String.format("%s:%s notnull unique", name, typeStr);
+        } else {
+            line = String.format("%s:%s %s", name, typeStr, isPrimaryKey ? "primarykey" : "");
+        }
 
-        return String.format("%s:%s %s", name, typeStr, isPrimaryKey ? "primarykey" : "");
+        return line;
     }
 }

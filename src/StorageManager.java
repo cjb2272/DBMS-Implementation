@@ -2,8 +2,11 @@ package src;
 /*
  * This file represents the Storage Manager as Whole,
  * Which includes the Buffer Manager within
- * @author(s) Charlie Baker, Austin Cepalia, Duncan Small (barely)
+ * @author(s) Charlie Baker, Austin Cepalia, Duncan Small (barely), Tristan Hoenninger
  */
+
+import src.ConditionalTreeNodes.AndNode;
+import src.ConditionalTreeNodes.ConditionTree;
 
 import java.io.*;
 import java.nio.file.Paths;
@@ -72,8 +75,19 @@ public class StorageManager {
         return null;
     }
 
+    /**
+     * Drops the table with given table id, purges its pages from the buffer and deletes the related tableschema.
+     * @param ID : Id of table to drop
+     * @return True if dropped successfully, False if unsuccessful.
+     */
     public boolean dropTable(int ID) {
+        try {
+            buffer.PurgeTableFromBuffer(ID);
+        } catch (IOException e) {
+            return false;
+        }
         File file = new File(Paths.get(tablesRootPath, String.valueOf(ID)).toString());
+        Catalog.instance.dropTableSchema(ID);
         return file.delete();
     }
 
@@ -147,12 +161,52 @@ public class StorageManager {
     }
 
     /**
-     *
+     * Compares value in the given index in the record contents of two given records.
+     * @param a : Given record
+     * @param b : Given record
+     * @param index : given index
+     * @return -1 if record contents of record A at index is greater than record contents of record B at index.
+     *          1 if record contents of record B at index is greater than record contents of record A at index.
+     *          0 record contents of record A at index is equal to record contents of record B at index.
+     */
+    private int compareOnIndex(Object a, Object b, int index) {
+        if (a.equals(b)) {
+            return 0;
+        }
+
+        Object objA = ((Record) a).getRecordContents().get(index);
+
+        Object objB = ((Record) b).getRecordContents().get(index);
+
+        if (objA == null && objB != null) {
+            return 1;
+        }
+        if (objA != null && objB == null) {
+            return -1;
+        }
+
+        if (objA == null && objB == null) {
+            return 0;
+        }
+
+        return switch (objA.getClass().getSimpleName()) {
+            case "String" -> CharSequence.compare((String) objA, (String) objB);
+            case "Integer" -> Integer.compare((int) objA, (int) objB);
+            case "Boolean" -> Boolean.compare((boolean) objA, (boolean) objB);
+            case "Double" -> Double.compare((double) objA, (double) objB);
+            default -> 0;
+        };
+    }
+
+    /**
+     * Inserts the given record into the given table. Returns a length one int array to show if it succeeded, int array[1],
+     * or a length two int array with the row the insert failed on and the column that holds the value it failed on.
      * @param tableID        the table for which we want to insert a record into its
      *                       pages
      * @param recordToInsert the record to insert
+     * @return int[1] or int[2]
      */
-    public int insertRecord(int tableID, Record recordToInsert) {
+    public int[] insertRecord(int tableID, Record recordToInsert) {
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
 
         ArrayList<Integer> pageOrder = table.getPageOrder();
@@ -162,7 +216,7 @@ public class StorageManager {
                 // insert the record, no comparator needed here, because this is the
                 // first record of the table
                 emptyPageInbuffer.getRecordsInPage().add(recordToInsert);
-                return 1;
+                return new int[]{1};
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -173,12 +227,29 @@ public class StorageManager {
                 try {
                     Page pageReference = buffer.GetPage(tableID, pageOrder.get(index));
                     int numRecordsInPage = pageReference.getRecordCount();
+                    if (numRecordsInPage == 0) {
+                        pageReference.getRecordsInPage().add(0, recordToInsert);
+                        pageReference.setIsModified(true);
+                        if (pageReference.computeSizeInBytes() > Main.pageSize) {
+                            buffer.PageSplit(pageReference, tableID);
+                        }
+                        break;
+                    }
                     RecordSort sorter = new RecordSort();
                     for (int idx = 0; idx < numRecordsInPage; idx++) {
                         Record curRecord = pageReference.getRecordsInPage().get(idx);
                         int comparison = sorter.compare(recordToInsert, curRecord);
                         if (comparison == 0) {
-                            return -1 * totalRecords;
+                            return new int[]{totalRecords, curRecord.getPkIndex()};
+                        }
+                        for (int i = 0; i < table.getAttributes().size(); i++) {
+                            AttributeSchema attribute = table.getAttributes().get(i);
+                            if ((attribute.getConstraints() == 1 || attribute.getConstraints() == 3)
+                                    && i != Catalog.instance.getTablePKIndex(tableID)) {
+                                if (compareOnIndex(recordToInsert, curRecord, i) == 0) {
+                                    return new int[]{totalRecords, i};
+                                }
+                            }
                         }
                         if (comparison < 0) {
                             pageReference.getRecordsInPage().add(idx, recordToInsert);
@@ -202,7 +273,7 @@ public class StorageManager {
                     throw new RuntimeException(e);
                 }
             }
-            return 1;
+            return new int[]{1};
         }
     }
 
@@ -217,7 +288,7 @@ public class StorageManager {
      *                   empty string "" on no default provided for added column
      * @return some integer indicating success
      */
-    public int alterTable(int newTableID, int tableID, Object defaultVal) throws IOException {
+    public int alterTable(int newTableID, int tableID, String defaultVal) throws IOException {
         TableSchema oldTable = Catalog.instance.getTableSchemaById(tableID);
         TableSchema newTable = Catalog.instance.getTableSchemaById(newTableID);
         //at this point, newTable has NO PAGES
@@ -236,44 +307,116 @@ public class StorageManager {
             } //if this checks out, we are dropping last column in old table
             if (indexOfColumnToDrop == -1) { indexOfColumnToDrop = newTableAttributes.size();}
         }
-        if (0 == oldTablePageOrder.size()) { // if altered table has no existing records simply return
-            return 1;
-        } else {
-            int numPagesInTable = oldTablePageOrder.size();
-            for (int index = 0; index < numPagesInTable; index++) { //iterating pages
-                try {
-                    Page oldPageReference = buffer.GetPage(tableID, oldTablePageOrder.get(index));
-                    int numRecordsInPage = oldPageReference.getRecordCount();
-                    for (int idx = 0; idx < numRecordsInPage; idx++) {
-                        Record recordToCopyOver = oldPageReference.getRecordsInPage().get(idx);
-                        Record newRecord = new Record();
-                        ArrayList<Object> oldRecordContents = recordToCopyOver.getRecordContents();
-                        if (indexOfColumnToDrop != -1) { //if we are dropping a column
-                            //remove the attribute value for column we are dropping
-                            oldRecordContents.remove(indexOfColumnToDrop);
-                            newRecord.setRecordContents(oldRecordContents);
-                            insertRecord(newTableID, newRecord);
-                        } else { //we are adding a column
-                            //add the default value being null or some value
-                            if (defaultVal == "") {
-                                oldRecordContents.add(null);
-                                newRecord.setRecordContents(oldRecordContents);
-                            } else {
-                                oldRecordContents.add(defaultVal);
-                                newRecord.setRecordContents(oldRecordContents);
-                            }
-                            insertRecord(newTableID, newRecord);
+        ArrayList<String> all = new ArrayList<>();
+        all.add("*");
+        ArrayList<Record> allRecordInOldTable = selectData(tableID, all);
+        for (Record recordToCopyOver : allRecordInOldTable) {
+            Record newRecord = new Record();
+            ArrayList<Object> oldRecordContents = recordToCopyOver.getRecordContents();
+            if (indexOfColumnToDrop != -1) { //if we are dropping a column
+                //remove the attribute value for column we are dropping
+                oldRecordContents.remove(indexOfColumnToDrop);
+                newRecord.setRecordContents(oldRecordContents);
+                newRecord.setPkIndex(Catalog.instance.getTablePKIndex(newTableID));
+                insertRecord(newTableID, newRecord);
+            } else { //we are adding a column
+                //add the default value being null or some value
+                if (defaultVal == "") {
+                    oldRecordContents.add(null);
+                    newRecord.setRecordContents(oldRecordContents);
+                } else {
+                    //determining type of default value
+                    int indexOfLastColumn = newTableAttributes.size() - 1;
+                    int typeInt = newTableAttributes.get(indexOfLastColumn).getType();
+                    switch (typeInt) {
+                        case 1 -> {
+                            Integer intValue = Integer.valueOf(defaultVal);
+                            oldRecordContents.add(intValue);
                         }
-
+                        case 2 -> {
+                            Double doubleValue = Double.valueOf(defaultVal);
+                            oldRecordContents.add(doubleValue);
+                        }
+                        case 3 -> {
+                            Boolean boolValue = Boolean.valueOf(defaultVal);
+                            oldRecordContents.add(boolValue);
+                        }
+                        case 4, 5 -> {
+                            String charValue = defaultVal.toString();
+                            oldRecordContents.add(charValue);
+                        }
                     }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    newRecord.setRecordContents(oldRecordContents);
                 }
+                newRecord.setPkIndex(Catalog.instance.getTablePKIndex(newTableID));
+                insertRecord(newTableID, newRecord);
             }
         }
         //WE HAVE SUCCESS! so purge all pages for the tableID still in buffer
-        buffer.PurgeTableFromBuffer(tableID);
         return 1;
+    }
+
+
+    /**
+     *
+     * @param obj TODO IS AN OBJECT Containing a list of tuples/records
+     *             for which we are working on and the appropriate
+     *             schemas needed
+     *             this obj is references as 'selectData' in google doc
+     *            - obj is created when evaluating 'from' part of select
+     *              and passed to this method by someone somehow
+     */
+    public void whereDriver(Object obj) {
+        //todo prep (build tree (includes shunting yard))
+        //before we evaluate our tuples, we need to have our conditionalTree Built
+        //first step in building this tree is calling our Shunting Yard algorithm
+        //which takes our list of tokens from the where clause condition(s).
+        //Not sure if this should happen higher up
+        //Shunting yard algorithm serves to convert our list of tokens in
+        // Infix Notation to Postfix Notation. Converting our list of tokens comprising the
+        // where clause into Postfix Notation is done because the postfix notation of tokens
+        // is easier to evaluate with our tree-
+        // todo use this arraylist of tokens to build ConditionTree
+        //  this would look something like   "ConditionTree root = parseConditionTree(conditionaltokensinPostfix)"
+        //  i could be wrong and the logic for shunting yard is the logic of the condition tree itself
+        //ex: in writeup using conditionaltree to parse "x > 0 and y < 3 or b = 5 and c = 2"
+        //would be difficult and require ALOT of lookahead i imagine, because we have to evaluate
+        //"and's" before "or's". I imagine this is why shunting yard is used
+        //
+
+        //todo
+        //for every tuple in list of tuples
+            //call evaluate tuple passing in tuple and according schema
+            //if return value from evaluate is false, we will remove this
+            //record from our list of records in obj
+    }
+
+    //todo takens in the array list of tokens and passes tokens along to call to new instance of
+    // whatever node is our root-per tokens
+    //
+    //todo change VOID to ConditionTree
+    public static void parseConditionTree() {
+        //in case of returning AndNode we would have "OperationNode leftOperation = new OperationNode(...);"
+        // and leftOperation would become our first param in AndNode below.
+        // to do this though we would need to instanciate the params of Operation Node calling parseValueNode ....
+        // which would get a bit messy
+        //return new AndNode();
+        //return new OrNode();
+    }
+
+    /**
+     *
+     * @param record TODO the record that will or will not be included in
+     *                our select data output
+     * @param schema
+     * @return todo true, this record does check out with 'where',
+     *              false, does not check out
+     */
+    public boolean evaluateRecord(Record record, TableSchema schema) {
+        //use the conditional tree to evaluate this tuple/record
+        //maybe this simply looks like calling validateTree of root node im not really sure
+
+        return true;
     }
 
     /**
@@ -285,24 +428,13 @@ public class StorageManager {
      */
     public int getPageCountForTable(int tableID) {
         return Catalog.instance.getTableSchemaById(tableID).getPageOrder().size();
-        /*
-         * String tableFilePath = Paths.get(tablesRootPath,
-         * String.valueOf(tableID)).toString();
-         * RandomAccessFile file;
-         * try {
-         * file = new RandomAccessFile(tableFilePath, "r");
-         * file.seek(0);
-         * byte[] pageByteArray = new byte[4];
-         * file.read(pageByteArray, 0, 4);
-         * file.close();
-         * return ByteBuffer.wrap(pageByteArray).getInt();
-         * } catch (Exception e) {
-         * e.printStackTrace();
-         * }
-         * return -1;
-         */
     }
 
+    /**
+     * Returns the record count of table with given table id.
+     * @param tableID : Given table id.
+     * @return integer - number of records in table.
+     */
     public int getRecordCountForTable(int tableID) {
         ArrayList<Integer> arrayOfPageLocationsOnDisk = Catalog.instance.getTableSchemaById(tableID).getPageOrder();
         int sum = 0;
@@ -321,6 +453,10 @@ public class StorageManager {
         return buffer.PageBuffer.size();
     }
 
+    /**
+     * Returns the number of tableschemas.
+     * @return integer - number of tableschemas.
+     */
     public int getNumberOfTables() {
         return Catalog.instance.getTableSchemas().size();
     }
@@ -561,10 +697,20 @@ public class StorageManager {
          * @throws IOException
          */
         public void PurgeTableFromBuffer(int tableId) throws IOException {
-            for (Page page : PageBuffer) {
-                if (tableId == page.getTableNumber()) {
-                    PageBuffer.remove(page);
+            //an arraylist of all the buffer indexes where a page needs to be removed from
+            ArrayList<Integer> indexesofpagestoremove = new ArrayList<>();
+            int numPagesInBuffer = PageBuffer.size();
+            for (int pageIndex = 0; pageIndex < numPagesInBuffer; pageIndex++) {
+                Page pageref = PageBuffer.get(pageIndex);
+                if (tableId == pageref.getTableNumber()) {
+                    indexesofpagestoremove.add(pageIndex);
                 }
+            }
+            int numpagestoremove = indexesofpagestoremove.size();
+            for (int i = numpagestoremove-1; i >= 0; i--) {
+                int value = indexesofpagestoremove.get(i);
+                PageBuffer.remove(value);
+                if (PageBuffer.isEmpty()) {return;}
             }
         }
 

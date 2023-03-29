@@ -157,6 +157,15 @@ class QueryParser {
     //alter table <name> add <a_name> <a_type>;
     //alter table <name> add <a_name> <a_type> default <value>
 
+    /**
+     * Takes in the query string for alter.
+     * Handles:
+     * alter table <name> drop <a_name>;
+     * alter table <name> add <a_name> <a_type>;
+     * alter table <name> add <a_name> <a_type> default <value>
+     * @param input :query string
+     * @return Either Null is failed or AlterQuery if successful.
+     */
     public Query ParseAlter( String input ) {
         String[] tokens = input.split( " " , 8);
 
@@ -196,8 +205,19 @@ class QueryParser {
                 System.out.println("Must use a valid column type, got: " + tokens[5]);
                 return null;
             }
+            int type = StringToCode( tokens[5] );
+            int size;
+            if (type == 4 || type == 5) {
+                size = GetLength(tokens[5]);
+            } else if (type == 3){
+                size = Character.BYTES;
+            } else if (type == 2) {
+                size = Double.BYTES;
+            } else {
+                size = Integer.BYTES;
+            }
 
-            return new AlterQuery( tableName, tokens[4], StringToCode( tokens[5] ));
+            return new AlterQuery( tableName, tokens[4], type, size);
 
         }
         else if (tokens.length == 8) {
@@ -212,12 +232,19 @@ class QueryParser {
             else if(typeCode == -1){
                 System.out.println("Must use a valid column type, got: " + tokens[5]);
                 return null;
+            } else if (!tokens[6].equalsIgnoreCase("default")) {
+                System.out.println( "Use the format 'alter table <name> drop <a_name>;' or " +
+                        "'alter table <name> add <a_name> <a_type> [optional: default <value>];'" );
+                return null;
             }
 
             List typeInfo = TypeCast( tokens[7] );
+            String defaultStr = tokens[7];
             int defaultType = (int) typeInfo.get( 0 );
+            //Mates sure string type matches and string length is correct
             if((defaultType == 0 && (typeCode == 4 || typeCode == 5))){
-                String defaultStr = (String) typeInfo.get( 1 );
+                defaultStr = (String) typeInfo.get( 1 );
+                defaultStr = defaultStr.substring(1, defaultStr.length() - 1);
                 int strLen = GetLength( tokens[5] );
                 if(strLen != defaultStr.length() && typeCode == 4){
                     System.out.println("Default Value must follow type constraint: " + tokens[5]);
@@ -228,13 +255,26 @@ class QueryParser {
                     return null;
                 }
             }
+            //Makes sure type matches
             else if (defaultType != typeCode){
                 System.out.println("Default value type must match column type given.");
                 System.out.println("Got (" + CodeToString( defaultType ) + ") Expected (" + CodeToString( typeCode ) + ").");
                 return null;
             }
 
-            return new AlterQuery( tableName, tokens[4], typeCode, tokens[7]);
+            //sets size
+            int size;
+            if (typeCode == 4 || typeCode == 5) {
+                size = GetLength(tokens[5]);
+            } else if (typeCode == 3){
+                size = Character.BYTES;
+            } else if (typeCode == 2) {
+                size = Double.BYTES;
+            } else {
+                size = Integer.BYTES;
+            }
+
+            return new AlterQuery( tableName, tokens[4], typeCode,size, defaultStr);
         }
         else{
             System.out.println( "Expected 'alter table <name> drop <a_name>;' or " +
@@ -243,7 +283,13 @@ class QueryParser {
         }
     }
 
-
+    /**
+     * Processes a drop query.
+     * Handles:
+     * drop table <name>
+     * @param input : drop query
+     * @return DropQuery if successful and null if unsuccessful.
+     */
     public DropQuery ParseDrop(String input) {
         String[] tokens = input.split(" ");
 
@@ -498,6 +544,7 @@ class QueryParser {
                     return null;
                 }
             } else if (temp.length == 4){
+                temp[3] = temp[3].replace(")", "");
                 if((temp[2].equalsIgnoreCase( "unique" ) && temp[3].equalsIgnoreCase( "notnull" )) || (temp[3].equalsIgnoreCase( "unique" ) && temp[2].equalsIgnoreCase( "notnull" ))){
                     constraintCode = 3;
                 } else{
