@@ -17,6 +17,30 @@ public abstract class Query {
 
 }
 
+class UpdateQuery extends Query{
+    public UpdateQuery(){
+
+    }
+
+    @Override
+    public void execute() {
+
+    }
+
+}
+
+class DeleteQuery extends Query{
+    public DeleteQuery(){
+
+    }
+
+    @Override
+    public void execute() {
+
+    }
+
+}
+
 class SelectQuery extends Query {
     ArrayList<String> colNames;
     String table;
