@@ -283,7 +283,7 @@ public class StorageManager {
      * is used in both the 'delete from' statement and the 'update' statement
      * todo deleting empty page from hardware should occur when buffer writes page out to hardware
      * how does this t o d o come into play
-     * re-uses large portion of code from insertRecord
+     * should re-use large portion of code from insertRecord
      * @param tableID table for which we want to delete the record
      * @param recordToDelete record to be deleted/removed from table
      * @return .
@@ -311,18 +311,20 @@ public class StorageManager {
     /**
      * todo Called by Parser, or move into execute()?
      * should take in table we are working with as well as the tokens for where condition
-     * @param tableID
-     * @return
+     * @param tableID table intended to delete records from
      */
     public void deleteFrom(int tableID) {
-        //for each page in table
-            //for each record r in page
-                //call method(s) to evaluate a single tuple for meeting where condition
-                //call deleteRecord on record if condition was meet
+        ArrayList<String> allRecordsRequest = new ArrayList<>();
+        allRecordsRequest.add("*");
+        ArrayList<Record> allRecordsFromTable = selectData(tableID, allRecordsRequest);
+        for (Record curRecord : allRecordsFromTable) {
+            boolean deleteRecord = true; //call method(s) to evaluate a single tuple for meeting where condition todo
+            //call deleteRecord on record if condition was met
+            if (deleteRecord) {
+                deleteRecord(tableID, curRecord);
+            }
+        }
     }
-
-
-    //this will handle a change to primarykey resulting in that record moving to proper location
 
     /**
      * --missing params helping with change--
@@ -334,14 +336,50 @@ public class StorageManager {
      * where the primarykey has been changed
      * @param tableID the table record in question belongs to
      * @param recordToUpdate the record to update
-     * @return receive return from insert and pass that along? not sure what return from insert does
+     * @return receive return from insert and pass that along? not sure what return from insert does todo
      */
     public int[] updateRecord(int tableID, Record recordToUpdate, String columnName, String valueToSet) {
         //todo if we are changing primary key value, need to determine where we
         // will ensure that the new primarykey value doesn't already exist
-        Record copyOfRecordToUpdate = recordToUpdate;
+        Record copyOfRecordToUpdate = recordToUpdate; //make a copy of the record
+        ArrayList<Object> copyOfRecordContents = copyOfRecordToUpdate.getRecordContents();
         deleteRecord(tableID, recordToUpdate);
-        //make changes updating record,
+        //find index of column to update
+        int indexOfColumnToUpdate = 0;
+        TableSchema table = Catalog.instance.getTableSchemaById(tableID);
+        ArrayList<AttributeSchema> tableColumns = table.getAttributes();
+        for (AttributeSchema attribute : tableColumns) {
+            if (Objects.equals(attribute.getName(), columnName)) {
+                break;
+            }
+            indexOfColumnToUpdate++;
+        }
+        //make changes updating our copy of original record
+        if (Objects.equals(valueToSet, "")) {
+            copyOfRecordContents.set(indexOfColumnToUpdate, null);
+        } else {
+            //determining type of column we are setting value for
+            int typeInt = tableColumns.get(indexOfColumnToUpdate).getType();
+            switch (typeInt) {
+                case 1 -> {
+                    Integer intValue = Integer.valueOf(valueToSet);
+                    copyOfRecordContents.set(indexOfColumnToUpdate, intValue);
+                }
+                case 2 -> {
+                    Double doubleValue = Double.valueOf(valueToSet);
+                    copyOfRecordContents.set(indexOfColumnToUpdate, doubleValue);
+                }
+                case 3 -> {
+                    Boolean boolValue = Boolean.valueOf(valueToSet);
+                    copyOfRecordContents.set(indexOfColumnToUpdate, boolValue);
+                }
+                case 4, 5 -> {
+                    String charValue = valueToSet.toString();
+                    copyOfRecordContents.set(indexOfColumnToUpdate, charValue);
+                }
+            }
+        }
+        copyOfRecordToUpdate.setRecordContents(copyOfRecordContents); //set content change
         return insertRecord(tableID, copyOfRecordToUpdate);
     }
 
@@ -354,32 +392,17 @@ public class StorageManager {
      * 'where' clause of the update statement
      * @param tableID table in question
      * @param columnName column to update
-     * @param valueToSet value to update in column
+     * @param valueToSet value to update in column, "" empty string if null
      */
     public void updateTable(int tableID, String columnName, String valueToSet) {
-        TableSchema tableToUpdate = Catalog.instance.getTableSchemaById(tableID);
-        ArrayList<Integer> pageOrder = tableToUpdate.getPageOrder();
-        int numPagesInTable = pageOrder.size();
-        //vv todo vv
-        // my concern is that this will pose issues/ is done incorrectly because our number of pages
-        // etc can change while we are making these calls to update record. and then the records/pages
-        // we are iterating here are inconsistent. need to think about this
-        for (int index = 0; index < numPagesInTable; index++) { //for each page in table
-            try {
-                Page pageReference = buffer.GetPage(tableID, pageOrder.get(index));
-                int numRecordsInPage = pageReference.getRecordCount();
-                if (numRecordsInPage == 0) {
-                    //throw error, try to update table with no records?
-                }
-                for (int idx = 0; idx < numRecordsInPage; idx++) {
-                    Record curRecord = pageReference.getRecordsInPage().get(idx);
-                    boolean updateRecord = true; //todo meet where condition
-                    if (updateRecord) {
-                        updateRecord(tableID, curRecord, columnName, valueToSet);
-                    }
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+        ArrayList<String> allRecordsRequest = new ArrayList<>();
+        allRecordsRequest.add("*");
+        ArrayList<Record> allRecordsFromTable = selectData(tableID, allRecordsRequest);
+        //should an update query indicate at command line if table has no records at all. none to update?
+        for (Record curRecord : allRecordsFromTable) {
+            boolean updateRecord = true; //todo meet where condition
+            if (updateRecord) {
+                updateRecord(tableID, curRecord, columnName, valueToSet);
             }
         }
     }
