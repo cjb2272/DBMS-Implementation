@@ -290,7 +290,9 @@ public class StorageManager {
      */
     public int[] deleteRecord(int tableID, Record recordToDelete) {
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
-        //for each page in table
+        ArrayList<Integer> pageOrder = table.getPageOrder();
+        int numPagesInTable = pageOrder.size();
+        for (int index = 0; index < numPagesInTable; index++) { //for each page in table
             //for each record r in page
                 //if r's pk equals recordToDelete's pk
                     //delete the record
@@ -301,6 +303,7 @@ public class StorageManager {
                         //update page count for table
                 //if r's pk > recordToDelete's pk
                     //record to delete does not exist?
+        }
 
         return new int[]{1};
     }
@@ -318,28 +321,68 @@ public class StorageManager {
                 //call deleteRecord on record if condition was meet
     }
 
-    //missing params
-    //todo calls DeleteRecord then InsertRecord with new copy!
+
     //this will handle a change to primarykey resulting in that record moving to proper location
-    public int[] updateRecord(int tableID, Record recordToUpdate) {
 
-        //when a record is updated. size of page needs to be recomputed,
-        // determining if page split is needed
-
-        //if it is the primarykey that is updated!, then record might have to move
-        //to complete different page in table file.
-
-
-        return new int[]{1};
+    /**
+     * --missing params helping with change--
+     * This Method updates a record, by first deleting the existing record, and then
+     * inserting the updated version of that record. The insertRecord method
+     * handled recomputation of page size when the updated record is added, indicating
+     * if a page split is needed- additionally the insertRecord method also handled
+     * sorting the updated record to its proper place among the records in the case
+     * where the primarykey has been changed
+     * @param tableID the table record in question belongs to
+     * @param recordToUpdate the record to update
+     * @return receive return from insert and pass that along? not sure what return from insert does
+     */
+    public int[] updateRecord(int tableID, Record recordToUpdate, String columnName, String valueToSet) {
+        //todo if we are changing primary key value, need to determine where we
+        // will ensure that the new primarykey value doesn't already exist
+        Record copyOfRecordToUpdate = recordToUpdate;
+        deleteRecord(tableID, recordToUpdate);
+        //make changes updating record,
+        return insertRecord(tableID, copyOfRecordToUpdate);
     }
 
-    //todo indication of column and value to set passed in
-    // also deals with param holding token for where condition
-    public int updateTable() {
-        //todo makes repeated calls to updateRecord w proper commands
-        return 0;
+    /**
+     * todo needs params for where condition.. 'data' 'where'
+     * Called by UpdateQuery's execute.
+     * -- What of this belong in execute and what belongs here????
+     * This Method iterates through all records for a given table, calling
+     * updateRecord on the records that meet the condition specified in the
+     * 'where' clause of the update statement
+     * @param tableID table in question
+     * @param columnName column to update
+     * @param valueToSet value to update in column
+     */
+    public void updateTable(int tableID, String columnName, String valueToSet) {
+        TableSchema tableToUpdate = Catalog.instance.getTableSchemaById(tableID);
+        ArrayList<Integer> pageOrder = tableToUpdate.getPageOrder();
+        int numPagesInTable = pageOrder.size();
+        //vv todo vv
+        // my concern is that this will pose issues/ is done incorrectly because our number of pages
+        // etc can change while we are making these calls to update record. and then the records/pages
+        // we are iterating here are inconsistent. need to think about this
+        for (int index = 0; index < numPagesInTable; index++) { //for each page in table
+            try {
+                Page pageReference = buffer.GetPage(tableID, pageOrder.get(index));
+                int numRecordsInPage = pageReference.getRecordCount();
+                if (numRecordsInPage == 0) {
+                    //throw error, try to update table with no records?
+                }
+                for (int idx = 0; idx < numRecordsInPage; idx++) {
+                    Record curRecord = pageReference.getRecordsInPage().get(idx);
+                    boolean updateRecord = true; //todo meet where condition
+                    if (updateRecord) {
+                        updateRecord(tableID, curRecord, columnName, valueToSet);
+                    }
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
-
 
     /**
      * This method handles all alter table commands (adding and removing columns)
