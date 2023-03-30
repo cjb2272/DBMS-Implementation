@@ -278,12 +278,11 @@ public class StorageManager {
     }
 
     /**
-     * Called by deleteFrom()
+     * Called by deleteFrom() and updateRecord() methods
      * Deletes a single provided record from the table it belongs too. This method
      * is used in both the 'delete from' statement and the 'update' statement
-     * todo deleting empty page from hardware should occur when buffer writes page out to hardware
-     * how does this t o d o come into play
-     * should re-use large portion of code from insertRecord
+     * should re-use portions of code from insertRecord
+     *
      * @param tableID table for which we want to delete the record
      * @param recordToDelete record to be deleted/removed from table
      * @return .
@@ -293,18 +292,42 @@ public class StorageManager {
         ArrayList<Integer> pageOrder = table.getPageOrder();
         int numPagesInTable = pageOrder.size();
         for (int index = 0; index < numPagesInTable; index++) { //for each page in table
-            //for each record r in page
-                //if r's pk equals recordToDelete's pk
-                    //delete the record
-                    //"move all other records up to cover empty space" should be handled auto
-                    //update record count for page
-                    //if page is empty as a result of delete
-                        //Adjust P.O, removing reference to page and moving all other pages up in file
-                        //update page count for table
-                //if r's pk > recordToDelete's pk
-                    //record to delete does not exist?
-        }
+            try {
+                Page pageReference = buffer.GetPage(tableID, pageOrder.get(index));
+                int numRecordsInPage = pageReference.getRecordCount();
+                if (numRecordsInPage == 0) {
+                    //throw error, try to delete table with no records?
+                }
+                RecordSort sorter = new RecordSort();
+                for (int idx = 0; idx < numRecordsInPage; idx++) {
+                    Record curRecord = pageReference.getRecordsInPage().get(idx);
+                    int comparison = sorter.compare(recordToDelete, curRecord);
+                    //if records are equal (if curRecord's pk equals recordToDelete's pk)
+                    if (comparison == 0) {
+                        pageReference.getRecordsInPage().remove(idx); //delete the record
+                        pageReference.setIsModified(true);
+                        //"move all other records up to cover empty space" should be handled auto
+                        if (pageReference.getRecordCount() == 0) { //if page is empty as a result of delete
+                            // todo deleting empty page from hardware should occur when buffer writes page out to hardware
+                            //how does this effect how and when we make changes to P.O.
+                            // WE CANNOT change PO. until change is actually made on disk, because P.O. would be
+                            // representative of changes that haven't happened
+                            //Adjust P.O, removing reference to page and moving all other pages up in file
+                            //update page count for table
 
+                            //i believe we will just leave page in file empty, and then add cases to our writeout methods
+                            //that check if page its writing out is empty, and if so adjust the P.O. and ensure
+                            //pages are moved up.
+                        }
+                        break;
+                    }
+                    //if curRecord's pk > recordToDelete's pk
+                        //record to delete does not exist?
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         return new int[]{1};
     }
 
@@ -334,6 +357,7 @@ public class StorageManager {
      * if a page split is needed- additionally the insertRecord method also handled
      * sorting the updated record to its proper place among the records in the case
      * where the primarykey has been changed
+     *
      * @param tableID the table record in question belongs to
      * @param recordToUpdate the record to update
      * @return receive return from insert and pass that along? not sure what return from insert does todo
@@ -390,6 +414,7 @@ public class StorageManager {
      * This Method iterates through all records for a given table, calling
      * updateRecord on the records that meet the condition specified in the
      * 'where' clause of the update statement
+     *
      * @param tableID table in question
      * @param columnName column to update
      * @param valueToSet value to update in column, "" empty string if null

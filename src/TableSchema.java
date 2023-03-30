@@ -18,12 +18,18 @@ public class TableSchema {
      * Page Ordering maps where a page is actually on the disk, because
      * we don't want to be shifting pages all around on disk, everytime
      * we add a page
-     * Demo of page splitting page at index 1:
+     * Demo of page splitting page at index 1: (adding page)
      * notice values remain same but index changes
      * Before: Index 0, 1, 2, 3, 4
-     * Value 0, 1, 2, 3, 4
+     *         Value 0, 1, 2, 3, 4
      * After: Index 0, 1, 2, 3, 4, 5
-     * Value 0, 1, 5, 2, 3, 4
+     *        Value 0, 1, 5, 2, 3, 4
+     *
+     * Demo of removing empty page at index 3:
+     * Before: Index 0, 1, 2, 3, 4
+     *         Value 0, 1, 2, 3, 4
+     * After: Index 0, 1, 2, 3 (page at index 3 here is same page that was at index 4 in 'before')
+     *        Value 0, 1, 2, 3 (value cannot remain 4 leaving empty space in file, page has to move up in file)
      */
     private ArrayList<Integer> pageOrder;
 
@@ -79,7 +85,8 @@ public class TableSchema {
 
     /**
      * Method should return the pageNumber of where the page is stored sequentially
-     * on the disk. This pageNumber should be the value at index for the page
+     * on the disk. This pageNumber should be the value at index for the page.
+     * (charlie)This method likely only deals with page split and addition of page, NOT removal of page
      * 
      * @param whereInitialPageOnDisk int representation of where this page is on
      *                               disk
