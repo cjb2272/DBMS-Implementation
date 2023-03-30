@@ -332,23 +332,6 @@ class QueryParser {
         }
 
         String tableName = tokens[3].replace(";", "");
-        int id = Catalog.instance.getTableIdByName(tableName);
-
-        if (id == -1) {
-            System.out.println("No such table " + tableName);
-            return null;
-        }
-
-        ArrayList<String> expectedColNames = Catalog.instance.getAttributeNames(tableName);
-
-        if (!colNames.contains("*")) {
-            for (String name : colNames) {
-                if (!expectedColNames.contains(name)) {
-                    System.out.println("Unknown attribute name \"" + name + "\"");
-                    return null;
-                }
-            }
-        }
 
         return new SelectQuery(colNames, tableName);
     }

@@ -76,6 +76,19 @@ class SelectQuery extends Query {
             System.out.println("ERROR\n");
             return;
         }
+
+        ArrayList<String> expectedColNames = Catalog.instance.getAttributeNames(this.table);
+
+        if (!colNames.contains("*")) {
+            for (String name : colNames) {
+                if (!expectedColNames.contains(name)) {
+                    System.out.println("Unknown attribute name \"" + name + "\"");
+                    System.out.println("ERROR\n");
+                    return;
+                }
+            }
+        }
+
         ArrayList<Record> records = StorageManager.instance.selectData(tableNum, colNames);
 
         if (colNames.size() == 1 && colNames.get(0).equals("*")) {
