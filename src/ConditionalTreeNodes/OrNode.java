@@ -1,5 +1,7 @@
 package src.ConditionalTreeNodes;
 
+import java.util.ArrayList;
+
 public class OrNode implements ConditionTree {
 
     private final OperationNode leftChild;
@@ -14,7 +16,7 @@ public class OrNode implements ConditionTree {
     }
 
     @Override
-    public boolean validateTree() {
-        return leftChild.validateTree() || rightChild.validateTree();
+    public boolean validateTree(Record record, ArrayList<Integer> schema) {
+        return leftChild.validateTree(record, schema) || rightChild.validateTree(record, schema);
     }
 }

@@ -6,12 +6,14 @@ package src.ConditionalTreeNodes;
  */
 public interface ValueNode extends ConditionTree{
 
+
+    //TODO refactor this since it doesn't make sense
     /**
      * todo param should take in our arraylist of tokens
      * @return
      */
     static ValueNode parseValueNode() {
-        //if next token is attribute
+        //if next token is an attribute
         return AttributeNode.parseAttributeNode(); //pass along mutable arraylist of tokens
         //else our next token should be a constant
         //return ConstantNode.parseConstantNode(); //pass along mutable arraylist of tokens

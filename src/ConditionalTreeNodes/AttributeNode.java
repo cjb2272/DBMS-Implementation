@@ -3,9 +3,11 @@ package src.ConditionalTreeNodes;
 //TODO THIS CLASS HAS ACCESS TO THE OBJECT WE ARE WORKING WITH THAT
 // that is 'obj' in whereDriver method in StorageManager
 
+import java.util.ArrayList;
+
 public class AttributeNode implements ValueNode {
 
-    private final String token;
+    private final String token;//TODO this should be the name of the attribute from the record/table
     public AttributeNode(String token) {
         this.token = token;
     }
@@ -17,7 +19,8 @@ public class AttributeNode implements ValueNode {
     }
 
     @Override
-    public boolean validateTree() {
+    public boolean validateTree(Record record, ArrayList<Integer> schema) {
+
         return false;
     }
 }

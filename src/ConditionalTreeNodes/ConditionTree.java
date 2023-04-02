@@ -2,13 +2,15 @@ package src.ConditionalTreeNodes;
 
 import src.StorageManager;
 
+import java.util.ArrayList;
+
 //todo this should be a part of the storage manager, how do i go about this
 
 public interface ConditionTree  {
 
     /**
      * Validate
-     * @return
+     * @return true if record passes, false if not
      */
-    public boolean validateTree();
+    public boolean validateTree(Record record, ArrayList<Integer> schema);
 }

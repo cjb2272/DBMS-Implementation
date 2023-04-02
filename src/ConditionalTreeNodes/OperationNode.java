@@ -1,9 +1,11 @@
 package src.ConditionalTreeNodes;
 
+import java.util.ArrayList;
+
 public class OperationNode implements ConditionTree {
 
     private final ValueNode leftChild;
-    private final String token; //should be "and" this might be redundant not needed
+    private final String token; //should be the corresponding operator
     private final ValueNode rightChild;
 
 
@@ -14,7 +16,7 @@ public class OperationNode implements ConditionTree {
     }
 
     @Override
-    public boolean validateTree() {
+    public boolean validateTree(Record record, ArrayList<Integer> schema) {
         //TODO WE HAVE CASES WHERE OPERATOR CAN BE
         // '=', '>', '<', '>=', '<=', '!='
         //depending on which of these is equal to this.token

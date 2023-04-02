@@ -1,8 +1,10 @@
 package src.ConditionalTreeNodes;
 
+import java.util.ArrayList;
+
 public class ConstantNode implements ValueNode{
 
-    private final String token;
+    private final String token;//TODO find out how to differentiate between object types. could this be done while parsing?
 
     public ConstantNode(String token) {
         this.token = token;
@@ -15,7 +17,7 @@ public class ConstantNode implements ValueNode{
     }
 
     @Override
-    public boolean validateTree() {
+    public boolean validateTree(Record record, ArrayList<Integer> schema) {
         return false;
     }
 }
