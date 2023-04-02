@@ -5,6 +5,7 @@ package src;
  * @author Duncan Small, Austin Cepalia
  */
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 class QueryParser {
@@ -315,13 +316,11 @@ class QueryParser {
      *         if there is an error
      */
     public SelectQuery ParseSelect(String input) {
+
+
         String[] tokens = input.split(" ");
         if (tokens.length < 4) {
             System.out.println("Expected 'SELECT * FROM <table>' format.");
-            return null;
-        }
-        if (!tokens[2].toLowerCase(Locale.ROOT).equals("from")) {
-            System.out.println("Missing FROM keyword.");
             return null;
         }
 
@@ -332,8 +331,10 @@ class QueryParser {
         }
 
         String tableName = tokens[3].replace(";", "");
-
         return new SelectQuery(colNames, tableName);
+
+
+
     }
 
     // INSERT INTO <table> values <tuple>;
