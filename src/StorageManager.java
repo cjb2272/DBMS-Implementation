@@ -117,16 +117,20 @@ public class StorageManager {
                 ArrayList<AttributeSchema> columns = Catalog.instance.getTableSchemaById( tableID ).getAttributes();
 
                 ArrayList<Integer> indexes = new ArrayList<>();
-                int i = 0;
-                for ( AttributeSchema column : columns ) {
-                    if ( column.getName().equals( columns.get( i ).getName() ) ) {
-                        indexes.add( i );
+
+                for (String colName : colNames) {
+                    int index = 0;
+                    for (AttributeSchema column: columns) {
+                        if (column.getName().equals(colName)) {
+                            indexes.add(index);
+                        }
+                        index++;
                     }
-                    i++;
                 }
 
+
                 int[] colIdxs = new int[indexes.size()];
-                i = 0;
+                int i = 0;
                 for ( Integer index : indexes ) {
                     colIdxs[i] = index;
                     i++;
