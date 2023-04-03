@@ -5,10 +5,7 @@ package src;
  */
 
 import java.io.IOException;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public abstract class Query {
 
@@ -57,12 +54,33 @@ class DeleteQuery extends Query{
 }
 
 class SelectQuery extends Query {
-    ArrayList<String> colNames;
-    ArrayList<String> tableNames;
+    HashMap<String, ArrayList<String>> tableColumnDictionary;
+    ArrayList<ArrayList<Conditional>> where;
+    String orderBy;
+    Boolean starFlag;
+    int numberOfColumns;
+    int numberOfTables;
 
-    public SelectQuery(ArrayList<String> colNames, ArrayList<String> tableNames) {
-        this.colNames = colNames;
-        this.tableNames = tableNames;
+    public SelectQuery( HashMap<String, ArrayList<String>> tableColumnDict, ArrayList<ArrayList<Conditional>> where, String orderBy, Boolean starFlag ) {
+        this.tableColumnDictionary = tableColumnDict;
+        this.where = where;
+        this.orderBy = orderBy;
+        this.starFlag = starFlag;
+
+        int Ccounter = 0;
+        int Tcounter = 0;
+        for(String t : this.getTableNames()){
+            for(String c: this.tableColumnDictionary.get( t )){
+                Ccounter++;
+            }
+            Tcounter++;
+        }
+        this.numberOfColumns = Ccounter;
+        this.numberOfTables = Tcounter;
+    }
+
+    public Set<String> getTableNames(){
+        return this.tableColumnDictionary.keySet();
     }
 
     @Override
@@ -78,11 +96,11 @@ class SelectQuery extends Query {
 
         ArrayList<String> displayedColNames = new ArrayList<>();
 
-        for (String tableName : tableNames) {
+        for (String tableName : this.getTableNames()) {
 
             int tableNum = Catalog.instance.getTableIdByName(tableName); // guaranteed to exist
             ArrayList<String> columnNames = Catalog.instance.getAttributeNames(tableName);
-            ArrayList<Record> records = StorageManager.instance.selectData(tableNum, colNames);
+            ArrayList<Record> records = StorageManager.instance.selectData(tableNum, columnNames);
             tables.add(new Table(tableName, columnNames, records));
 
         }
@@ -92,7 +110,7 @@ class SelectQuery extends Query {
 
         int tableCount = tables.size();
 
-        if (tableCount == 1 && colNames.size() == 1 && colNames.get(0).equals("*"))
+        if (this.numberOfTables == 1 && starFlag)
         {
             finalRecordOutput = tables.get(0).getRecords();
             displayedColNames = tables.get(0).getColNames();
