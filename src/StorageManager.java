@@ -39,7 +39,7 @@ public class StorageManager {
      * page-based (and the Table object is never
      * directly in the buffer), this isn't strictly needed.
      */
-    public Table createTable(int ID, String name, ArrayList<String> columnNames, ArrayList<Integer> dataTypes) {
+    public void createTable(int ID, String name, ArrayList<String> columnNames, ArrayList<Integer> dataTypes) {
 
         // create the tables subdirectory if it doesn't exist.
         File folder = new File(tablesRootPath);
@@ -60,8 +60,6 @@ public class StorageManager {
             output.flush();
             output.close();
 
-            return new Table(ID, name, columnNames, dataTypes);
-
         } catch (Exception e) {
             System.err.println(e.getMessage());
         } finally {
@@ -72,7 +70,6 @@ public class StorageManager {
             }
         }
 
-        return null;
     }
 
     /**

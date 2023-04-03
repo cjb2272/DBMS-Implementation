@@ -5,6 +5,7 @@ package src;
  */
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -57,46 +58,95 @@ class DeleteQuery extends Query{
 
 class SelectQuery extends Query {
     ArrayList<String> colNames;
-    String table;
+    ArrayList<String> tableNames;
 
-    public SelectQuery(ArrayList<String> colNames, String table) {
+    public SelectQuery(ArrayList<String> colNames, ArrayList<String> tableNames) {
         this.colNames = colNames;
-        this.table = table;
+        this.tableNames = tableNames;
     }
 
     @Override
     public void execute() {
         // ask the storage manager for this data. It will in turn ask the buffer first,
-        // but that's
-        // abstracted away from this point in the code
+        // but that's abstracted away from this point in the code
 
-        int tableNum = Catalog.instance.getTableIdByName(table);
-        if (tableNum == -1) {
-            System.out.println("No such table " + table);
-            System.out.println("ERROR\n");
-            return;
+
+        // NOTE: checking for valid names of tables and attributes should be done in the parse method upstream.
+
+        // Load all the tables into memory (with unneeded column names already filtered out)
+        ArrayList<Table> tables = new ArrayList<>();
+
+        ArrayList<String> displayedColNames = new ArrayList<>();
+
+        for (String tableName : tableNames) {
+
+            int tableNum = Catalog.instance.getTableIdByName(tableName); // guaranteed to exist
+            ArrayList<String> columnNames = Catalog.instance.getAttributeNames(tableName);
+            ArrayList<Record> records = StorageManager.instance.selectData(tableNum, colNames);
+            tables.add(new Table(tableName, columnNames, records));
+
         }
 
-        ArrayList<String> expectedColNames = Catalog.instance.getAttributeNames(this.table);
+        // Build the final record output by performing a cross-product on all the loaded tables
+        ArrayList<Record> finalRecordOutput = new ArrayList<>();
 
-        if (!colNames.contains("*")) {
-            for (String name : colNames) {
-                if (!expectedColNames.contains(name)) {
-                    System.out.println("Unknown attribute name \"" + name + "\"");
-                    System.out.println("ERROR\n");
-                    return;
+        int tableCount = tables.size();
+
+        if (tableCount == 1 && colNames.size() == 1 && colNames.get(0).equals("*"))
+        {
+            finalRecordOutput = tables.get(0).getRecords();
+            displayedColNames = tables.get(0).getColNames();
+        }
+        else {
+
+            for (int tableIndex = 0; tableIndex < tableCount-1; tableIndex++) {
+                // tableIndex = 0 means merge tables 0 and 1
+                // tableIndex = 1 means merge that result with table 2
+                // ....
+
+                if (tableIndex == 0) {
+                    int leftTableIndex = 0;
+                    int rightTableIndex = 1;
+
+                    for (Record leftRecord : tables.get(leftTableIndex).getRecords()) {
+                        for (Record rightRecord : tables.get(rightTableIndex).getRecords()) {
+                            finalRecordOutput.add(Record.mergeRecords(leftRecord, rightRecord));
+                        }
+                    }
+                }
+                else {
+                    int rightTableIndex = tableIndex+1;
+
+                    ArrayList<Record> tempFinalRecordsOutput = new ArrayList<>();
+
+                    for (Record leftRecord : finalRecordOutput) {
+                        for (Record rightRecord : tables.get(rightTableIndex).getRecords()) {
+                            tempFinalRecordsOutput.add(Record.mergeRecords(leftRecord, rightRecord));
+                        }
+                    }
+
+                    finalRecordOutput = tempFinalRecordsOutput;
                 }
             }
+
+            // build the columnNames arraylist for the cartesian product
+
+            ArrayList<String> tableNamesForColumns = new ArrayList<>();
+
+            for (Table table : tables) {
+                for (String colName : table.getColNames()) {
+                    tableNamesForColumns.add(table.getName());
+                    displayedColNames.add(colName);
+                }
+            }
+
         }
 
-        ArrayList<Record> records = StorageManager.instance.selectData(tableNum, colNames);
 
-        if (colNames.size() == 1 && colNames.get(0).equals("*")) {
-            colNames = Catalog.instance.getAttributeNames(table);
-        }
+        // everything after this is printing logic
 
         int max = 8;
-        for (String col : colNames) {
+        for (String col : displayedColNames) {
             if (col.length() > max) {
                 max = col.length();
             }
@@ -108,7 +158,7 @@ class SelectQuery extends Query {
         StringBuilder columns = new StringBuilder();
 
         spacer.append( " " );
-        for(String col : colNames){
+        for(String col : displayedColNames){
             if(col.length() == max){
                 columns.append(" |").append(col);
             } else {
@@ -121,7 +171,7 @@ class SelectQuery extends Query {
         System.out.println(columns + " |");
         System.out.println( spacer );
 
-        for (Record record : records) {
+        for (Record record : finalRecordOutput) {
             System.out.println(record.displayRecords(max));
         }
         System.out.println(spacer);

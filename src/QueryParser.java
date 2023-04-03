@@ -317,23 +317,29 @@ class QueryParser {
      */
     public SelectQuery ParseSelect(String input) {
 
+//        String[] tokens = input.split(" ");
+//        if (tokens.length < 4) {
+//            System.out.println("Expected 'SELECT * FROM <table>' format.");
+//            return null;
+//        }
+//
+//        // get individual column names from clause
+//        ArrayList<String> colNames = new ArrayList<>(Arrays.asList(tokens[1].split(",")));
+//        for (int i = 0; i < colNames.size(); i++) {
+//            colNames.set(i, colNames.get(i).trim());
+//        }
+//
+//        String tableName = tokens[3].replace(";", "");
+//        return new SelectQuery(colNames, tableName);
 
-        String[] tokens = input.split(" ");
-        if (tokens.length < 4) {
-            System.out.println("Expected 'SELECT * FROM <table>' format.");
-            return null;
-        }
+        //todo: Supposedly duncan modified this, so I don't want to re-engineer this just yet.
+        // in the meantime, modify the arraylists below then just run select; at the command line
 
-        // get individual column names from clause
-        ArrayList<String> colNames = new ArrayList<>(Arrays.asList(tokens[1].split(",")));
-        for (int i = 0; i < colNames.size(); i++) {
-            colNames.set(i, colNames.get(i).trim());
-        }
-
-        String tableName = tokens[3].replace(";", "");
-        return new SelectQuery(colNames, tableName);
+        ArrayList<String> colNames = new ArrayList<>();
+        ArrayList<String> tableNames = new ArrayList<>();
 
 
+        return new SelectQuery(colNames, tableNames);
 
     }
 

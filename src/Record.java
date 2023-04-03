@@ -251,6 +251,21 @@ public class Record {
         return result + "|";
     }
 
+
+    // Takes two records and merges their data into a new record.
+    // This is used for the cartesian product.
+    public static Record mergeRecords(Record record1, Record record2) {
+        Record mergedRecord = new Record();
+
+        ArrayList<Object> newRecordData = new ArrayList<>();
+        newRecordData.addAll(record1.getRecordContents());
+        newRecordData.addAll(record2.getRecordContents());
+
+        mergedRecord.setRecordContents(newRecordData);
+
+        return mergedRecord;
+    }
+
 }
 
 class RecordSort implements Comparator<Record> {
