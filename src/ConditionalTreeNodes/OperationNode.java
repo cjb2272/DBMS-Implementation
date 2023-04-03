@@ -18,10 +18,11 @@ public class OperationNode implements ConditionTree {
     }
 
     @Override
-    public boolean validateTree(Record record, ArrayList<Integer> schema) {
+    public boolean validateTree(Record record, ArrayList<Integer> attributeTypes, ArrayList<String> attributeNames) {
         //WE HAVE CASES WHERE OPERATOR CAN BE
         // '=', '>', '<', '>=', '<=', '!='
         //Both sides of the operation MUST have the same data type (as per writeup)
+        //TODO use .getType to determine data type and perform correct comparisons
         switch (token){
             case "=":
                 return leftChild.equals(rightChild);

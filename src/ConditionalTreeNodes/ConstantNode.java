@@ -8,32 +8,29 @@ import java.util.Objects;
 public class ConstantNode implements ValueNode{
 
     private final String token;
+    private final int type;
 
+    //TODO This needs to determine what the data type of the token is and store it somewhere
     public ConstantNode(String token) {
         this.token = token;
+        this.type = -1;//THIS IS A PLACEHOLDER AND WILL BREAK THINGS AS IS
     }
 
-//    //todo param should take in our arraylist of tokens
-//    static ConstantNode parseConstantNode() {
-//
-//        return new ConstantNode("");
-//    }
-
     @Override
-    public boolean validateTree(Record record, ArrayList<Integer> schema) {
+    public boolean validateTree(Record record, ArrayList<Integer> attributeTypes, ArrayList<String> attributeNames) {
         return false;
     }
 
-    //TODO implement comparison and equals function
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        ConstantNode that = (ConstantNode) o;
-
-        return Objects.equals(token, that.token);
-    }
+    //TODO implement comparison and equals function?
+//    @Override
+//    public boolean equals(Object o) {
+//        if (this == o) return true;
+//        if (o == null || getClass() != o.getClass()) return false;
+//
+//        ConstantNode that = (ConstantNode) o;
+//
+//        return Objects.equals(token, that.token);
+//    }
 
     @Override
     public Object getValue(Record record, ArrayList<String> attributeNames) {
@@ -41,7 +38,7 @@ public class ConstantNode implements ValueNode{
     }
 
     @Override
-    public int getType(Record record, ArrayList<Integer> schema) {
-        return 0;
+    public int getType(Record record, ArrayList<Integer> attributeTypes, ArrayList<String> attributeNames) {
+        return type;
     }
 }

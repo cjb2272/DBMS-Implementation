@@ -1,7 +1,6 @@
 package src.ConditionalTreeNodes;
 
 import src.Record;
-import src.StorageManager;
 
 import java.util.ArrayList;
 
@@ -13,5 +12,5 @@ public interface ConditionTree  {
      * Validate
      * @return true if record passes, false if not
      */
-    public boolean validateTree(Record record, ArrayList<Integer> schema); //TODO the schema variable is not final yet
+    public boolean validateTree(Record record, ArrayList<Integer> attributeTypes, ArrayList<String> attributeNames); //TODO the schema variable is not final yet
 }

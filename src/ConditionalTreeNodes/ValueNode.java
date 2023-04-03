@@ -19,21 +19,13 @@ public interface ValueNode extends ConditionTree{
     public abstract Object getValue(Record record, ArrayList<String> attributeNames);
 
     /**
-     * Each attribute type has a corresponding int
-     * this method returns the int corresponding to the type of this value
-     * @return the type int
+     * Each data type has a corresponding integer that represents that type
+     * This method returns the integer corresponding to the data type of the token referenced in the node
+     *
+     * @param record         The record with the attributes in question
+     * @param attributeTypes An array with all record's attribute data types in order
+     * @param attributeNames The names of each attribute (the column names in the table) in the record
+     * @return the integer corresponding to the type that this node represents
      */
-    public abstract int getType(Record record, ArrayList<Integer> schema);
-
-//    //TODO refactor this since it doesn't make sense
-//    /**
-//     * todo param should take in our arraylist of tokens
-//     * @return
-//     */
-//    static ValueNode parseValueNode() {
-//        //if next token is an attribute
-//        return AttributeNode.parseAttributeNode(); //pass along mutable arraylist of tokens
-//        //else our next token should be a constant
-//        //return ConstantNode.parseConstantNode(); //pass along mutable arraylist of tokens
-//    }
+    public abstract int getType(Record record, ArrayList<Integer> attributeTypes, ArrayList<String> attributeNames);
 }

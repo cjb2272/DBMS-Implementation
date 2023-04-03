@@ -6,7 +6,6 @@ package src.ConditionalTreeNodes;
 import src.Record;
 
 import java.util.ArrayList;
-import java.util.Objects;
 
 public class AttributeNode implements ValueNode {
 
@@ -17,28 +16,22 @@ public class AttributeNode implements ValueNode {
         //TODO from the schema, determine the type of the token and store it
     }
 
-//    //todo param should take in our arraylist of tokens
-//    static AttributeNode parseAttributeNode() {
-//
-//        return new AttributeNode("");
-//    }
-
     @Override
-    public boolean validateTree(Record record, ArrayList<Integer> schema) {
+    public boolean validateTree(Record record, ArrayList<Integer> attributeTypes, ArrayList<String> attributeNames) {
 
         return false;
     }
 
-    //TODO implement comparison function
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        AttributeNode that = (AttributeNode) o;
-
-        return Objects.equals(token, that.token);
-    }
+    //TODO implement comparison function?
+//    @Override
+//    public boolean equals(Object o) {
+//        if (this == o) return true;
+//        if (o == null || getClass() != o.getClass()) return false;
+//
+//        AttributeNode that = (AttributeNode) o;
+//
+//        return Objects.equals(token, that.token);
+//    }
 
     @Override
     public Object getValue(Record record, ArrayList<String> attributeNames) {
@@ -56,8 +49,17 @@ public class AttributeNode implements ValueNode {
     }
 
     @Override
-    public int getType(Record record, ArrayList<Integer> schema) {
-        //TODO using the schema, find out the corresponding type int for the attribute and return it
-        return 0;
+    public int getType(Record record, ArrayList<Integer> attributeTypes, ArrayList<String> attributeNames) {
+        //Using the "schema", find out the corresponding type int for the attribute and return it
+        int index = -1;
+        for (int i = 0; i < attributeNames.size(); ++i) {
+            if (attributeNames.get(i).equals(token)) {
+                index = i;
+                break;
+            }
+        }
+        if (index == -1)
+            return -1;
+        return attributeTypes.get(index);
     }
 }
