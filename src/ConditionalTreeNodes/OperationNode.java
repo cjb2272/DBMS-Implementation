@@ -1,5 +1,7 @@
 package src.ConditionalTreeNodes;
 
+import src.Record;
+
 import java.util.ArrayList;
 
 public class OperationNode implements ConditionTree {

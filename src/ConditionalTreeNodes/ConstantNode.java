@@ -1,5 +1,7 @@
 package src.ConditionalTreeNodes;
 
+import src.Record;
+
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -34,7 +36,7 @@ public class ConstantNode implements ValueNode{
     }
 
     @Override
-    public Object getValue(Record record, ArrayList<Integer> schema) {
+    public Object getValue(Record record, ArrayList<String> attributeNames) {
         return null;
     }
 

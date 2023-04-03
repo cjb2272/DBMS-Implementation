@@ -3,6 +3,8 @@ package src.ConditionalTreeNodes;
 //TODO THIS CLASS HAS ACCESS TO THE OBJECT WE ARE WORKING WITH THAT
 // that is 'obj' in whereDriver method in StorageManager
 
+import src.Record;
+
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -39,9 +41,18 @@ public class AttributeNode implements ValueNode {
     }
 
     @Override
-    public Object getValue(Record record, ArrayList<Integer> schema) {
-        //TODO Find where token is within the record using the schema and return it
-        return null;
+    public Object getValue(Record record, ArrayList<String> attributeNames) {
+        //Finds where token is within the record using the schema and returns it
+        int index = -1;
+        for (int i = 0; i < attributeNames.size(); ++i) {
+            if (attributeNames.get(i).equals(token)) {
+                index = i;
+                break;
+            }
+        }
+        if (index == -1)
+            return null;
+        return record.getRecordContents().get(index);
     }
 
     @Override

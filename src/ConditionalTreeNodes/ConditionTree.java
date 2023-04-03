@@ -1,5 +1,6 @@
 package src.ConditionalTreeNodes;
 
+import src.Record;
 import src.StorageManager;
 
 import java.util.ArrayList;

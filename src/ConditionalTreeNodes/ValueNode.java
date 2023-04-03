@@ -1,6 +1,8 @@
 package src.ConditionalTreeNodes;
 
 
+import src.Record;
+
 import java.util.ArrayList;
 
 /**
@@ -10,9 +12,11 @@ public interface ValueNode extends ConditionTree{
 
     /**
      * Gets the object value of the node
-     * @return the value as an object
+     * @param record is the record containing the values in question
+     * @param attributeNames are the names of each attribute in the record in order
+     * @return the object corresponding to the token name stored in the node
      */
-    public abstract Object getValue(Record record, ArrayList<Integer> schema);
+    public abstract Object getValue(Record record, ArrayList<String> attributeNames);
 
     /**
      * Each attribute type has a corresponding int
