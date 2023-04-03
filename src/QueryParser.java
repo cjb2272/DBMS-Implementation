@@ -306,7 +306,6 @@ class QueryParser {
         }
     }
 
-    // SELECT * FROM <table>;
 
     /**
      * This function parses a Select command into a SelectQuery Object
@@ -316,31 +315,100 @@ class QueryParser {
      *         if there is an error
      */
     public SelectQuery ParseSelect(String input) {
+        if ( !input.contains( "from" ) ) {
+            System.out.println( "Missing FROM keyword." );
+            return null;
+        }
+        String[] tokens = input.split( "select|from|where|orderby" );
+        if ( tokens.length < 3 ) {
+            System.out.println( "Expected 'SELECT * FROM <table>' format." );
+            return null;
+        }
+        int stepCounter = 0;
+        ArrayList<String> colNames = null;
+        ArrayList<String> tableNames = null;
+        ArrayList<ArrayList<Conditional>> where = null;
+        Boolean starFlag = false;
+        String orderBy = "";
+        for ( String s : tokens ) {
+            if ( s.equals( "" ) && stepCounter == 0 ) {
+                stepCounter++;
+                continue;
+            }
+            if ( stepCounter == 1 ) {
+                if(tokens[stepCounter].trim().equals( "*" )){
+                    starFlag = true;
+                    stepCounter++;
+                    continue;
+                }
+                colNames = new ArrayList<>( Arrays.asList( tokens[stepCounter].split( "," ) ) );
+                for ( int i = 0; i < colNames.size(); i++ ) {
+                    colNames.set( i, colNames.get( i ).trim() );
+                }
+                stepCounter++;
+                continue;
+            }
+            if (stepCounter == 2){
+                tableNames = new ArrayList<>( Arrays.asList( tokens[stepCounter].split( "," ) ) );
+                for ( int i = 0; i < tableNames.size(); i++ ) {
+                    tableNames.set( i, tableNames.get( i ).trim() );
+                }
+                stepCounter++;
+                continue;
+            }
+            if (stepCounter == 3){
+                where = ParseConditionalStatement( tokens[stepCounter] );
+                stepCounter++;
+                continue;
+            }
+            if(stepCounter == 4){
+                orderBy = tokens[stepCounter].trim();
+                stepCounter++;
+                continue;
+            }
+        }
 
-//        String[] tokens = input.split(" ");
-//        if (tokens.length < 4) {
-//            System.out.println("Expected 'SELECT * FROM <table>' format.");
-//            return null;
-//        }
-//
-//        // get individual column names from clause
-//        ArrayList<String> colNames = new ArrayList<>(Arrays.asList(tokens[1].split(",")));
-//        for (int i = 0; i < colNames.size(); i++) {
-//            colNames.set(i, colNames.get(i).trim());
-//        }
-//
-//        String tableName = tokens[3].replace(";", "");
-//        return new SelectQuery(colNames, tableName);
 
-        //todo: Supposedly duncan modified this, so I don't want to re-engineer this just yet.
-        // in the meantime, modify the arraylists below then just run select; at the command line
+        ArrayList<String> colCheckList = new ArrayList<>();
+        if(!starFlag) {
+            colCheckList = new ArrayList<>( colNames ); //make a copy to ensure each col exists
+        }
+        HashMap<String, ArrayList<String>> tableColumnDict = new HashMap<>();
 
-        ArrayList<String> colNames = new ArrayList<>();
-        ArrayList<String> tableNames = new ArrayList<>();
+        for(String t : tableNames){
+            int tableID = Catalog.instance.getTableIdByName( t );
+            if(tableID == -1){
+                System.out.println("Table '" + t + "' does not exist.");
+                return null;
+            } else{
+                ArrayList<String> colFromThisTable = new ArrayList<>();
+                ArrayList<String> col = Catalog.instance.getAttributeNames( t );
+                if(starFlag){
+                    colFromThisTable.addAll( col );
+                } else {
+                    for ( String c : colNames ) {
+                        c = c.replace( t + ".", "" );
+                        if ( col.contains( c ) ) {
+                            colFromThisTable.add( c );
+                            colCheckList.remove( t + "." + c );
+                        }
+                    }
+                }
+                tableColumnDict.put( t, colFromThisTable );
+            }
+        }
 
+        if(!starFlag && colCheckList.size() > 0){
+            StringBuilder res = new StringBuilder( "[" );
+            for(String col: colCheckList){
+                res.append( " " ).append( col );
+            }
+            res.append( " ]" );
+            System.out.println("The following columns could not be found: " + res);
+            return null;
+        }
 
-        return new SelectQuery(colNames, tableNames);
-
+        return new SelectQuery( tableColumnDict, where, orderBy, starFlag );
     }
 
     // INSERT INTO <table> values <tuple>;
