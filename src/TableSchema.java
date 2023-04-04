@@ -113,9 +113,16 @@ public class TableSchema {
      */
     public int changePageOrder(int whereInitialPageOnDisk) {
         if (pageOrder.isEmpty()) { // same as if whereInitialPageOnDisk is 0
-            pageOrder.add(0); // value for first page in P.O is also 0th page sequentially
-            //todo do we need to update here based on if pageDiskLocationsForReuse has available values. think about
-            return 0; // written on disk
+            if (pageDiskLocationsForReuse.isEmpty()) {
+                pageOrder.add(0); // value for first page in P.O is also 0th page sequentially
+                return 0; // written on disk
+            } else {
+                //else might be redundant, but this works, say we had deleted the last record in last page, we go to
+                //add again and use 'pageDiskLocationsForReuse'
+                int pageLocationForResuse = pageDiskLocationsForReuse.remove(0);
+                pageOrder.add(pageLocationForResuse);
+                return pageLocationForResuse;
+            }
         } else {
             // indexNewPage will always be set accurately, only time this should be zero is in if^
             int indexNewPage = 0; // need to initialize to prevent error

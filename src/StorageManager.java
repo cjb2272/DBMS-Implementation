@@ -205,7 +205,8 @@ public class StorageManager {
      * @param tableID        the table for which we want to insert a record into its
      *                       pages
      * @param recordToInsert the record to insert
-     * @return int[1] or int[2]
+     *
+     * @return int[1] or int[2]. len 1 on succeed, len 2 with row insert failed on and column^
      */
     public int[] insertRecord(int tableID, Record recordToInsert) {
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
@@ -317,7 +318,10 @@ public class StorageManager {
                         break;
                     }
                     //if curRecord's pk > recordToDelete's pk
-                        //record to delete does not exist?
+                    if (comparison < 0) { // - CHECK THIS conditional for correctness todo!
+                        //record to delete does not exist, stop our search
+                        return new int[]{1}; //todo how does this return come into play
+                    }
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -336,7 +340,7 @@ public class StorageManager {
         allRecordsRequest.add("*");
         ArrayList<Record> allRecordsFromTable = selectData(tableID, allRecordsRequest);
         for (Record curRecord : allRecordsFromTable) {
-            boolean deleteRecord = true; //call method(s) to evaluate a single tuple for meeting where condition todo
+            boolean deleteRecord = false; //call method(s) to evaluate a single tuple for meeting where condition todo
             //call deleteRecord on record if condition was met
             if (deleteRecord) {
                 deleteRecord(tableID, curRecord);
@@ -420,7 +424,7 @@ public class StorageManager {
         ArrayList<Record> allRecordsFromTable = selectData(tableID, allRecordsRequest);
         //should an update query indicate at command line if table has no records at all. none to update?
         for (Record curRecord : allRecordsFromTable) {
-            boolean updateRecord = true; //todo meet where condition
+            boolean updateRecord = false; //todo meet where condition
             if (updateRecord) {
                 updateRecord(tableID, curRecord, columnName, valueToSet);
             }
