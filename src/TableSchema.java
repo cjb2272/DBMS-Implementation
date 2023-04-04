@@ -132,10 +132,12 @@ public class TableSchema {
                         // adding into arraylist at specific index will automatically shift all
                         // following indexes and their corresponding values
                         pageOrder.add(indexNewPage, curPageOrderSize);
-                    } else { //we can reuse a prior page location on disk
-                        indexNewPage = index; //after we remove, our add will be equal to current index
+                    }
+                    else { //we can reuse a prior page location on disk
+                        indexNewPage = index + 1; //todo check
                         int pageLocationForResuse = pageDiskLocationsForReuse.remove(0);
                         //remove the empty page reference from our P.O.
+                        /*
                         int size = pageOrder.size();
                         for (int i = 0; i < size; i++) {
                             if (pageOrder.get(i) == pageLocationForResuse) {
@@ -143,12 +145,30 @@ public class TableSchema {
                                 break;
                             }
                         }
+
+                         */
                         pageOrder.add(indexNewPage, pageLocationForResuse);
                     }
                     break; // if will never be true again, no need to run rest of loop though
                 }
             }
             return pageOrder.get(indexNewPage); // same as returning curPageOrderSize
+        }
+    }
+
+    /**
+     * First adds page to reusable page locations arraylist
+     * @param pageNumber - page that
+     */
+    public void removePageFromPageOrdering(int pageNumber) {
+        addReuseablePageLocation(pageNumber);
+        int sizeBeforeAdd = pageOrder.size();
+        for (int index = 0; index < sizeBeforeAdd; index++) {
+            if (pageOrder.get(index) == pageNumber) {
+                pageOrder.remove(index); //remove the now empty page from our page ordering- we want to skip over
+                                         // this location on disk
+                break;
+            }
         }
     }
 
