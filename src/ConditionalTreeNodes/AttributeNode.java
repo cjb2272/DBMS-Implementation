@@ -4,6 +4,7 @@ package src.ConditionalTreeNodes;
 // that is 'obj' in whereDriver method in StorageManager
 
 import src.Record;
+import src.StorageManager;
 
 import java.util.ArrayList;
 
@@ -21,22 +22,11 @@ public class AttributeNode implements ValueNode {
         this.token = token;
     }
 
-    //As far as I'm aware, this should never be used for a Value Node since it doesn't evaluate to true or false
+    //As far as I'm aware, this should never be used for a ValueNode since it doesn't evaluate to true or false
     @Override
     public boolean validateTree(Record record, ArrayList<Integer> attributeTypes, ArrayList<String> attributeNames) {
         return false;
     }
-
-    //TODO implement comparison function?
-//    @Override
-//    public boolean equals(Object o) {
-//        if (this == o) return true;
-//        if (o == null || getClass() != o.getClass()) return false;
-//
-//        AttributeNode that = (AttributeNode) o;
-//
-//        return Objects.equals(token, that.token);
-//    }
 
     @Override
     public Object getValue(Record record, ArrayList<String> attributeNames) {

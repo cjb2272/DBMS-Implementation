@@ -11,13 +11,26 @@ public class OperationNode implements ConditionTree {
     private final String token; //should be the corresponding operator
     private final ValueNode rightChild;
 
-
+    /**
+     * OperationNode Constructor
+     * @param left The left child ValueNode
+     * @param token The operation in string form: '=', '>', '<', '>=', '<=', or '!='
+     * @param right The right child ValueNode
+     */
     public OperationNode(ValueNode left, String token, ValueNode right) {
         this.leftChild = left;
         this.token = token;
         this.rightChild = right;
     }
 
+    /**
+     * Used when executing a where statement
+     * Compares the child ValueNodes using the operation depicted by the token
+     * @param record The record being tested
+     * @param attributeTypes The ArrayList of ints corresponding to the type of each attribute in the record
+     * @param attributeNames The names of all the columns/attributes in the record
+     * @return True or False depending on how the operation compares the child nodes
+     */
     @Override
     public boolean validateTree(Record record, ArrayList<Integer> attributeTypes, ArrayList<String> attributeNames) {
         //WE HAVE CASES WHERE OPERATOR CAN BE
