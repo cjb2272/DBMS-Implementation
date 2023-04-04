@@ -32,112 +32,42 @@ public class OperationNode implements ConditionTree {
             System.err.println("ERROR: value types in where expression do not match");
             return false;
         }
-        //TODO use .getType to determine data type and perform correct comparisons
-        switch (leftType){
-            case 1: //Integer
-                int intCompVal = Integer.compare((Integer)leftVal, (Integer)rightVal);
-                switch (token) {
-                    case "=" -> {
-                        return intCompVal == 0;
-                    }
-                    case ">" -> {
-                        return intCompVal > 0;
-                    }
-                    case "<" -> {
-                        return intCompVal < 0;
-                    }
-                    case ">=" -> {
-                        return intCompVal >= 0;
-                    }
-                    case "<=" -> {
-                        return intCompVal <= 0;
-                    }
-                    case "!=" -> {
-                        return intCompVal != 0;
-                    }
-                }
-                break;
-            case 2: //Double
-                int doubleCompVal = Double.compare((Double) leftVal, (Double) rightVal);
-                switch (token) {
-                    case "=" -> {
-                        return doubleCompVal == 0;
-                    }
-                    case ">" -> {
-                        return doubleCompVal > 0;
-                    }
-                    case "<" -> {
-                        return doubleCompVal < 0;
-                    }
-                    case ">=" -> {
-                        return doubleCompVal >= 0;
-                    }
-                    case "<=" -> {
-                        return doubleCompVal <= 0;
-                    }
-                    case "!=" -> {
-                        return doubleCompVal != 0;
-                    }
-                }
-                break;
-            case 3: //Boolean
-                switch (token){
-                    case "=":
-                        return false;
-                    case ">":
-                        return false;
-                    case "<":
-                        return false;
-                    case ">=":
-                        return false;
-                    case "<=":
-                        return false;
-                    case "!=":
-                        return false;
-
-                }
-                break;
-            case 4: //Char(x)
-                switch (token){
-                    case "=":
-                        return false;
-                    case ">":
-                        return false;
-                    case "<":
-                        return false;
-                    case ">=":
-                        return false;
-                    case "<=":
-                        return false;
-                    case "!=":
-                        return false;
-
-                }
-                break;
-            case 5: //Varchar(x)
-                switch (token){
-                    case "=":
-                        return false;
-                    case ">":
-                        return false;
-                    case "<":
-                        return false;
-                    case ">=":
-                        return false;
-                    case "<=":
-                        return false;
-                    case "!=":
-                        return false;
-
-                }
-                break;
-            default:
-                System.err.println("Unexpected type int found ("+leftType+"), returning false");
+        //use Type to determine data type and perform correct comparisons
+        int compVal;
+        switch (leftType) {
+            case 1 -> //Integer
+                    compVal = Integer.compare((Integer) leftVal, (Integer) rightVal);
+            case 2 -> //Double
+                    compVal = Double.compare((Double) leftVal, (Double) rightVal);
+            case 3 -> //Boolean
+                    compVal = Boolean.compare((Boolean)leftVal, (Boolean)rightVal);
+            case 4, 5 -> //Char(x) and Varchar(x)
+                    compVal = ((String) leftVal).compareTo((String) rightVal);
+            default -> {
+                System.err.println("Unexpected type int found (" + leftType + "), returning false");
                 return false;
+            }
         }
-
-        //depending on which of these is equal to this.token
-        // we need to return if our children satisfy that operator
+        switch (token) {
+            case "=" -> {
+                return compVal == 0;
+            }
+            case ">" -> {
+                return compVal > 0;
+            }
+            case "<" -> {
+                return compVal < 0;
+            }
+            case ">=" -> {
+                return compVal >= 0;
+            }
+            case "<=" -> {
+                return compVal <= 0;
+            }
+            case "!=" -> {
+                return compVal != 0;
+            }
+        }
         System.err.println("Unexpected operation found when evaluating where ("+token+"), returning false");
         return false;
     }
