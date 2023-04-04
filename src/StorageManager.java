@@ -226,6 +226,15 @@ public class StorageManager {
             int numPagesInTable = pageOrder.size();
             for (int index = 0; index < numPagesInTable; index++) {
                 try {
+                    //TODO i believe this case of a page being empty assumes this is only page for the table
+                    // we now have a case where page has no records due to deletion of records-
+                    // therefor we might not want to automatically insert here if the record should be sorted
+                    // in some other postion.
+
+                    //todo do we just add simple check here, if no records, and this is not the only page/last page,
+                    // continue to next page?
+                    // if we do allow to add back into these empty pages before a new page is creating taking its place,
+                    // then we need to remove it from table schema's pageDiskLocationsForReuse
                     Page pageReference = buffer.GetPage(tableID, pageOrder.get(index));
                     int numRecordsInPage = pageReference.getRecordCount();
                     if (numRecordsInPage == 0) {
@@ -294,7 +303,8 @@ public class StorageManager {
         int numPagesInTable = pageOrder.size();
         for (int index = 0; index < numPagesInTable; index++) { //for each page in table
             try {
-                Page pageReference = buffer.GetPage(tableID, pageOrder.get(index));
+                int pageNumber = pageOrder.get(index);
+                Page pageReference = buffer.GetPage(tableID, pageNumber);
                 int numRecordsInPage = pageReference.getRecordCount();
                 if (numRecordsInPage == 0) {
                     //throw error, try to delete table with no records?
@@ -309,16 +319,10 @@ public class StorageManager {
                         pageReference.setIsModified(true);
                         //"move all other records up to cover empty space" should be handled auto
                         if (pageReference.getRecordCount() == 0) { //if page is empty as a result of delete
-                            // todo deleting empty page from hardware should occur when buffer writes page out to hardware
-                            //how does this effect how and when we make changes to P.O.
-                            // WE CANNOT change PO. until change is actually made on disk, because P.O. would be
-                            // representative of changes that haven't happened
-                            //Adjust P.O, removing reference to page and moving all other pages up in file
-                            //update page count for table
+                            // deletion of empty page from hardware should occur when buffer writes page out to hardware
+                            // label this page as EMPTY even though this is not yet reflected on the disk
+                            table.addReuseablePageLocation(pageNumber);
 
-                            //i believe we will just leave page in file empty, and then add cases to our writeout methods
-                            //that check if page its writing out is empty, and if so adjust the P.O. and ensure
-                            //pages are moved up.
                         }
                         break;
                     }
@@ -763,6 +767,9 @@ public class StorageManager {
             TableSchema table = Catalog.instance.getTableSchemaById(tableNumber);
             // insert page into P.O. using proper method calls
             int locOnDisk = table.changePageOrder(priorPageDiskPosition);
+            //REMOVE OUR empty PAGE AT LOCATION 2 on DISK, BEFORE adding new Page at LOCATION 2 on disk
+            //this call will result in nothing happening, if new page isn't replacing location of an empty page
+            writeEmptyPageOutOfBuffer(tableNumber, locOnDisk);
             return AddToBufferLogic(tableNumber, locOnDisk, true);
         }
 
@@ -843,6 +850,28 @@ public class StorageManager {
             file.seek((long) pageNumber * Main.pageSize);
             file.write(Page.parsePage(pageToWrite)); // still need to write out page size worth of bytes
             file.close();
+        }
+
+        /**
+         * todo calling this might be redudant, and not necessary, but we will do either way
+         * called by upon result of changePageOrderMethod in CreateNewPage method
+         * the Page that we are writing out has an empty Arraylist<Record>,
+         * the page has no records,
+         * @param tableId table
+         * @param pageNumber location of page on disk
+         * @throws IOException
+         */
+        private void writeEmptyPageOutOfBuffer(int tableId, int pageNumber) throws IOException {
+            int numPagesInBuffer = PageBuffer.size();
+            //page will not be found if and nothing will occur if this new page isn't replacing spot of empty page
+            for (int pageIndex = 0; pageIndex < numPagesInBuffer; pageIndex++) {
+                Page pageref = PageBuffer.get(pageIndex);
+                if (tableId == pageref.getTableNumber()) {
+                    if (pageNumber == pageref.getPageNumberOnDisk()) {
+                        WritePageToDisk(pageref);
+                    }
+                }
+            }
         }
 
         /**

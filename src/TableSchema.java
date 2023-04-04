@@ -25,13 +25,20 @@ public class TableSchema {
      * After: Index 0, 1, 2, 3, 4, 5
      *        Value 0, 1, 5, 2, 3, 4
      *
-     * Demo of removing empty page at index 3:
-     * Before: Index 0, 1, 2, 3, 4
-     *         Value 0, 1, 2, 3, 4
-     * After: Index 0, 1, 2, 3 (page at index 3 here is same page that was at index 4 in 'before')
-     *        Value 0, 1, 2, 3 (value cannot remain 4 leaving empty space in file, page has to move up in file)
+     * Demo of removing/replacing empty page at starting index 3 due to split at starting index 4:
+     * (page location 2 on disk can be re-used)
+     * Before: Index 0, 1, 2, 3, 4, 5
+     *         Value 0, 1, 5, 2, 3, 4
+     * After: Index 0, 1, 2, 3, 4, 5 (page that was at index 4 is now at index 3)
+     *        Value 0, 1, 5, 3, 2, 4     and (page at index 4 is new page, reusing location of removed page)
      */
     private ArrayList<Integer> pageOrder;
+
+    /*
+    List of Page Locations on Disk that correspond to Pages with no records -
+    an empty ArrayList<Record>. these locations on disk STILL HAVE RECORD DATA
+     */
+    private ArrayList<Integer> pageDiskLocationsForReuse;
 
     /**
      * Creates an instance of the Table object.
@@ -44,6 +51,7 @@ public class TableSchema {
         this.tableId = tableId;
         this.attributes = new ArrayList<>();
         this.pageOrder = pageOrder;
+        this.pageDiskLocationsForReuse = new ArrayList<>();
     }
 
     /**
@@ -57,6 +65,14 @@ public class TableSchema {
     public void addAttribute(String name, int type, int size, boolean isPrimaryKey, int constraints) {
         AttributeSchema attribute = new AttributeSchema(name, type, size, isPrimaryKey, constraints);
         attributes.add(attribute);
+    }
+
+    /**
+     * Add the pageNumber/pagelocationondisk for a page that has no records.
+     * @param pageLocation location
+     */
+    public void addReuseablePageLocation(int pageLocation) {
+        this.pageDiskLocationsForReuse.add(pageLocation);
     }
 
     /**
@@ -86,7 +102,9 @@ public class TableSchema {
     /**
      * Method should return the pageNumber of where the page is stored sequentially
      * on the disk. This pageNumber should be the value at index for the page.
-     * (charlie)This method likely only deals with page split and addition of page, NOT removal of page
+     * This method deals with page split/addition of page.
+     * A page is first removed from the P.O. if the new page being added can reuse that disk location
+     * due to a page being empty.
      * 
      * @param whereInitialPageOnDisk int representation of where this page is on
      *                               disk
@@ -104,14 +122,29 @@ public class TableSchema {
             int sizeBeforeAdd = pageOrder.size();
             for (int index = 0; index < sizeBeforeAdd; index++) {
                 if (pageOrder.get(index) == whereInitialPageOnDisk) {
-                    indexNewPage = index + 1;
-                    // how many pages deep out new page is written on disk will ALWAYS be the
-                    // size of P.O. bc if adding a page, page in data comes after all pages
-                    // that already exist (all pages already in the P.O.)
-                    int curPageOrderSize = pageOrder.size();
-                    // adding into arraylist at specific index will automatically shift all
-                    // following indexes and their corresponding values
-                    pageOrder.add(indexNewPage, curPageOrderSize);
+                    //normal addition of new page in the page ordering
+                    if (pageDiskLocationsForReuse.isEmpty()) {
+                        indexNewPage = index + 1;
+                        // how many pages deep out new page is written on disk will ALWAYS be the
+                        // size of P.O. bc if adding a page, page in data comes after all pages
+                        // that already exist (all pages already in the P.O.)
+                        int curPageOrderSize = pageOrder.size();
+                        // adding into arraylist at specific index will automatically shift all
+                        // following indexes and their corresponding values
+                        pageOrder.add(indexNewPage, curPageOrderSize);
+                    } else { //we can reuse a prior page location on disk
+                        indexNewPage = index; //after we remove, our add will be equal to current index
+                        int pageLocationForResuse = pageDiskLocationsForReuse.remove(0);
+                        //remove the empty page reference from our P.O.
+                        int size = pageOrder.size();
+                        for (int i = 0; i < size; i++) {
+                            if (pageOrder.get(i) == pageLocationForResuse) {
+                                pageOrder.remove(i);
+                                break;
+                            }
+                        }
+                        pageOrder.add(indexNewPage, pageLocationForResuse);
+                    }
                     break; // if will never be true again, no need to run rest of loop though
                 }
             }
