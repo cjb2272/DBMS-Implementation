@@ -19,6 +19,7 @@ public class OrNode implements ConditionTree {
 
     @Override
     public boolean validateTree(Record record, ArrayList<Integer> attributeTypes, ArrayList<String> attributeNames) {
-        return leftChild.validateTree(record, attributeTypes, attributeNames) || rightChild.validateTree(record, attributeTypes, attributeNames);
+        return leftChild.validateTree(record, attributeTypes, attributeNames)
+                || rightChild.validateTree(record, attributeTypes, attributeNames);
     }
 }

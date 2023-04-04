@@ -24,8 +24,30 @@ public class ConstantNode implements ValueNode{
 
     @Override
     public Object getValue(Record record, ArrayList<String> attributeNames) {
-        //TODO this needs to, using the stored type, convert the token into an object representation
-        return null;
+        //using the stored type, convert the token into an object representation
+        switch (type) {
+            case 1 -> { //Integer
+                return Integer.parseInt(token);
+            }
+            case 2 -> { //Double
+                return Double.parseDouble(token);
+            }
+            case 3 -> { //Boolean
+                if (token.equalsIgnoreCase("true"))
+                    return true;
+                else if (token.equalsIgnoreCase("false")) {
+                    return false;
+                }
+                return null;
+            }
+            case 4, 5 -> { //Char(x) and Varchar(x)
+                return token;
+            }
+            default -> {
+                System.err.println("Unexpected type int found (" + type + "), returning null");
+                return null;
+            }
+        }
     }
 
     @Override
