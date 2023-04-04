@@ -4,7 +4,7 @@ import src.Record;
 
 import java.util.ArrayList;
 
-public class AndNode implements ConditionTree{
+public class AndNode extends ConditionTree {
 
     private final OperationNode leftChild;
     private final String token; //should be "and" this might be redundant not needed

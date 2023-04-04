@@ -5,7 +5,7 @@ import src.Record;
 import java.util.ArrayList;
 import java.util.Objects;
 
-public class OperationNode implements ConditionTree {
+public class OperationNode extends ConditionTree {
 
     private final ValueNode leftChild;
     private final String token; //should be the corresponding operator

@@ -8,7 +8,7 @@ import java.util.ArrayList;
 /**
  * REPRESENTATIVE OF EITHER An ATTRIBUTE NODE OR A CONSTANT NODE
  */
-public interface ValueNode extends ConditionTree{
+public abstract class ValueNode extends ConditionTree{
 
     /**
      * Gets the object value of the node

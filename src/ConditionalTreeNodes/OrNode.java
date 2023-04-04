@@ -4,7 +4,7 @@ import src.Record;
 
 import java.util.ArrayList;
 
-public class OrNode implements ConditionTree {
+public class OrNode extends ConditionTree {
 
     private final OperationNode leftChild;
     private final String token; //should be "or"
