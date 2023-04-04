@@ -16,6 +16,7 @@ public class ConstantNode implements ValueNode{
         this.type = -1;//THIS IS A PLACEHOLDER AND WILL BREAK THINGS AS IS
     }
 
+    //As far as I'm aware, this should never be used for a Value Node since it doesn't evaluate to true or false
     @Override
     public boolean validateTree(Record record, ArrayList<Integer> attributeTypes, ArrayList<String> attributeNames) {
         return false;

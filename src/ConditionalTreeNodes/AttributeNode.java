@@ -9,16 +9,21 @@ import java.util.ArrayList;
 
 public class AttributeNode implements ValueNode {
 
-    private final String token;//TODO this should be the name of the attribute from the record/table
+    private final String token;//the name of the attribute from the record/table
     //private final int type;
-    public AttributeNode(String token, ArrayList<Integer> schema) {
+
+    /**
+     * Attribute Node constructor
+     * Just stores the name of the column to be looked at when evaluating
+     * @param token is the name of the attribute/column from the query
+     */
+    public AttributeNode(String token) {
         this.token = token;
-        //TODO from the schema, determine the type of the token and store it
     }
 
+    //As far as I'm aware, this should never be used for a Value Node since it doesn't evaluate to true or false
     @Override
     public boolean validateTree(Record record, ArrayList<Integer> attributeTypes, ArrayList<String> attributeNames) {
-
         return false;
     }
 
