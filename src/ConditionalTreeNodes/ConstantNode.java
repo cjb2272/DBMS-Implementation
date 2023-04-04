@@ -34,6 +34,7 @@ public class ConstantNode implements ValueNode{
 
     @Override
     public Object getValue(Record record, ArrayList<String> attributeNames) {
+        //TODO this needs to, using the stored type, convert the token into an object representation
         return null;
     }
 
