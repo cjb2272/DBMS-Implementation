@@ -4,6 +4,8 @@ package src;
  * @author Duncan Small, Austin Cepalia
  */
 
+import src.ConditionalTreeNodes.ConditionTree;
+
 import java.io.IOException;
 import java.util.*;
 
@@ -21,9 +23,9 @@ class UpdateQuery extends Query{
     public String table;
     public String colName;
     public List<Object> data;
-    public ArrayList<ArrayList<Conditional>> where;
+    public ConditionTree where;
 
-    public UpdateQuery( String table, String colName, List<Object> data, ArrayList<ArrayList<Conditional>> where ) {
+    public UpdateQuery( String table, String colName, List<Object> data, ConditionTree where ) {
         this.table = table;
         this.colName = colName;
         this.data = data;
@@ -39,9 +41,9 @@ class UpdateQuery extends Query{
 
 class DeleteQuery extends Query{
     public String table;
-    public ArrayList<ArrayList<Conditional>> where;
+    public ConditionTree where;
 
-    public DeleteQuery( String tableName, ArrayList<ArrayList<Conditional>> where ){
+    public DeleteQuery( String tableName, ConditionTree where ){
         this.table = tableName;
         this.where = where;
     }
@@ -55,13 +57,13 @@ class DeleteQuery extends Query{
 
 class SelectQuery extends Query {
     HashMap<String, ArrayList<String>> tableColumnDictionary;
-    ArrayList<ArrayList<Conditional>> where;
+    ConditionTree where;
     String orderBy;
     Boolean starFlag;
     int numberOfColumns;
     int numberOfTables;
 
-    public SelectQuery( HashMap<String, ArrayList<String>> tableColumnDict, ArrayList<ArrayList<Conditional>> where, String orderBy, Boolean starFlag ) {
+    public SelectQuery( HashMap<String, ArrayList<String>> tableColumnDict, ConditionTree where, String orderBy, Boolean starFlag ) {
         this.tableColumnDictionary = tableColumnDict;
         this.where = where;
         this.orderBy = orderBy;

@@ -3,7 +3,6 @@ package src.ConditionalTreeNodes;
 import src.Record;
 
 import java.util.ArrayList;
-import java.util.Objects;
 
 public class OperationNode extends ConditionTree {
 
@@ -83,5 +82,10 @@ public class OperationNode extends ConditionTree {
         }
         System.err.println("Unexpected operation found when evaluating where ("+token+"), returning false");
         return false;
+    }
+
+    @Override
+    public String getToken() {
+        return this.token;
     }
 }

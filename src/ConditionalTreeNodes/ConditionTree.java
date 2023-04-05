@@ -11,4 +11,6 @@ public abstract class ConditionTree  {
      * @return true if record passes, false if not
      */
     public abstract boolean validateTree(Record record, ArrayList<Integer> attributeTypes, ArrayList<String> attributeNames);
+
+    public abstract String getToken();
 }

@@ -22,4 +22,9 @@ public class OrNode extends ConditionTree {
         return leftChild.validateTree(record, attributeTypes, attributeNames)
                 || rightChild.validateTree(record, attributeTypes, attributeNames);
     }
+
+    @Override
+    public String getToken() {
+        return this.token;
+    }
 }

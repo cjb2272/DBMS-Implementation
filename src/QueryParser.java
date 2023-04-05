@@ -5,7 +5,8 @@ package src;
  * @author Duncan Small, Austin Cepalia
  */
 
-import java.lang.reflect.Array;
+import src.ConditionalTreeNodes.*;
+
 import java.util.*;
 
 class QueryParser {
@@ -13,63 +14,101 @@ class QueryParser {
     public QueryParser() {
     }
 
-
-    public Conditional ParseCond(String input){
-        String[] relSplit = input.trim().split( " " );
-        String rel = "";
-        if(relSplit.length != 3){
-            System.out.println("Error parsing conditional: " + input);
-            return null;
-        } else{
-            for(String s : relSplit){
-                if(s.matches( "[<>=!]=?|<=|>=" )){
-                    rel = s;
-                }
-            }
-            if(rel.equals( "" )){
-                System.out.println("Missing relational operator in conditional: " + input);
-                return null;
-            }
-            String A = relSplit[0];
-            String B = relSplit[2];
-            List<Object> ACode = TypeCast( A );
-            List<Object> BCode = TypeCast( B );
-            if((int) ACode.get( 0 ) == 0 && !A.contains( "\"" )){
-                ACode.set(0,7);
-            }
-            if((int) BCode.get( 0 ) == 0 && !B.contains( "\"" )){
-                BCode.set(0,7);
-            }
-            return new Conditional( ACode.get(1), BCode.get(1), (int) ACode.get( 0 ), (int) BCode.get( 0 ), ParseRelation( rel ) );
-        }
-    }
-
-    public ArrayList<ArrayList<Conditional>> ParseConditionalStatement( String input){
-        ArrayList<ArrayList<Conditional>> orClauses = new ArrayList<>();
-        String[] orSplit = input.split( "or" );
-        for(String o : orSplit){
-            ArrayList<Conditional> andClauses = new ArrayList<>();
-            String[] andSplit = o.split( "and" );
-            for ( String a : andSplit ) {
-                andClauses.add( ParseCond( a ) );
-            }
-            orClauses.add( andClauses );
-        }
-        return orClauses;
-    }
-
-    public int ParseRelation(String op){
-        return switch (op.trim()){
-            case "=" -> 0;
-            case ">" -> 1;
-            case "<" -> 2;
-            case "<=" -> 3;
-            case ">=" -> 4;
-            case "!=" -> 5;
+    public int Precedence(String input){
+        return switch (input){
+            case "=", ">", "<", "<=", ">=", "!=" -> 3;
+            case "and" -> 2;
+            case "or" -> 1;
             default -> -1;
         };
     }
 
+    public ConditionTree ParseConditional( String input, ArrayList<String> validColumns){
+        String[] tokens = input.split( " " );
+        Deque<ConditionTree> outputQ = new ArrayDeque<>();
+        Deque<String> operatorStack = new ArrayDeque<>();
+
+        for(String token : tokens){
+            if(token.equals( "" )){
+                continue;
+            }
+            int prece = Precedence( token );
+            if( prece == -1){
+                //operand
+                if(validColumns.contains( token )){
+                    //attribute
+                    outputQ.add( new AttributeNode( token ) );
+                } else{
+                    //constant
+                    List<Object> data = TypeCast( token );
+                    outputQ.add( new ConstantNode( data.get( 1 ), (int) data.get( 0 ) ) );
+                }
+            } else {
+                //operator
+                while(!operatorStack.isEmpty() && Precedence( operatorStack.peekLast()) >= prece ){
+                    int exitCode = popOffOperatorStack( operatorStack, outputQ );
+                    if(exitCode == -1){
+                        return null;
+                    }
+                }
+                operatorStack.add( token );
+            }
+        }
+        while(!operatorStack.isEmpty()){
+            int exitCode = popOffOperatorStack( operatorStack, outputQ );
+            if(exitCode == -1){
+                return null;
+            }
+        }
+        return outputQ.pop();
+    }
+
+    public int popOffOperatorStack(Deque<String> operatorStack, Deque<ConditionTree> outputQ){
+        String current = operatorStack.removeLast();
+        ConditionTree R = outputQ.removeLast();
+        ConditionTree L = outputQ.removeLast();
+        switch (Precedence( current )){
+            case 1:
+                //or
+                if(R.getClass() != OperationNode.class ){
+                    System.out.println("Expected OperationNode, got: " + R.getClass()+ ". Token: " + R.getToken());
+                    return -1;
+                } else if(L.getClass() != OperationNode.class){
+                    System.out.println("Expected OperationNode, got: " + L.getClass()+ ". Token: " + L.getToken());
+                    return -1;
+                } else{
+                    outputQ.add( new OrNode( (OperationNode) L, current, (OperationNode) R) );
+                    return 1;
+                }
+            case 2:
+                //and
+                if(R.getClass() != OperationNode.class ){
+                    System.out.println("Expected OperationNode, got: " + R.getClass()+ ". Token: " + R.getToken());
+                    return -1;
+                } else if(L.getClass() != OperationNode.class){
+                    System.out.println("Expected OperationNode, got: " + L.getClass()+ ". Token: " + L.getToken());
+                    return -1;
+                } else{
+                    outputQ.add( new AndNode( (OperationNode) L, current, (OperationNode) R) );
+                    return 1;
+                }
+            case 3:
+                //operator
+                if(R.getClass() != ConstantNode.class ){
+                    System.out.println("Expected ConstantNode, got: " + R.getClass()+ ". Token: " + R.getToken());
+                    return -1;
+                } else if(L.getClass() != AttributeNode.class){
+                    System.out.println("Expected AttributeNode, got: " + L.getClass()+ ". Token: " + L.getToken());
+                    return -1;
+                } else{
+                    outputQ.add( new OperationNode( (AttributeNode) L, current, (ConstantNode) R) );
+                    return 1;
+                }
+            default:
+                System.out.println("Expected either an OR, an AND, or an Operator, received: " + current);
+                return -1;
+        }
+    }
 
     //update <name>
     //set <column_1> = <value>
@@ -91,12 +130,16 @@ class QueryParser {
         }
         String colName = equalSplit[0];
         List<Object> data = TypeCast( equalSplit[1].trim() );
-        ArrayList<ArrayList<Conditional>> where = null;
+        ConditionTree where = null;
         if(whereSplit.length != 1){
             //There is a where
             whereSplit[1].replace( "where", "" );
             //parse conditional
-            where = ParseConditionalStatement( whereSplit[1] );
+            where = ParseConditional( whereSplit[1], Catalog.instance.getAttributeNames( tableName.trim() ) );
+            if(where == null){
+                System.out.println("Could not parse conditional statement.");
+                return null;
+            }
         }
         return new UpdateQuery(tableName.trim(), colName.trim(), data, where);
     }
@@ -108,11 +151,15 @@ class QueryParser {
             return null;
         }
         String[] chunks = keywords[1].split( "where" );
-        ArrayList<ArrayList<Conditional>> where = null;
+        ConditionTree where = null;
         String tableName = chunks[0].replace( "from", "" );
         if(chunks.length != 1){
             //Where is present so chunks[0] is table name, chunks[1] is conditional
-            where = ParseConditionalStatement(chunks[1].replace( "where", "" ));
+            where = ParseConditional(chunks[1].replace( "where", "" ), Catalog.instance.getAttributeNames(tableName.trim()) );
+            if(where == null){
+                System.out.println("Could not parse conditional statement");
+                return null;
+            }
         }
         return new DeleteQuery(tableName.trim(), where);
     }
@@ -327,8 +374,8 @@ class QueryParser {
         int stepCounter = 0;
         ArrayList<String> colNames = null;
         ArrayList<String> tableNames = null;
-        ArrayList<ArrayList<Conditional>> where = null;
         Boolean starFlag = false;
+        String conditional = "";
         String orderBy = "";
         for ( String s : tokens ) {
             if ( s.equals( "" ) && stepCounter == 0 ) {
@@ -357,7 +404,7 @@ class QueryParser {
                 continue;
             }
             if (stepCounter == 3){
-                where = ParseConditionalStatement( tokens[stepCounter] );
+                conditional = tokens[stepCounter];
                 stepCounter++;
                 continue;
             }
@@ -375,6 +422,8 @@ class QueryParser {
         }
         HashMap<String, ArrayList<String>> tableColumnDict = new HashMap<>();
 
+        ArrayList<String> validColumnNames = new ArrayList<>();
+
         for(String t : tableNames){
             int tableID = Catalog.instance.getTableIdByName( t );
             if(tableID == -1){
@@ -383,6 +432,7 @@ class QueryParser {
             } else{
                 ArrayList<String> colFromThisTable = new ArrayList<>();
                 ArrayList<String> col = Catalog.instance.getAttributeNames( t );
+                validColumnNames.addAll( col );
                 if(starFlag){
                     colFromThisTable.addAll( col );
                 } else {
@@ -405,6 +455,12 @@ class QueryParser {
             }
             res.append( " ]" );
             System.out.println("The following columns could not be found: " + res);
+            return null;
+        }
+
+        ConditionTree where = ParseConditional( conditional, validColumnNames );
+        if(where == null){
+            System.out.println("Could not parse conditional statement.");
             return null;
         }
 

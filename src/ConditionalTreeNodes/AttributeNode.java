@@ -4,11 +4,10 @@ package src.ConditionalTreeNodes;
 // that is 'obj' in whereDriver method in StorageManager
 
 import src.Record;
-import src.StorageManager;
 
 import java.util.ArrayList;
 
-public class AttributeNode implements ValueNode {
+public class AttributeNode extends ValueNode {
 
     private final String token;//the name of the attribute from the record/table
     //private final int type;
@@ -56,5 +55,10 @@ public class AttributeNode implements ValueNode {
         if (index == -1)
             return -1;
         return attributeTypes.get(index);
+    }
+
+    @Override
+    public String getToken() {
+        return this.token;
     }
 }

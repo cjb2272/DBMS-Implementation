@@ -5,9 +5,6 @@ package src;
  * @author(s) Charlie Baker, Austin Cepalia, Duncan Small (barely), Tristan Hoenninger
  */
 
-import src.ConditionalTreeNodes.AndNode;
-import src.ConditionalTreeNodes.ConditionTree;
-
 import java.io.*;
 import java.nio.file.Paths;
 import java.util.*;
