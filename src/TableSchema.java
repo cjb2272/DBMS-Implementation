@@ -25,12 +25,12 @@ public class TableSchema {
      * After: Index 0, 1, 2, 3, 4, 5
      *        Value 0, 1, 5, 2, 3, 4
      *
-     * Demo of removing/replacing empty page at starting index 3 due to split at starting index 4:
+     * Demo of removing/replacing empty page at due to split at index 3:
      * (page location 2 on disk can be re-used)
-     * Before: Index 0, 1, 2, 3, 4, 5
-     *         Value 0, 1, 5, 2, 3, 4
-     * After: Index 0, 1, 2, 3, 4, 5 (page that was at index 4 is now at index 3)
-     *        Value 0, 1, 5, 3, 2, 4     and (page at index 4 is new page, reusing location of removed page)
+     * Before: Index 0, 1, 2, 3, 4      pageDiskLocationsForReuse[2]
+     *         Value 0, 1, 5, 3, 4
+     * After:  Index 0, 1, 2, 3, 4, 5
+     *         Value 0, 1, 5, 3, 2, 4
      */
     private ArrayList<Integer> pageOrder;
 
@@ -113,18 +113,25 @@ public class TableSchema {
      */
     public int changePageOrder(int whereInitialPageOnDisk) {
         if (pageOrder.isEmpty()) { // same as if whereInitialPageOnDisk is 0
-            pageOrder.add(0); // value for first page in P.O is also 0th page sequentially
-            return 0; // written on disk
+            if (pageDiskLocationsForReuse.isEmpty()) {
+                pageOrder.add(0); // value for first page in P.O is also 0th page sequentially
+                return 0; // written on disk
+            } else {
+                //else might be redundant, but this works, say we had deleted the last record in last page, we go to
+                //add again and use 'pageDiskLocationsForReuse'
+                int pageLocationForResuse = pageDiskLocationsForReuse.remove(0);
+                pageOrder.add(pageLocationForResuse);
+                return pageLocationForResuse;
+            }
         } else {
-            // indexNewPage will always be set accurately, only time this should be zero is
-            // in if^
+            // indexNewPage will always be set accurately, only time this should be zero is in if^
             int indexNewPage = 0; // need to initialize to prevent error
             int sizeBeforeAdd = pageOrder.size();
             for (int index = 0; index < sizeBeforeAdd; index++) {
                 if (pageOrder.get(index) == whereInitialPageOnDisk) {
                     //normal addition of new page in the page ordering
+                    indexNewPage = index + 1;
                     if (pageDiskLocationsForReuse.isEmpty()) {
-                        indexNewPage = index + 1;
                         // how many pages deep out new page is written on disk will ALWAYS be the
                         // size of P.O. bc if adding a page, page in data comes after all pages
                         // that already exist (all pages already in the P.O.)
@@ -134,19 +141,7 @@ public class TableSchema {
                         pageOrder.add(indexNewPage, curPageOrderSize);
                     }
                     else { //we can reuse a prior page location on disk
-                        indexNewPage = index + 1; //todo check
                         int pageLocationForResuse = pageDiskLocationsForReuse.remove(0);
-                        //remove the empty page reference from our P.O.
-                        /*
-                        int size = pageOrder.size();
-                        for (int i = 0; i < size; i++) {
-                            if (pageOrder.get(i) == pageLocationForResuse) {
-                                pageOrder.remove(i);
-                                break;
-                            }
-                        }
-
-                         */
                         pageOrder.add(indexNewPage, pageLocationForResuse);
                     }
                     break; // if will never be true again, no need to run rest of loop though
@@ -157,8 +152,11 @@ public class TableSchema {
     }
 
     /**
-     * First adds page to reusable page locations arraylist
-     * @param pageNumber - page that
+     * Method first adds page location on disk of now empty page to reusable page
+     * locations arraylist 'pageDiskLocationsForReuse'
+     * Method then removes that page from our page ordering, because we want to ignore
+     * this page in file from now
+     * @param pageNumber - page that has no records - Arraylist<Record> is empty
      */
     public void removePageFromPageOrdering(int pageNumber) {
         addReuseablePageLocation(pageNumber);

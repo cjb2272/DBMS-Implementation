@@ -202,7 +202,8 @@ public class StorageManager {
      * @param tableID        the table for which we want to insert a record into its
      *                       pages
      * @param recordToInsert the record to insert
-     * @return int[1] or int[2]
+     *
+     * @return int[1] or int[2]. len 1 on succeed, len 2 with row insert failed on and column^
      */
     public int[] insertRecord(int tableID, Record recordToInsert) {
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
@@ -314,7 +315,10 @@ public class StorageManager {
                         break;
                     }
                     //if curRecord's pk > recordToDelete's pk
-                        //record to delete does not exist?
+                    if (comparison < 0) { // - CHECK THIS conditional for correctness todo!
+                        //record to delete does not exist, stop our search
+                        return new int[]{1}; //todo how does this return come into play
+                    }
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -333,7 +337,7 @@ public class StorageManager {
         allRecordsRequest.add("*");
         ArrayList<Record> allRecordsFromTable = selectData(tableID, allRecordsRequest);
         for (Record curRecord : allRecordsFromTable) {
-            boolean deleteRecord = true; //call method(s) to evaluate a single tuple for meeting where condition todo
+            boolean deleteRecord = false; //call method(s) to evaluate a single tuple for meeting where condition todo
             //call deleteRecord on record if condition was met
             if (deleteRecord) {
                 deleteRecord(tableID, curRecord);
@@ -417,7 +421,7 @@ public class StorageManager {
         ArrayList<Record> allRecordsFromTable = selectData(tableID, allRecordsRequest);
         //should an update query indicate at command line if table has no records at all. none to update?
         for (Record curRecord : allRecordsFromTable) {
-            boolean updateRecord = true; //todo meet where condition
+            boolean updateRecord = false; //todo meet where condition
             if (updateRecord) {
                 updateRecord(tableID, curRecord, columnName, valueToSet);
             }
@@ -639,7 +643,7 @@ public class StorageManager {
          * If page is in buffer, no disk access needed, otherwise,
          * call the addToBufferLogic
          * This Method is Called when getting record by primary key
-         * when getting all records for given table num
+         * when getting all records for given table num (selectData)
          * when inserting a record
          * ...
          * 
@@ -835,28 +839,6 @@ public class StorageManager {
             file.write(Page.parsePage(pageToWrite)); // still need to write out page size worth of bytes
             file.close();
         }
-
-        /*
-         *    calling this might be redudant, and not necessary, but we will do either way
-         * called by upon result of changePageOrderMethod in CreateNewPage method
-         * the Page that we are writing out has an empty Arraylist<Record>,
-         * the page has no records,
-         * @param tableId table
-         * @param pageNumber location of page on disk
-         * @throws IOException
-        private void writeEmptyPageOutOfBuffer(int tableId, int pageNumber) throws IOException {
-            int numPagesInBuffer = PageBuffer.size();
-            //page will not be found if and nothing will occur if this new page isn't replacing spot of empty page
-            for (int pageIndex = 0; pageIndex < numPagesInBuffer; pageIndex++) {
-                Page pageref = PageBuffer.get(pageIndex);
-                if (tableId == pageref.getTableNumber()) {
-                    if (pageNumber == pageref.getPageNumberOnDisk()) {
-                        WritePageToDisk(pageref);
-                    }
-                }
-            }
-        }
-        */
 
         /**
          * We DO NOT want to write the records for this table that are
