@@ -114,6 +114,8 @@ class SelectQuery extends Query {
 
         ArrayList<String> tableNamesForColumns = new ArrayList<>();
 
+        ArrayList<Integer> typesForColumns = new ArrayList<>();
+
 
         int tableCount = tables.size();
 
@@ -162,11 +164,15 @@ class SelectQuery extends Query {
                     tableNamesForColumns.add(table.getName());
                     displayedColNames.add(colName);
                 }
+                typesForColumns.addAll(Catalog.instance.getTableAttributeTypesByName(table.getName()));
             }
+
+
 
         }
 
         // !!!!  do the filtering here  !!!!!
+        // relevant objects: finalRecordOutput, tableNamesForColumns, typesForColumns, maybe displayedColNames?
 
 
 
@@ -220,6 +226,7 @@ class SelectQuery extends Query {
         for (int idx : colIdxsToRemove) {
             tableNamesForColumns.remove(idx);
             displayedColNames.remove(idx);
+            typesForColumns.remove(idx);
 
             for (Record record : finalRecordOutput) {
                 record.getRecordContents().remove(idx);
