@@ -102,13 +102,18 @@ class SelectQuery extends Query {
 
             int tableNum = Catalog.instance.getTableIdByName(tableName); // guaranteed to exist
             ArrayList<String> columnNames = Catalog.instance.getAttributeNames(tableName);
-            ArrayList<Record> records = StorageManager.instance.selectData(tableNum, columnNames);
+            ArrayList<String> star = new ArrayList<>();
+            star.add("*");
+            ArrayList<Record> records = StorageManager.instance.selectData(tableNum, star);
             tables.add(new Table(tableName, columnNames, records));
 
         }
 
         // Build the final record output by performing a cross-product on all the loaded tables
         ArrayList<Record> finalRecordOutput = new ArrayList<>();
+
+        ArrayList<String> tableNamesForColumns = new ArrayList<>();
+
 
         int tableCount = tables.size();
 
@@ -151,7 +156,6 @@ class SelectQuery extends Query {
 
             // build the columnNames arraylist for the cartesian product
 
-            ArrayList<String> tableNamesForColumns = new ArrayList<>();
 
             for (Table table : tables) {
                 for (String colName : table.getColNames()) {
@@ -161,6 +165,68 @@ class SelectQuery extends Query {
             }
 
         }
+
+        // !!!!  do the filtering here  !!!!!
+
+
+
+        // remove duplicate column, leaving only the column for the desired table for that column
+        // ex. select t1.a from t1, t2; deletes only the 'a' column that corresponds to t2 from the cartesian product
+
+        ArrayList<Integer> colIdxsToRemove = new ArrayList<>();
+        ArrayList<String> processedNames = new ArrayList<>();
+
+        for (int colIdx = 0; colIdx < tableNamesForColumns.size(); colIdx++) {
+
+
+            // are there any other column names that match this one?
+            String currentColName = displayedColNames.get(colIdx);
+
+            if (processedNames.contains(currentColName)) {
+                continue;
+            }
+
+
+            processedNames.add(currentColName);
+
+            for (int innerColIdx = colIdx+1; innerColIdx < displayedColNames.size(); innerColIdx++) {
+
+                String innerColName = displayedColNames.get(innerColIdx);
+                if (currentColName.equals(innerColName)) {
+
+                    // duplicate found, determine which one(s) to keep via the tableColumnDictionary
+                    ArrayList<String> matchedTables = new ArrayList<>();
+                    for (Map.Entry<String, ArrayList<String>> entry : tableColumnDictionary.entrySet()) {
+                        if (entry.getValue().contains(currentColName)) {
+                            matchedTables.add(entry.getKey());
+                        }
+                    }
+
+                    // if the tableName for the current innerColumnName is not in the matchedTables list, this is a column to drop
+                    if (!matchedTables.contains(tableNamesForColumns.get(innerColIdx))) {
+                        colIdxsToRemove.add(innerColIdx);
+                    }
+
+                }
+
+
+            }
+
+
+        }
+
+        // remove unwanted duplicate data
+
+        for (int idx : colIdxsToRemove) {
+            tableNamesForColumns.remove(idx);
+            displayedColNames.remove(idx);
+
+            for (Record record : finalRecordOutput) {
+                record.getRecordContents().remove(idx);
+            }
+
+        }
+
 
 
         // everything after this is printing logic
