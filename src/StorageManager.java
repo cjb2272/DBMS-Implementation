@@ -363,7 +363,7 @@ public class StorageManager {
 
         int tableCount = tables.size();
 
-        if (numberOfTables == 1 && starFlag) {
+        if (numberOfTables == 1) {
             finalRecordOutput = tables.get(0).getRecords();
 //            displayedColNames = tables.get(0).getColNames();
         } else {
@@ -407,7 +407,19 @@ public class StorageManager {
             }
             typesForColumns.addAll(Catalog.instance.getTableAttributeTypesByName(table.getName()));
         }
-    return new ResultSet(finalRecordOutput, displayedColNames, typesForColumns);
+
+        ArrayList<Record> cloneRecordOutput = new ArrayList<>();
+        for (Record record : finalRecordOutput) {
+            Record r = new Record();
+            ArrayList<Object> onew = new ArrayList<>();
+            for (Object o : record.recordContents) {
+                onew.add(o);
+            }
+            r.setRecordContents(onew);
+            cloneRecordOutput.add(r);
+        }
+
+    return new ResultSet(cloneRecordOutput, displayedColNames, typesForColumns);
     }
 
     /**

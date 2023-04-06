@@ -172,7 +172,8 @@ class SelectQuery extends Query {
 
         // !!!!  do the filtering here  !!!!!
         // relevant objects: finalRecordOutput, tableNamesForColumns, typesForColumns, maybe displayedColNames?
-        ArrayList<Record> finalRecordOutput = resultSet.getRecords();
+
+        ArrayList<Record> finalRecordOutput = new ArrayList<>(resultSet.getRecords());
 
 //        if (where != null) {
 //            for (Record record: resultSet.getRecords()) {
@@ -202,8 +203,8 @@ class SelectQuery extends Query {
                 continue;
             }
 
-
             processedNames.add(currentColName);
+
 
             for (int innerColIdx = colIdx+1; innerColIdx < displayedColNames.size(); innerColIdx++) {
 
@@ -230,7 +231,6 @@ class SelectQuery extends Query {
         }
 
         // remove unwanted duplicate data
-
         for (int idx : colIdxsToRemove) {
             resultSet.getColumnNames().remove(idx);
             displayedColNames.remove(idx);
@@ -240,6 +240,37 @@ class SelectQuery extends Query {
                 record.getRecordContents().remove(idx);
             }
 
+        }
+
+
+        // find and remove indexes of columns that were never requested to be projected
+        ArrayList<Integer> projectionRemovals = new ArrayList<>();
+
+        for (int colIdx = 0; colIdx < resultSet.getColumnNames().size(); colIdx++) {
+
+            String currentColName = resultSet.getColumnNames().get(colIdx);
+
+            boolean found = false;
+
+            for (Map.Entry<String, ArrayList<String>> entry : tableColumnDictionary.entrySet()) {
+                if (entry.getValue().contains(currentColName)) {
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                projectionRemovals.add(colIdx);
+            }
+
+        }
+
+        for (int idx : projectionRemovals) {
+            resultSet.getColumnNames().remove(idx);
+            resultSet.getColumnTypes().remove(idx);
+
+            for (Record record : finalRecordOutput) {
+                record.getRecordContents().remove(idx);
+            }
         }
 
 
@@ -259,7 +290,7 @@ class SelectQuery extends Query {
         StringBuilder columns = new StringBuilder();
 
         spacer.append( " " );
-        for(String col : displayedColNames){
+        for(String col : resultSet.getColumnNames()){
             if(col.length() == max){
                 columns.append(" |").append(col);
             } else {
