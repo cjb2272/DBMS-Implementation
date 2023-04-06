@@ -166,7 +166,7 @@ class SelectQuery extends Query {
 
         }
          */
-        ArrayList<String> displayedColNames = new ArrayList<>();
+        ArrayList<String> displayedColNames;
         ResultSet resultSet = StorageManager.instance.generateFromResultSet(tableColumnDictionary, starFlag);
         displayedColNames = resultSet.getColumnNames();
 
