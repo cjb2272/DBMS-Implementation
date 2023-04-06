@@ -70,15 +70,11 @@ class SelectQuery extends Query {
         this.starFlag = starFlag;
 
         int Ccounter = 0;
-        int Tcounter = 0;
         for(String t : this.getTableNames()){
-            for(String c: this.tableColumnDictionary.get( t )){
-                Ccounter++;
-            }
-            Tcounter++;
+            Ccounter += this.tableColumnDictionary.get( t ).size();
         }
         this.numberOfColumns = Ccounter;
-        this.numberOfTables = Tcounter;
+        this.numberOfTables = this.getTableNames().size();
     }
 
     public Set<String> getTableNames(){

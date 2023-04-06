@@ -23,7 +23,7 @@ class QueryParser {
         };
     }
 
-    public ConditionTree ParseConditional( String input, ArrayList<String> validColumns){
+    public ConditionTree ParseConditional( String input, ArrayList<String> validColumns, ArrayList<String> overlapColumns){
         String[] tokens = input.split( " " );
         Deque<ConditionTree> outputQ = new ArrayDeque<>();
         Deque<String> operatorStack = new ArrayDeque<>();
@@ -35,8 +35,14 @@ class QueryParser {
             int prece = Precedence( token );
             if( prece == -1){
                 //operand
-                if(validColumns.contains( token )){
+                if(validColumns.contains( token ) || validColumns.contains( token.split( "\\." )[token.split( "\\." ).length - 1] )){
                     //attribute
+                    if(!token.contains( "." )){
+                        if(overlapColumns.contains( token )){
+                            System.out.println("Ambiguous column name in conditional: " + token);
+                            return null;
+                        }
+                    }
                     outputQ.add( new AttributeNode( token ) );
                 } else{
                     //constant
@@ -94,14 +100,14 @@ class QueryParser {
                 }
             case 3:
                 //operator
-                if(R.getClass() != ConstantNode.class ){
-                    System.out.println("Expected ConstantNode, got: " + R.getClass()+ ". Token: " + R.getToken());
+                if(R.getClass() != ConstantNode.class && R.getClass() != AttributeNode.class){
+                    System.out.println("Expected ConstantNode or AttributeNode, got: " + R.getClass()+ ". Token: " + R.getToken());
                     return -1;
                 } else if(L.getClass() != AttributeNode.class){
                     System.out.println("Expected AttributeNode, got: " + L.getClass()+ ". Token: " + L.getToken());
                     return -1;
                 } else{
-                    outputQ.add( new OperationNode( (AttributeNode) L, current, (ConstantNode) R) );
+                    outputQ.add( new OperationNode( (AttributeNode) L, current, (ValueNode) R) );
                     return 1;
                 }
             default:
@@ -135,7 +141,7 @@ class QueryParser {
             //There is a where
             whereSplit[1].replace( "where", "" );
             //parse conditional
-            where = ParseConditional( whereSplit[1], Catalog.instance.getAttributeNames( tableName.trim() ) );
+            where = ParseConditional( whereSplit[1], Catalog.instance.getAttributeNames( tableName.trim() ), new ArrayList<>() );
             if(where == null){
                 System.out.println("Could not parse conditional statement.");
                 return null;
@@ -155,7 +161,7 @@ class QueryParser {
         String tableName = chunks[0].replace( "from", "" );
         if(chunks.length != 1){
             //Where is present so chunks[0] is table name, chunks[1] is conditional
-            where = ParseConditional(chunks[1].replace( "where", "" ), Catalog.instance.getAttributeNames(tableName.trim()) );
+            where = ParseConditional(chunks[1].replace( "where", "" ), Catalog.instance.getAttributeNames(tableName.trim()), new ArrayList<>() );
             if(where == null){
                 System.out.println("Could not parse conditional statement");
                 return null;
@@ -374,6 +380,7 @@ class QueryParser {
         int stepCounter = 0;
         ArrayList<String> colNames = null;
         ArrayList<String> tableNames = null;
+        ConditionTree where = null;
         Boolean starFlag = false;
         String conditional = "";
         String orderBy = "";
@@ -422,30 +429,91 @@ class QueryParser {
         }
         HashMap<String, ArrayList<String>> tableColumnDict = new HashMap<>();
 
+        //only for conditionals
         ArrayList<String> validColumnNames = new ArrayList<>();
 
+        //makes sure that tables are valid
         for(String t : tableNames){
             int tableID = Catalog.instance.getTableIdByName( t );
             if(tableID == -1){
                 System.out.println("Table '" + t + "' does not exist.");
                 return null;
-            } else{
-                ArrayList<String> colFromThisTable = new ArrayList<>();
+            } else {
                 ArrayList<String> col = Catalog.instance.getAttributeNames( t );
                 validColumnNames.addAll( col );
-                if(starFlag){
-                    colFromThisTable.addAll( col );
-                } else {
-                    for ( String c : colNames ) {
-                        c = c.replace( t + ".", "" );
-                        if ( col.contains( c ) ) {
-                            colFromThisTable.add( c );
-                            colCheckList.remove( t + "." + c );
+            }
+        }
+
+        ArrayList<String> overlapColumns = new ArrayList<>();
+
+        //looks for overlap in table columns
+        for(String t1 : tableNames){
+            for(String t2 : tableNames){
+                if(t1.equals( t2 )){
+                    //skip
+                } else{
+                    ArrayList<String> t1Col = Catalog.instance.getAttributeNames( t1 );
+                    ArrayList<String> t2Col = Catalog.instance.getAttributeNames( t2 );
+                    for(String col1 : t1Col){
+                        if( t2Col.contains(col1) ){
+                            overlapColumns.add( col1 );
                         }
                     }
                 }
-                tableColumnDict.put( t, colFromThisTable );
             }
+        }
+
+        //makes sure column names aren't ambiguous and exist
+        if(!starFlag) {
+            for ( String c : colNames ) {
+                if ( overlapColumns.contains( c ) ) {
+                    System.out.println( "Ambiguous column: " + c );
+                    return null;
+                }
+                if ( c.contains( "." ) ) {
+                    String[] cSplit = c.split( "\\." );
+                    if ( !Catalog.instance.getAttributeNames( cSplit[0] ).contains( cSplit[1] ) ) {
+                        System.out.println( "Table [" + cSplit[0] + "] does not have column [" + cSplit[1] + "]." );
+                        return null;
+                    } else if (!tableNames.contains( cSplit[0] )){
+                        System.out.println("Table referenced in select not included in query: " +  c);
+                        return null;
+                    }
+                } else{
+                    if(!validColumnNames.contains( c )){
+                        if(c.equals( "*" )){
+                            System.out.println("Cannot have multiple columns and * in the same query.");
+                            return null;
+                        }
+                        System.out.println("Column does not exist: " + c);
+                        return null;
+                    }
+                }
+                colCheckList.remove( c );
+            }
+        }
+
+        //Building TableColumnDictionary since every column is valid
+        for(String t : tableNames){
+            ArrayList<String> col = Catalog.instance.getAttributeNames( t );
+            ArrayList<String> colFromThisTable = new ArrayList<>();
+            if(starFlag){
+                colFromThisTable.addAll( col );
+            } else {
+                for ( String c : colNames ) {
+                    if ( c.contains( "." ) ) {
+                        String[] cSplit = c.split( "\\." );
+                        if ( cSplit[0].equals( t ) ) {
+                            colFromThisTable.add( cSplit[1] );
+                        }
+                    } else {
+                        if ( col.contains( c ) ) {
+                            colFromThisTable.add( c );
+                        }
+                    }
+                }
+            }
+            tableColumnDict.put( t, colFromThisTable );
         }
 
         if(!starFlag && colCheckList.size() > 0){
@@ -458,11 +526,13 @@ class QueryParser {
             return null;
         }
 
-        ConditionTree where = null;//ParseConditional( conditional, validColumnNames );
-        //if(where == null){
-        //    System.out.println("Could not parse conditional statement.");
-        //    return null;
-        //}
+        if(!conditional.equals( "" )){
+            where = ParseConditional( conditional, validColumnNames, overlapColumns );
+            if(where == null){
+                System.out.println("Could not parse conditional statement.");
+                return null;
+            }
+        }
 
         return new SelectQuery( tableColumnDict, where, orderBy, starFlag );
     }
