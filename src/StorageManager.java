@@ -363,14 +363,12 @@ public class StorageManager {
 
         int tableCount = tables.size();
 
-        if (numberOfTables == 1 && starFlag)
-        {
+        if (numberOfTables == 1 && starFlag) {
             finalRecordOutput = tables.get(0).getRecords();
             displayedColNames = tables.get(0).getColNames();
-        }
-        else {
+        } else {
 
-            for (int tableIndex = 0; tableIndex < tableCount-1; tableIndex++) {
+            for (int tableIndex = 0; tableIndex < tableCount - 1; tableIndex++) {
                 // tableIndex = 0 means merge tables 0 and 1
                 // tableIndex = 1 means merge that result with table 2
                 // ....
@@ -384,9 +382,8 @@ public class StorageManager {
                             finalRecordOutput.add(Record.mergeRecords(leftRecord, rightRecord));
                         }
                     }
-                }
-                else {
-                    int rightTableIndex = tableIndex+1;
+                } else {
+                    int rightTableIndex = tableIndex + 1;
 
                     ArrayList<Record> tempFinalRecordsOutput = new ArrayList<>();
 
@@ -401,16 +398,15 @@ public class StorageManager {
             }
 
             // build the columnNames arraylist for the cartesian product
-
-            for (Table table : tables) {
-                for (String colName : table.getColNames()) {
-                    tableNamesForColumns.add(table.getName());
-                    displayedColNames.add(colName);
-                }
-                typesForColumns.addAll(Catalog.instance.getTableAttributeTypesByName(table.getName()));
-            }
         }
-        return new ResultSet(finalRecordOutput, tableNamesForColumns, typesForColumns);
+        for (Table table : tables) {
+            for (String colName : table.getColNames()) {
+                tableNamesForColumns.add(table.getName());
+                displayedColNames.add(colName);
+            }
+            typesForColumns.addAll(Catalog.instance.getTableAttributeTypesByName(table.getName()));
+        }
+    return new ResultSet(finalRecordOutput, tableNamesForColumns, typesForColumns);
     }
 
     /**
