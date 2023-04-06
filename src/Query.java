@@ -226,9 +226,7 @@ class SelectQuery extends Query {
 
                 }
 
-
             }
-
 
         }
 

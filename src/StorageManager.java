@@ -365,7 +365,7 @@ public class StorageManager {
 
         if (numberOfTables == 1 && starFlag) {
             finalRecordOutput = tables.get(0).getRecords();
-            displayedColNames = tables.get(0).getColNames();
+//            displayedColNames = tables.get(0).getColNames();
         } else {
 
             for (int tableIndex = 0; tableIndex < tableCount - 1; tableIndex++) {
@@ -400,13 +400,14 @@ public class StorageManager {
             // build the columnNames arraylist for the cartesian product
         }
         for (Table table : tables) {
-            for (String colName : table.getColNames()) {
+            ArrayList<String> colNames = table.getColNames();
+            for (int i = 0; i < colNames.size(); i++) {
                 tableNamesForColumns.add(table.getName());
-                displayedColNames.add(colName);
+                displayedColNames.add(colNames.get(i));
             }
             typesForColumns.addAll(Catalog.instance.getTableAttributeTypesByName(table.getName()));
         }
-    return new ResultSet(finalRecordOutput, tableNamesForColumns, typesForColumns);
+    return new ResultSet(finalRecordOutput, displayedColNames, typesForColumns);
     }
 
     /**
