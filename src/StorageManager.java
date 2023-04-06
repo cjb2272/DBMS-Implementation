@@ -5,6 +5,8 @@ package src;
  * @author(s) Charlie Baker, Austin Cepalia, Duncan Small (barely), Tristan Hoenninger
  */
 
+import src.ConditionalTreeNodes.ConditionTree;
+
 import java.io.*;
 import java.nio.file.Paths;
 import java.util.*;
@@ -363,7 +365,7 @@ public class StorageManager {
 
         int tableCount = tables.size();
 
-        if (numberOfTables == 1 && starFlag) {
+        if (numberOfTables == 1) {
             finalRecordOutput = tables.get(0).getRecords();
 //            displayedColNames = tables.get(0).getColNames();
         } else {
@@ -407,22 +409,38 @@ public class StorageManager {
             }
             typesForColumns.addAll(Catalog.instance.getTableAttributeTypesByName(table.getName()));
         }
-    return new ResultSet(finalRecordOutput, displayedColNames, typesForColumns);
+
+        ArrayList<Record> cloneRecordOutput = new ArrayList<>();
+        for (Record record : finalRecordOutput) {
+            Record r = new Record();
+            ArrayList<Object> onew = new ArrayList<>();
+            for (Object o : record.recordContents) {
+                onew.add(o);
+            }
+            r.setRecordContents(onew);
+            cloneRecordOutput.add(r);
+        }
+
+    return new ResultSet(cloneRecordOutput, displayedColNames, typesForColumns);
     }
 
     /**
      * todo Called by Parser, or move into execute()?
      * should take in table we are working with as well as the tokens for where condition
      * @param tableID table intended to delete records from
+     * @param whereCondition ConditionTree, 'null' if no where clause exists
      */
-    public void deleteFrom(int tableID) {
+    public void deleteFrom(int tableID, ConditionTree whereCondition) {
         ArrayList<String> allRecordsRequest = new ArrayList<>();
         allRecordsRequest.add("*");
         ArrayList<Record> allRecordsFromTable = selectData(tableID, allRecordsRequest);
         for (Record curRecord : allRecordsFromTable) {
-            boolean deleteRecord = false; //call method(s) to evaluate a single tuple for meeting where condition todo
-            //call deleteRecord on record if condition was met
-            if (deleteRecord) {
+            boolean deleteRecord = true; //deleteing all Records by default
+            if (whereCondition != null) {
+                //call method(s) to evaluate a single tuple for meeting where condition todo
+                deleteRecord = false;//whereCondition.validateTree(curRecord, );
+            }
+            if (deleteRecord) { //call deleteRecord on record if condition was met
                 deleteRecord(tableID, curRecord);
             }
         }
@@ -497,14 +515,18 @@ public class StorageManager {
      * @param tableID table in question
      * @param columnName column to update
      * @param valueToSet value to update in column, "" empty string if null
+     * @param whereCondition ConditionTree, 'null' if no where clause exists
      */
-    public void updateTable(int tableID, String columnName, String valueToSet) {
+    public void updateTable(int tableID, String columnName, String valueToSet, ConditionTree whereCondition) {
         ArrayList<String> allRecordsRequest = new ArrayList<>();
         allRecordsRequest.add("*");
         ArrayList<Record> allRecordsFromTable = selectData(tableID, allRecordsRequest);
         //should an update query indicate at command line if table has no records at all. none to update?
         for (Record curRecord : allRecordsFromTable) {
-            boolean updateRecord = false; //todo meet where condition
+            boolean updateRecord = true; //default to updating ALL COLUMNS
+            if (whereCondition != null) { //if where condition exists
+                updateRecord = false; //whereCondition.validateTree(curRecord, );
+            }
             if (updateRecord) {
                 updateRecord(tableID, curRecord, columnName, valueToSet);
             }

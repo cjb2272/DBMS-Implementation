@@ -54,8 +54,8 @@ public class Record {
      * Also Called by Page's parse_bytes
      *
      * @return How many bytes this record consists of.
-     *         Size returned includes the bytes used to represent ints
-     *         telling how many chars are in a varchar or char
+     * Size returned includes the bytes used to represent ints
+     * telling how many chars are in a varchar or char
      */
     int compute_size(Boolean includeNullChars) {
         int sizeOfRecordInBytes = 0;
@@ -69,11 +69,9 @@ public class Record {
                 continue; //do nothing, null does not add to size
             else if (obj instanceof Integer) {
                 sizeOfRecordInBytes = sizeOfRecordInBytes + Integer.BYTES;
-            }
-            else if (obj instanceof Double) {
+            } else if (obj instanceof Double) {
                 sizeOfRecordInBytes = sizeOfRecordInBytes + Double.BYTES;
-            }
-            else if (obj instanceof Boolean) {
+            } else if (obj instanceof Boolean) {
                 sizeOfRecordInBytes = sizeOfRecordInBytes + Character.BYTES;
             }
             // case for char(x) and varchar(x), add 2 bytes for each char
@@ -92,11 +90,11 @@ public class Record {
      * representation of the data
      * to be used with the Page object
      *
-     * @param tableId   the table id corresponding to the record
+     * @param tableId       the table id corresponding to the record
      * @param recordInBytes the Page's ByteBuffer with the pointer at the beginning
      *                      of this record's data
      * @return a complete Record object that represents the parsed data as an
-     *         ArrayList of Objects
+     * ArrayList of Objects
      */
     //public static Record parseRecordBytes(int tableNumber, ByteBuffer nullBytes, ByteBuffer recordInBytes) {
     public static Record parseRecordBytes(int tableId, char[] nullBytes, ByteBuffer recordInBytes) {
@@ -115,15 +113,15 @@ public class Record {
             char isNull = nullBytes[counter];
             counter++;
             if (isNull == 'f') {
-            //if (isNull == (byte) 0) {
+                //if (isNull == (byte) 0) {
                 returnRecord.recordContents.add(null);
                 continue;
             }
             switch (typeInt) {
                 case 1 -> // Integer
-                    returnRecord.recordContents.add(recordInBytes.getInt()); // get next 4 BYTES
+                        returnRecord.recordContents.add(recordInBytes.getInt()); // get next 4 BYTES
                 case 2 -> // Double
-                    returnRecord.recordContents.add(recordInBytes.getDouble()); // get next 8 BYTES
+                        returnRecord.recordContents.add(recordInBytes.getDouble()); // get next 8 BYTES
                 case 3 -> { // Boolean
                     char boolChar = recordInBytes.getChar(); // A Boolean is either 't' or 'f' on disk
                     if (boolChar == 't')
@@ -179,9 +177,9 @@ public class Record {
             bytesBuffer.putChar('t');
             switch (typeInt) {
                 case 1 -> // Integer
-                    attrBytesBuffer.putInt((Integer) this.recordContents.get(i)); // get next 4 BYTES
+                        attrBytesBuffer.putInt((Integer) this.recordContents.get(i)); // get next 4 BYTES
                 case 2 -> // Double
-                    attrBytesBuffer.putDouble((Double) this.recordContents.get(i)); // get next 8 BYTES
+                        attrBytesBuffer.putDouble((Double) this.recordContents.get(i)); // get next 8 BYTES
                 case 3 -> { // Boolean
                     boolean val = (boolean) this.recordContents.get(i);
                     if (val) // A Boolean is either 't' or 'f' on disk
@@ -227,6 +225,9 @@ public class Record {
 
         return this.recordContents.equals(rec.recordContents);
     }
+
+
+
 
     public String displayRecords(int padLen){
         StringBuilder result = new StringBuilder();
