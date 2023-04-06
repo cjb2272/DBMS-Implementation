@@ -90,7 +90,7 @@ class SelectQuery extends Query {
         // ask the storage manager for this data. It will in turn ask the buffer first,
         // but that's abstracted away from this point in the code
 
-
+        /*
         // NOTE: checking for valid names of tables and attributes should be done in the parse method upstream.
 
         // Load all the tables into memory (with unneeded column names already filtered out)
@@ -106,7 +106,6 @@ class SelectQuery extends Query {
             star.add("*");
             ArrayList<Record> records = StorageManager.instance.selectData(tableNum, star);
             tables.add(new Table(tableName, columnNames, records));
-
         }
 
         // Build the final record output by performing a cross-product on all the loaded tables
@@ -170,9 +169,21 @@ class SelectQuery extends Query {
 
 
         }
+         */
+        ArrayList<String> displayedColNames = new ArrayList<>();
+        ResultSet resultSet = StorageManager.instance.generateFromResultSet(tableColumnDictionary, starFlag);
+        displayedColNames = resultSet.getColumnNames();
 
         // !!!!  do the filtering here  !!!!!
         // relevant objects: finalRecordOutput, tableNamesForColumns, typesForColumns, maybe displayedColNames?
+        ArrayList<Record> finalRecordOutput = new ArrayList<>();
+        if (where != null) {
+            for (Record record: resultSet.getRecords()) {
+                if (where.validateTree(record, resultSet.getColumnTypes(), resultSet.getColumnNames())) {
+                    finalRecordOutput.add(record);
+                }
+            }
+        }
 
 
 
@@ -182,7 +193,7 @@ class SelectQuery extends Query {
         ArrayList<Integer> colIdxsToRemove = new ArrayList<>();
         ArrayList<String> processedNames = new ArrayList<>();
 
-        for (int colIdx = 0; colIdx < tableNamesForColumns.size(); colIdx++) {
+        for (int colIdx = 0; colIdx < resultSet.getColumnNames().size(); colIdx++) {
 
 
             // are there any other column names that match this one?
@@ -209,7 +220,7 @@ class SelectQuery extends Query {
                     }
 
                     // if the tableName for the current innerColumnName is not in the matchedTables list, this is a column to drop
-                    if (!matchedTables.contains(tableNamesForColumns.get(innerColIdx))) {
+                    if (!matchedTables.contains(resultSet.getColumnNames().get(innerColIdx))) {
                         colIdxsToRemove.add(innerColIdx);
                     }
 
@@ -224,9 +235,9 @@ class SelectQuery extends Query {
         // remove unwanted duplicate data
 
         for (int idx : colIdxsToRemove) {
-            tableNamesForColumns.remove(idx);
+            resultSet.getColumnNames().remove(idx);
             displayedColNames.remove(idx);
-            typesForColumns.remove(idx);
+            resultSet.getColumnTypes().remove(idx);
 
             for (Record record : finalRecordOutput) {
                 record.getRecordContents().remove(idx);

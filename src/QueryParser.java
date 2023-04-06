@@ -458,11 +458,11 @@ class QueryParser {
             return null;
         }
 
-        ConditionTree where = ParseConditional( conditional, validColumnNames );
-        if(where == null){
-            System.out.println("Could not parse conditional statement.");
-            return null;
-        }
+        ConditionTree where = null;//ParseConditional( conditional, validColumnNames );
+        //if(where == null){
+        //    System.out.println("Could not parse conditional statement.");
+        //    return null;
+        //}
 
         return new SelectQuery( tableColumnDict, where, orderBy, starFlag );
     }

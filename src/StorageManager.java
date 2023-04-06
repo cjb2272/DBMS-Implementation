@@ -329,6 +329,90 @@ public class StorageManager {
         return new int[]{1};
     }
 
+
+    public ResultSet generateFromResultSet(HashMap<String, ArrayList<String>> tableColumnDict, Boolean starFlag) {
+        // ask the storage manager for this data. It will in turn ask the buffer first,
+        // but that's abstracted away from this point in the code
+
+
+        // NOTE: checking for valid names of tables and attributes should be done in the parse method upstream.
+
+        // Load all the tables into memory (with unneeded column names already filtered out)
+        ArrayList<Table> tables = new ArrayList<>();
+
+        ArrayList<String> displayedColNames = new ArrayList<>();
+
+        int numberOfTables = tableColumnDict.size();
+
+        for (String tableName : tableColumnDict.keySet()) {
+
+            int tableNum = Catalog.instance.getTableIdByName(tableName); // guaranteed to exist
+            ArrayList<String> columnNames = Catalog.instance.getAttributeNames(tableName);
+            ArrayList<String> star = new ArrayList<>();
+            star.add("*");
+            ArrayList<Record> records = StorageManager.instance.selectData(tableNum, star);
+            tables.add(new Table(tableName, columnNames, records));
+        }
+
+        // Build the final record output by performing a cross-product on all the loaded tables
+        ArrayList<Record> finalRecordOutput = new ArrayList<>();
+
+        ArrayList<String> tableNamesForColumns = new ArrayList<>();
+
+        ArrayList<Integer> typesForColumns = new ArrayList<>();
+
+        int tableCount = tables.size();
+
+        if (numberOfTables == 1 && starFlag)
+        {
+            finalRecordOutput = tables.get(0).getRecords();
+            displayedColNames = tables.get(0).getColNames();
+        }
+        else {
+
+            for (int tableIndex = 0; tableIndex < tableCount-1; tableIndex++) {
+                // tableIndex = 0 means merge tables 0 and 1
+                // tableIndex = 1 means merge that result with table 2
+                // ....
+
+                if (tableIndex == 0) {
+                    int leftTableIndex = 0;
+                    int rightTableIndex = 1;
+
+                    for (Record leftRecord : tables.get(leftTableIndex).getRecords()) {
+                        for (Record rightRecord : tables.get(rightTableIndex).getRecords()) {
+                            finalRecordOutput.add(Record.mergeRecords(leftRecord, rightRecord));
+                        }
+                    }
+                }
+                else {
+                    int rightTableIndex = tableIndex+1;
+
+                    ArrayList<Record> tempFinalRecordsOutput = new ArrayList<>();
+
+                    for (Record leftRecord : finalRecordOutput) {
+                        for (Record rightRecord : tables.get(rightTableIndex).getRecords()) {
+                            tempFinalRecordsOutput.add(Record.mergeRecords(leftRecord, rightRecord));
+                        }
+                    }
+
+                    finalRecordOutput = tempFinalRecordsOutput;
+                }
+            }
+
+            // build the columnNames arraylist for the cartesian product
+
+            for (Table table : tables) {
+                for (String colName : table.getColNames()) {
+                    tableNamesForColumns.add(table.getName());
+                    displayedColNames.add(colName);
+                }
+                typesForColumns.addAll(Catalog.instance.getTableAttributeTypesByName(table.getName()));
+            }
+        }
+        return new ResultSet(finalRecordOutput, tableNamesForColumns, typesForColumns);
+    }
+
     /**
      * todo Called by Parser, or move into execute()?
      * should take in table we are working with as well as the tokens for where condition
