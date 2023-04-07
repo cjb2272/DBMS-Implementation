@@ -11,7 +11,7 @@ import src.*;
  *
  * @author Charlie Baker, Duncan Small, Kevin Martin
  */
-public class Record {
+public class Record implements Cloneable{
 
     /**
      * important to note that attribute values for a record must be stored
@@ -33,14 +33,24 @@ public class Record {
         this.pkIndex = pkIndex;
     }
 
-    public void setTableNumber(int tableNum) { this.tableNumber = tableNum; }
-    public int getTableNumber() { return this.tableNumber; }
-
     /**
      * Record Constructor
      */
     public Record() {
         this.recordContents = new ArrayList<>();
+    }
+
+    /**
+     * for making copy of a Record Object, used in pair with clone() method below
+     */
+    public Record(Record record) {
+        this.tableNumber = record.tableNumber;
+        this.pkIndex = record.pkIndex;
+        this.recordContents = record.recordContents;
+    }
+
+    public Record clone() throws CloneNotSupportedException {
+        return new Record( this );
     }
 
     public void setRecordContents(ArrayList<Object> recordContents) {

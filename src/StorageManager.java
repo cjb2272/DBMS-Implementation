@@ -466,13 +466,16 @@ public class StorageManager {
      * @return receive return from insert and pass that along? not sure what return from insert does todo
      */
     public int[] updateRecord(int tableID, Record recordToUpdate, String columnName, List<Object> data) {
-        Record originalCopy = new Record();
-        originalCopy.setPkIndex(recordToUpdate.getPkIndex());
-        originalCopy.setRecordContents(recordToUpdate.getRecordContents());
-        originalCopy.setTableNumber(recordToUpdate.getTableNumber());
-        Record copyOfRecordToUpdate = recordToUpdate; //make a copy of the record
-        ArrayList<Object> copyOfRecordContents = copyOfRecordToUpdate.getRecordContents();
+        Record copyOfRecordToUpdate = null; //make a copy of the record
+        try {
+            copyOfRecordToUpdate = (Record) recordToUpdate.clone();
+
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+        ArrayList<Object> copyOfRecordContents = new ArrayList<>(copyOfRecordToUpdate.getRecordContents());
         deleteRecord(tableID, recordToUpdate);
+
         //find index of column to update
         int indexOfColumnToUpdate = 0;
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
@@ -483,15 +486,17 @@ public class StorageManager {
             }
             indexOfColumnToUpdate++;
         }
+
         Object valueToSet = data.get(1); //value to update in column
         //make change updating our copy of original record
         copyOfRecordContents.set(indexOfColumnToUpdate, valueToSet);
         copyOfRecordToUpdate.setRecordContents(copyOfRecordContents); //set content change
         int[] insertReturn = insertRecord(tableID, copyOfRecordToUpdate); //update
         if (insertReturn.length > 1) { //our record failed to insert
-            insertRecord(tableID, originalCopy); //add original, unchanged record back in
+            //recordToUpdate.setRecordContents(originalRecordContents);
+            insertRecord(tableID, recordToUpdate); //add original, unchanged record back in
         }
-        return insertReturn; //todo?
+        return insertReturn; // t o d o ?
     }
 
     /**
