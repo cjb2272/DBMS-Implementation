@@ -243,7 +243,13 @@ class QueryParser {
             return null;
         }
 
-        String tableName = tokens[2];
+        String tableName = tokens[2].trim();
+
+        int tableID = Catalog.instance.getTableIdByName(tableName);
+        if(tableID == -1){
+            System.out.println("Table " + tableName + " does not exist.");
+            return null;
+        }
 
         if (tokens.length == 5){
             //drop
@@ -251,6 +257,13 @@ class QueryParser {
                 System.out.println("Expected drop command, got: " + tokens[3]);
                 System.out.println( "Use the format 'alter table <name> drop <a_name>;' or " +
                         "'alter table <name> add <a_name> <a_type> [optional: default <value>];'" );
+                return null;
+            }
+
+            String colName = tokens[4].trim();
+
+            if(!Catalog.instance.getAttributeNames( tableName ).contains( colName )){
+                System.out.println("Column " + colName + " does not exist in table " + tableName + ".");
                 return null;
             }
 
@@ -506,6 +519,56 @@ class QueryParser {
             }
         }
 
+        boolean orderByTable = false;
+
+        if(orderBy.contains( "." )){
+            orderByTable = true;
+            String[] orderBySplit = orderBy.split( "\\." );
+            if(Catalog.instance.getTableIdByName( orderBySplit[0] ) == -1){
+                System.out.println("Table " + orderBySplit[0] + " used in orderBy does not exist.");
+                return null;
+            } else{
+                if(!Catalog.instance.getAttributeNames( orderBySplit[0] ).contains( orderBySplit[1] )){
+                    System.out.println("Column " + orderBySplit[1] + " does not exist in table " + orderBySplit[0] + ".");
+                    return null;
+                }
+            }
+        } else{
+            if(overlapColumns.contains( orderBy )){
+                System.out.println("OrderBy column " + orderBy + " is ambiguous.");
+                return null;
+            } else{
+                if(!validColumnNames.contains( orderBy )){
+                    System.out.println("Column " + orderBy + " could not be found.");
+                    return null;
+                }
+            }
+        }
+
+        if(!starFlag && !colNames.contains(orderBy)){
+            System.out.println("Must include attribute in select to use OrderBy.");
+            return null;
+        }
+
+        ArrayList<String> orderByInfo = new ArrayList<>();
+        if(orderByTable){
+            String[] orderBySplit = orderBy.split( "\\." );
+            orderByInfo.add( orderBySplit[0] );
+            orderByInfo.add( orderBySplit[1] );
+        } else{
+            for(String t : tableNames){
+                if(Catalog.instance.getAttributeNames( t ).contains( orderBy )){
+                    orderByInfo.add( t );
+                    orderByInfo.add( orderBy );
+                    break;
+                }
+            }
+            if(orderByInfo.size() == 0){
+                System.out.println("Error trying to find which table " + orderBy + " belongs to.");
+                return null;
+            }
+        }
+
         //Building TableColumnDictionary since every column is valid
         for(String t : tableNames){
             ArrayList<String> col = Catalog.instance.getAttributeNames( t );
@@ -547,7 +610,7 @@ class QueryParser {
             }
         }
 
-        return new SelectQuery( tableColumnDict, where, orderBy, starFlag );
+        return new SelectQuery( tableColumnDict, where, orderByInfo, starFlag );
     }
 
     // INSERT INTO <table> values <tuple>;

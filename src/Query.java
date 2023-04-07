@@ -7,7 +7,6 @@ package src;
 import src.ConditionalTreeNodes.ConditionTree;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.*;
 
 public abstract class Query {
@@ -75,12 +74,12 @@ class DeleteQuery extends Query{
 class SelectQuery extends Query {
     LinkedHashMap<String, ArrayList<String>> tableColumnDictionary;
     ConditionTree where;
-    String orderBy;
+    ArrayList<String> orderBy;
     Boolean starFlag;
     int numberOfColumns;
     int numberOfTables;
 
-    public SelectQuery( LinkedHashMap<String, ArrayList<String>> tableColumnDict, ConditionTree where, String orderBy, Boolean starFlag ) {
+    public SelectQuery( LinkedHashMap<String, ArrayList<String>> tableColumnDict, ConditionTree where, ArrayList<String> orderBy, Boolean starFlag ) {
         this.tableColumnDictionary = tableColumnDict;
         this.where = where;
         this.orderBy = orderBy;
