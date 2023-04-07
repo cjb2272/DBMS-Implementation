@@ -43,7 +43,13 @@ class UpdateQuery extends Query{
     public void execute() {
         ResultSet resultSet = StorageManager.instance.generateFromResultSet(tableColumnDictionary, starFlag);
         int tableId = Catalog.instance.getTableIdByName(this.table);
-        String valueToSet = null; //value to update in column, "" EMPTY STRING IF NULL
+        int dataTypeCode = (int) this.data.get(0);
+        String valueToSet; //value to update in column
+        if (dataTypeCode == 6) { //could be redundant if "" is present as value anyway
+            valueToSet = ""; //dataTypeCode 6 indicates null, in which case we will pass the empty string
+        } else {
+            valueToSet = (String) this.data.get(1); //could cast to proper type based on code
+        }
         StorageManager.instance.updateTable(resultSet, tableId, this.colName, valueToSet, where);
     }
 

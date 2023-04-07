@@ -296,7 +296,7 @@ public class StorageManager {
         for (int index = 0; index < numPagesInTable; index++) { //for each page in table
             if (recordWasDeleted) { break; }
             try {
-                int pageNumber = pageOrder.get(index); //todo errored out here,
+                int pageNumber = pageOrder.get(index);
                 Page pageReference = buffer.GetPage(tableID, pageNumber);
                 int numRecordsInPage = pageReference.getRecordCount();
                 if (numRecordsInPage == 0) {
@@ -322,7 +322,7 @@ public class StorageManager {
                         break;
                     }
                     //if curRecord's pk > recordToDelete's pk
-                    if (comparison < 0) { // - CHECK THIS conditional for correctness todo!
+                    if (comparison < 0) {
                         //record to delete does not exist, stop our search
                         return new int[]{1}; //todo how does this return come into play
                     }
@@ -438,7 +438,7 @@ public class StorageManager {
         //ArrayList<String> allRecordsRequest = new ArrayList<>();
         //allRecordsRequest.add("*");
         //ArrayList<Record> allRecordsFromTable = selectData(tableID, allRecordsRequest);
-        ArrayList<Record> allRecordsFromTable = resultSet.getRecords(); //todo ensure this is same as selectData *
+        ArrayList<Record> allRecordsFromTable = resultSet.getRecords();
         for (Record curRecord : allRecordsFromTable) {
             boolean deleteRecord = true; //deleteing all Records by default
             if (whereCondition != null) {
@@ -459,6 +459,9 @@ public class StorageManager {
      * if a page split is needed- additionally the insertRecord method also handled
      * sorting the updated record to its proper place among the records in the case
      * where the primarykey has been changed
+     *
+     * CAN REDUCE REDUNDANCY GREATLY BY USING ENTIRE 'List<Object> Data' in execute method
+     * which informs us of type of string
      *
      * @param tableID the table record in question belongs to
      * @param recordToUpdate the record to update
