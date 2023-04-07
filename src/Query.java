@@ -23,6 +23,7 @@ class UpdateQuery extends Query{
 
     public String table;
     public String colName;
+    public String valueToSet;
     public List<Object> data;
     public ConditionTree where;
 
@@ -30,7 +31,7 @@ class UpdateQuery extends Query{
 
     Boolean starFlag;
 
-    public UpdateQuery( String table, String colName, LinkedHashMap<String, ArrayList<String>> tableColumnDict, List<Object> data, ConditionTree where ) {
+    public UpdateQuery( String table, String colName, LinkedHashMap<String, ArrayList<String>> tableColumnDict, List<Object> data, ConditionTree where) {
         this.table = table;
         this.colName = colName;
         this.data = data;
@@ -43,14 +44,7 @@ class UpdateQuery extends Query{
     public void execute() {
         ResultSet resultSet = StorageManager.instance.generateFromResultSet(tableColumnDictionary, starFlag);
         int tableId = Catalog.instance.getTableIdByName(this.table);
-        int dataTypeCode = (int) this.data.get(0);
-        String valueToSet; //value to update in column
-        if (dataTypeCode == 6) { //could be redundant if "" is present as value anyway
-            valueToSet = ""; //dataTypeCode 6 indicates null, in which case we will pass the empty string
-        } else {
-            valueToSet = (String) this.data.get(1); //could cast to proper type based on code
-        }
-        StorageManager.instance.updateTable(resultSet, tableId, this.colName, valueToSet, where);
+        StorageManager.instance.updateTable(resultSet, tableId, this.colName, this.data, where);
     }
 
 }

@@ -460,16 +460,13 @@ public class StorageManager {
      * sorting the updated record to its proper place among the records in the case
      * where the primarykey has been changed
      *
-     * CAN REDUCE REDUNDANCY GREATLY BY USING ENTIRE 'List<Object> Data' in execute method
-     * which informs us of type of string
-     *
      * @param tableID the table record in question belongs to
      * @param recordToUpdate the record to update
      * @return receive return from insert and pass that along? not sure what return from insert does todo
      */
-    public int[] updateRecord(int tableID, Record recordToUpdate, String columnName, String valueToSet) {
+    public int[] updateRecord(int tableID, Record recordToUpdate, String columnName, List<Object> data) {
         //todo if we are changing primary key value, need to determine where we
-        // will ensure that the new primarykey value doesn't already exist
+        // will ensure that the new primary key value doesn't already exist
         Record copyOfRecordToUpdate = recordToUpdate; //make a copy of the record
         ArrayList<Object> copyOfRecordContents = copyOfRecordToUpdate.getRecordContents();
         deleteRecord(tableID, recordToUpdate);
@@ -483,31 +480,10 @@ public class StorageManager {
             }
             indexOfColumnToUpdate++;
         }
-        //make changes updating our copy of original record
-        if (Objects.equals(valueToSet, "")) {
-            copyOfRecordContents.set(indexOfColumnToUpdate, null);
-        } else {
-            //determining type of column we are setting value for
-            int typeInt = tableColumns.get(indexOfColumnToUpdate).getType();
-            switch (typeInt) {
-                case 1 -> {
-                    Integer intValue = Integer.valueOf(valueToSet);
-                    copyOfRecordContents.set(indexOfColumnToUpdate, intValue);
-                }
-                case 2 -> {
-                    Double doubleValue = Double.valueOf(valueToSet);
-                    copyOfRecordContents.set(indexOfColumnToUpdate, doubleValue);
-                }
-                case 3 -> {
-                    Boolean boolValue = Boolean.valueOf(valueToSet);
-                    copyOfRecordContents.set(indexOfColumnToUpdate, boolValue);
-                }
-                case 4, 5 -> {
-                    String charValue = valueToSet.toString();
-                    copyOfRecordContents.set(indexOfColumnToUpdate, charValue);
-                }
-            }
-        }
+        //int dataTypeCode = (int) data.get(0);
+        Object valueToSet = data.get(1); //value to update in column
+        //make change updating our copy of original record
+        copyOfRecordContents.set(indexOfColumnToUpdate, valueToSet);
         copyOfRecordToUpdate.setRecordContents(copyOfRecordContents); //set content change
         return insertRecord(tableID, copyOfRecordToUpdate);
     }
@@ -522,10 +498,10 @@ public class StorageManager {
      * @param resultSet contains ALL Records for table in question, ...
      * @param tableID table in question
      * @param columnName column to update
-     * @param valueToSet value to update in column, "" empty string if null
+     * @param data       includes value to update in column, "" empty string if null
      * @param whereCondition ConditionTree, 'null' if no where clause exists
      */
-    public void updateTable(ResultSet resultSet, int tableID, String columnName, String valueToSet,
+    public void updateTable(ResultSet resultSet, int tableID, String columnName, List<Object> data,
                             ConditionTree whereCondition) {
         //ArrayList<String> allRecordsRequest = new ArrayList<>();
         //allRecordsRequest.add("*");
@@ -538,7 +514,7 @@ public class StorageManager {
                 updateRecord = whereCondition.validateTree(curRecord, resultSet.getColumnTypes(), resultSet.getColumnNames());
             }
             if (updateRecord) {
-                updateRecord(tableID, curRecord, columnName, valueToSet);
+                updateRecord(tableID, curRecord, columnName, data);
             }
         }
     }
