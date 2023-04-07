@@ -109,12 +109,9 @@ class SelectQuery extends Query {
         // ask the storage manager for this data. It will in turn ask the buffer first,
         // but that's abstracted away from this point in the code
 
-        /*
         // NOTE: checking for valid names of tables and attributes should be done in the parse method upstream.
 
 
-        }
-         */
         ResultSet resultSet = StorageManager.instance.generateFromResultSet(tableColumnDictionary, starFlag);
 
         ArrayList<String> displayedColNames = new ArrayList<>(resultSet.getColumnNames());
