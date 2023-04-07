@@ -221,13 +221,13 @@ class SelectQuery extends Query {
 
         }
 
-        for (int idx : projectionRemovals) {
-            resultSet.getColumnNames().remove(idx);
-            resultSet.getColumnTypes().remove(idx);
-            displayedColNames.remove(idx);
+        for (int idx = projectionRemovals.size() - 1; idx > -1; idx--){
+            resultSet.getColumnNames().remove( (int) projectionRemovals.get( idx ) );
+            resultSet.getColumnTypes().remove( (int) projectionRemovals.get( idx ) );
+            displayedColNames.remove( (int) projectionRemovals.get( idx ) );
 
             for (Record record : finalRecordOutput) {
-                record.getRecordContents().remove(idx);
+                record.getRecordContents().remove( (int) projectionRemovals.get( idx ) );
             }
         }
 
