@@ -7,6 +7,7 @@ package src;
 import src.ConditionalTreeNodes.ConditionTree;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.*;
 
 public abstract class Query {
@@ -226,8 +227,8 @@ class SelectQuery extends Query {
 
                 String innerColName = resultSet.getColumnNames().get(innerColIdx);
                 if (currentColName.equals(innerColName)) {
-                    displayedColNames.set(colIdx, resultSet.getTableNamesForColumns().get(colIdx) + "." + resultSet.getColumnNames().get(colIdx));
-                    displayedColNames.set(innerColIdx, resultSet.getTableNamesForColumns().get(innerColIdx) + "." + resultSet.getColumnNames().get(innerColIdx));
+//                    displayedColNames.set(colIdx, resultSet.getTableNamesForColumns().get(colIdx) + "." + resultSet.getColumnNames().get(colIdx));
+//                    displayedColNames.set(innerColIdx, resultSet.getTableNamesForColumns().get(innerColIdx) + "." + resultSet.getColumnNames().get(innerColIdx));
 
                     // duplicate found, determine which one(s) to keep via the tableColumnDictionary
                     ArrayList<String> matchedTables = new ArrayList<>();
@@ -239,7 +240,22 @@ class SelectQuery extends Query {
 
                     // if the tableName for the current innerColumnName is not in the matchedTables list, this is a column to drop
                     if (!matchedTables.contains(resultSet.getTableNamesForColumns().get(innerColIdx))) {
+
                         colIdxsToRemove.add(innerColIdx);
+
+
+                    }
+                    else if (colIdx == 0) {
+
+
+                        // special case for the first outer-iteration
+                        // we need to check both tables to see which one is not requested
+
+                        String tableName = resultSet.getTableNamesForColumns().get(0);
+                        if (tableColumnDictionary.containsKey(tableName) && !tableColumnDictionary.get(tableName).contains(currentColName)) {
+                            colIdxsToRemove.add(colIdx);
+
+                        }
                     }
 
                 }
@@ -294,11 +310,37 @@ class SelectQuery extends Query {
         }
 
 
+        // final renaming filter (has to be done here after the final projection filter)
+
+        processedNames.clear();
+
+        for (int colIdx = 0; colIdx < displayedColNames.size(); colIdx++) {
+            String currentColName = displayedColNames.get(colIdx);
+
+            if (processedNames.contains(currentColName)) {
+                continue;
+            }
+
+            processedNames.add(currentColName);
+
+
+            for (int innerColIdx = colIdx+1; innerColIdx < displayedColNames.size(); innerColIdx++) {
+
+                String innerColName = displayedColNames.get(innerColIdx);
+                if (currentColName.equals(innerColName)) {
+
+                    displayedColNames.set(colIdx, resultSet.getTableNamesForColumns().get(colIdx) + "." + resultSet.getColumnNames().get(colIdx));
+                    displayedColNames.set(innerColIdx, resultSet.getTableNamesForColumns().get(innerColIdx) + "." + resultSet.getColumnNames().get(innerColIdx));
+                }
+            }
+        }
 
 
 
 
-        // everything after this is printing logic
+
+
+            // everything after this is printing logic
         int max = 6;
 
         for(String t: this.getTableNames()){
