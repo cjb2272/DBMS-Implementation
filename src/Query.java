@@ -236,7 +236,7 @@ class SelectQuery extends Query {
                     }
 
                     // if the tableName for the current innerColumnName is not in the matchedTables list, this is a column to drop
-                    if (!matchedTables.contains(resultSet.getColumnNames().get(innerColIdx))) {
+                    if (!matchedTables.contains(resultSet.getTableNamesForColumns().get(innerColIdx))) {
                         colIdxsToRemove.add(innerColIdx);
                     }
 
@@ -271,6 +271,7 @@ class SelectQuery extends Query {
             for (Map.Entry<String, ArrayList<String>> entry : tableColumnDictionary.entrySet()) {
                 if (entry.getValue().contains(currentColName)) {
                     found = true;
+                    break;
                 }
             }
 

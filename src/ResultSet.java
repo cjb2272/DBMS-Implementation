@@ -8,11 +8,14 @@ public class ResultSet {
     private ArrayList<String> columnNames;
     private ArrayList<Integer> columnTypes;
 
+    private ArrayList<String> tableNamesForColumns;
+
     public ResultSet(ArrayList<Record> records, ArrayList<String> recordColumnNames,
-                     ArrayList<Integer> recordColumnTypes) {
+                     ArrayList<Integer> recordColumnTypes, ArrayList<String> tableNamesForColumns) {
         this.records = records;
         this.columnNames = recordColumnNames;
         this.columnTypes = recordColumnTypes;
+        this.tableNamesForColumns = tableNamesForColumns;
     }
 
     public ArrayList<String> getColumnNames() {
@@ -26,4 +29,6 @@ public class ResultSet {
     public ArrayList<Integer> getColumnTypes() {
         return columnTypes;
     }
+
+    public ArrayList<String> getTableNamesForColumns() { return tableNamesForColumns; }
 }

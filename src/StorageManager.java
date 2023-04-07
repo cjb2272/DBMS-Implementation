@@ -421,7 +421,7 @@ public class StorageManager {
             cloneRecordOutput.add(r);
         }
 
-    return new ResultSet(cloneRecordOutput, displayedColNames, typesForColumns);
+    return new ResultSet(cloneRecordOutput, displayedColNames, typesForColumns, tableNamesForColumns);
     }
 
     /**
