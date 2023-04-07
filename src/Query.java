@@ -29,13 +29,13 @@ class UpdateQuery extends Query{
 
     Boolean starFlag;
 
-    public UpdateQuery( String table, String colName, List<Object> data, ConditionTree where ) {
+    public UpdateQuery( String table, String colName, HashMap<String, ArrayList<String>> tableColumnDict, List<Object> data, ConditionTree where ) {
         this.table = table;
         this.colName = colName;
         this.data = data;
         this.where = where; //SHOULD BE 'null' if no where clause exists
-        //this.tableColumnDictionary = tableColumnDict;
-        //this.starFlag = starFlag;
+        this.tableColumnDictionary = tableColumnDict;
+        this.starFlag = true;
     }
 
     @Override
@@ -55,11 +55,11 @@ class DeleteQuery extends Query{
     HashMap<String, ArrayList<String>> tableColumnDictionary;
     Boolean starFlag;
 
-    public DeleteQuery( String tableName, ConditionTree where ){
+    public DeleteQuery( String tableName, ConditionTree where, HashMap<String, ArrayList<String>> tableColumnDict ){
         this.table = tableName;
         this.where = where; //SHOULD BE 'null' if no where clause exists
-        //this.tableColumnDictionary = tableColumnDict;
-        //this.starFlag = starFlag;
+        this.tableColumnDictionary = tableColumnDict;
+        this.starFlag = true;
     }
 
     @Override
