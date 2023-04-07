@@ -286,14 +286,13 @@ class SelectQuery extends Query {
         for (int idx : projectionRemovals) {
             resultSet.getColumnNames().remove(idx);
             resultSet.getColumnTypes().remove(idx);
+            displayedColNames.remove(idx);
 
             for (Record record : finalRecordOutput) {
                 record.getRecordContents().remove(idx);
             }
         }
 
-
-        // any remaining duplicate column names need to have the tablename prepended to them
 
 
 
