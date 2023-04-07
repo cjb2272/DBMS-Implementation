@@ -155,7 +155,7 @@ class QueryParser {
                 return null;
             }
         }
-        HashMap<String, ArrayList<String>> tableColumnDict = new HashMap<>();
+        LinkedHashMap<String, ArrayList<String>> tableColumnDict = new LinkedHashMap<>();
         tableColumnDict.put( tableName, new ArrayList<>(Arrays.asList( colName )) );
         return new UpdateQuery(tableName, colName, tableColumnDict, data, where);
     }
@@ -178,7 +178,7 @@ class QueryParser {
             }
         }
         ArrayList<String> colNames = Catalog.instance.getAttributeNames(tableName);
-        HashMap<String, ArrayList<String>> tableColumnDict = new HashMap<>();
+        LinkedHashMap<String, ArrayList<String>> tableColumnDict = new LinkedHashMap<>();
         tableColumnDict.put( tableName, colNames );
         return new DeleteQuery(tableName, where, tableColumnDict);
     }
@@ -440,7 +440,7 @@ class QueryParser {
         if(!starFlag) {
             colCheckList = new ArrayList<>( colNames ); //make a copy to ensure each col exists
         }
-        HashMap<String, ArrayList<String>> tableColumnDict = new HashMap<>();
+        LinkedHashMap<String, ArrayList<String>> tableColumnDict = new LinkedHashMap<>();
 
         //only for conditionals
         ArrayList<String> validColumnNames = new ArrayList<>();

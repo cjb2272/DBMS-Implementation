@@ -332,7 +332,7 @@ public class StorageManager {
     }
 
 
-    public ResultSet generateFromResultSet(HashMap<String, ArrayList<String>> tableColumnDict, Boolean starFlag) {
+    public ResultSet generateFromResultSet(LinkedHashMap<String, ArrayList<String>> tableColumnDict, Boolean starFlag) {
         // ask the storage manager for this data. It will in turn ask the buffer first,
         // but that's abstracted away from this point in the code
 

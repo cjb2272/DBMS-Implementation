@@ -26,11 +26,11 @@ class UpdateQuery extends Query{
     public List<Object> data;
     public ConditionTree where;
 
-    HashMap<String, ArrayList<String>> tableColumnDictionary;
+    LinkedHashMap<String, ArrayList<String>> tableColumnDictionary;
 
     Boolean starFlag;
 
-    public UpdateQuery( String table, String colName, HashMap<String, ArrayList<String>> tableColumnDict, List<Object> data, ConditionTree where ) {
+    public UpdateQuery( String table, String colName, LinkedHashMap<String, ArrayList<String>> tableColumnDict, List<Object> data, ConditionTree where ) {
         this.table = table;
         this.colName = colName;
         this.data = data;
@@ -53,10 +53,10 @@ class DeleteQuery extends Query{
     public String table;
     public ConditionTree where;
 
-    HashMap<String, ArrayList<String>> tableColumnDictionary;
+    LinkedHashMap<String, ArrayList<String>> tableColumnDictionary;
     Boolean starFlag;
 
-    public DeleteQuery( String tableName, ConditionTree where, HashMap<String, ArrayList<String>> tableColumnDict ){
+    public DeleteQuery( String tableName, ConditionTree where, LinkedHashMap<String, ArrayList<String>> tableColumnDict ){
         this.table = tableName;
         this.where = where; //SHOULD BE 'null' if no where clause exists
         this.tableColumnDictionary = tableColumnDict;
@@ -73,14 +73,14 @@ class DeleteQuery extends Query{
 }
 
 class SelectQuery extends Query {
-    HashMap<String, ArrayList<String>> tableColumnDictionary;
+    LinkedHashMap<String, ArrayList<String>> tableColumnDictionary;
     ConditionTree where;
     String orderBy;
     Boolean starFlag;
     int numberOfColumns;
     int numberOfTables;
 
-    public SelectQuery( HashMap<String, ArrayList<String>> tableColumnDict, ConditionTree where, String orderBy, Boolean starFlag ) {
+    public SelectQuery( LinkedHashMap<String, ArrayList<String>> tableColumnDict, ConditionTree where, String orderBy, Boolean starFlag ) {
         this.tableColumnDictionary = tableColumnDict;
         this.where = where;
         this.orderBy = orderBy;
