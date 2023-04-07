@@ -25,16 +25,25 @@ class UpdateQuery extends Query{
     public List<Object> data;
     public ConditionTree where;
 
+    HashMap<String, ArrayList<String>> tableColumnDictionary;
+
+    Boolean starFlag;
+
     public UpdateQuery( String table, String colName, List<Object> data, ConditionTree where ) {
         this.table = table;
         this.colName = colName;
         this.data = data;
-        this.where = where;
+        this.where = where; //SHOULD BE 'null' if no where clause exists
+        //this.tableColumnDictionary = tableColumnDict;
     }
 
     @Override
     public void execute() {
-
+        ResultSet resultSet = StorageManager.instance.generateFromResultSet(tableColumnDictionary, starFlag);
+        int tableId = Catalog.instance.getTableIdByName(this.table);
+        String columnName = null; //column being updated
+        String valueToSet = null; //value to update in column, "" EMPTY STRING IF NULL
+        StorageManager.instance.updateTable(resultSet, tableId, columnName, valueToSet, where);
     }
 
 }
@@ -43,14 +52,20 @@ class DeleteQuery extends Query{
     public String table;
     public ConditionTree where;
 
+    HashMap<String, ArrayList<String>> tableColumnDictionary;
+    Boolean starFlag;
+
     public DeleteQuery( String tableName, ConditionTree where ){
         this.table = tableName;
-        this.where = where;
+        this.where = where; //SHOULD BE 'null' if no where clause exists
+        //this.tableColumnDictionary = tableColumnDict;
     }
 
     @Override
     public void execute() {
-
+        ResultSet resultSet = StorageManager.instance.generateFromResultSet(tableColumnDictionary, starFlag);
+        int tableId = Catalog.instance.getTableIdByName(this.table);
+        StorageManager.instance.deleteFrom(resultSet, tableId, where);
     }
 
 }
