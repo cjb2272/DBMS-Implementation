@@ -247,7 +247,7 @@ class QueryParser {
 
         int tableID = Catalog.instance.getTableIdByName(tableName);
         if(tableID == -1){
-            System.out.println("Table " + tableName + " does not exist.");
+            System.out.println("Table '" + tableName + "' does not exist.");
             return null;
         }
 
@@ -263,7 +263,7 @@ class QueryParser {
             String colName = tokens[4].trim();
 
             if(!Catalog.instance.getAttributeNames( tableName ).contains( colName )){
-                System.out.println("Column " + colName + " does not exist in table " + tableName + ".");
+                System.out.println("Column '" + colName + "' does not exist in table '" + tableName + "'.");
                 return null;
             }
 
@@ -526,21 +526,21 @@ class QueryParser {
                 orderByTable = true;
                 String[] orderBySplit = orderBy.split( "\\." );
                 if ( Catalog.instance.getTableIdByName( orderBySplit[0] ) == -1 ) {
-                    System.out.println( "Table " + orderBySplit[0] + " used in orderBy does not exist." );
+                    System.out.println( "Table '" + orderBySplit[0] + "' used in orderBy does not exist." );
                     return null;
                 } else {
                     if ( !Catalog.instance.getAttributeNames( orderBySplit[0] ).contains( orderBySplit[1] ) ) {
-                        System.out.println( "Column " + orderBySplit[1] + " does not exist in table " + orderBySplit[0] + "." );
+                        System.out.println( "Column '" + orderBySplit[1] + "' does not exist in table '" + orderBySplit[0] + "'." );
                         return null;
                     }
                 }
             } else {
                 if ( overlapColumns.contains( orderBy ) ) {
-                    System.out.println( "OrderBy column " + orderBy + " is ambiguous." );
+                    System.out.println( "OrderBy column '" + orderBy + "' is ambiguous." );
                     return null;
                 } else {
                     if ( !validColumnNames.contains( orderBy ) ) {
-                        System.out.println( "Column " + orderBy + " could not be found." );
+                        System.out.println( "Column '" + orderBy + "' could not be found." );
                         return null;
                     }
                 }
@@ -563,7 +563,7 @@ class QueryParser {
                     }
                 }
                 if ( orderByInfo.size() == 0 ) {
-                    System.out.println( "Error trying to find which table " + orderBy + " belongs to." );
+                    System.out.println( "Error trying to find which table '" + orderBy + "' belongs to." );
                     return null;
                 }
             }
