@@ -1,8 +1,7 @@
 package src.ConditionalTreeNodes;
 
 import src.Record;
-
-import java.util.ArrayList;
+import src.ResultSet;
 
 public class ConstantNode extends ValueNode{
 
@@ -17,18 +16,18 @@ public class ConstantNode extends ValueNode{
 
     //As far as I'm aware, this should never be used for a ValueNode since it doesn't evaluate to true or false
     @Override
-    public boolean validateTree(Record record, ArrayList<Integer> attributeTypes, ArrayList<String> attributeNames) {
+    public boolean validateTree(Record record, ResultSet resultSet) {
         return false;
     }
 
     @Override
-    public Object getValue(Record record, ArrayList<String> attributeNames) {
+    public Object getValue(Record record, ResultSet resultSet) {
         //using the stored type, convert the token into an object representation
         return token;
     }
 
     @Override
-    public int getType(Record record, ArrayList<Integer> attributeTypes, ArrayList<String> attributeNames) {
+    public int getType(Record record, ResultSet resultSet) {
         return type;
     }
 

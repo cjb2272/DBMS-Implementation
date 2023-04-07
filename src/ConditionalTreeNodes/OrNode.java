@@ -1,8 +1,7 @@
 package src.ConditionalTreeNodes;
 
 import src.Record;
-
-import java.util.ArrayList;
+import src.ResultSet;
 
 public class OrNode extends ConditionTree {
 
@@ -18,9 +17,9 @@ public class OrNode extends ConditionTree {
     }
 
     @Override
-    public boolean validateTree(Record record, ArrayList<Integer> attributeTypes, ArrayList<String> attributeNames) {
-        return leftChild.validateTree(record, attributeTypes, attributeNames)
-                || rightChild.validateTree(record, attributeTypes, attributeNames);
+    public boolean validateTree(Record record, ResultSet resultSet) {
+        return leftChild.validateTree(record, resultSet)
+                || rightChild.validateTree(record, resultSet);
     }
 
     @Override

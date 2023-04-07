@@ -442,7 +442,7 @@ public class StorageManager {
             boolean deleteRecord = true; //deleteing all Records by default
             if (whereCondition != null) {
                 //call method(s) to evaluate a single tuple for meeting where condition
-                deleteRecord = whereCondition.validateTree(curRecord, resultSet.getColumnTypes(), resultSet.getColumnNames());
+                deleteRecord = whereCondition.validateTree(curRecord, resultSet);
             }
             if (deleteRecord) { //call deleteRecord on record if condition was met
                 deleteRecord(tableID, curRecord);
@@ -514,7 +514,7 @@ public class StorageManager {
         for (Record curRecord : allRecordsFromTable) {
             boolean updateRecord = true; //default to updating ALL COLUMNS
             if (whereCondition != null) { //if where condition exists
-                updateRecord = whereCondition.validateTree(curRecord, resultSet.getColumnTypes(), resultSet.getColumnNames());
+                updateRecord = whereCondition.validateTree(curRecord, resultSet);
             }
             if (updateRecord) {
                 int[] returnVal = updateRecord(tableID, curRecord, columnName, data);

@@ -1,8 +1,7 @@
 package src.ConditionalTreeNodes;
 
 import src.Record;
-
-import java.util.ArrayList;
+import src.ResultSet;
 
 public class OperationNode extends ConditionTree {
 
@@ -25,21 +24,21 @@ public class OperationNode extends ConditionTree {
     /**
      * Used when executing a where statement
      * Compares the child ValueNodes using the operation depicted by the token
-     * @param record The record being tested
-     * @param attributeTypes The ArrayList of ints corresponding to the type of each attribute in the record
-     * @param attributeNames The names of all the columns/attributes in the record
+     *
+     * @param record    The record being tested
+     * @param resultSet The result set corresponding to the record
      * @return True or False depending on how the operation compares the child nodes
      */
     @Override
-    public boolean validateTree(Record record, ArrayList<Integer> attributeTypes, ArrayList<String> attributeNames) {
+    public boolean validateTree(Record record, ResultSet resultSet) {
         //WE HAVE CASES WHERE OPERATOR CAN BE
         // '=', '>', '<', '>=', '<=', '!='
         //Both sides of the operation MUST have the same data type (as per writeup)
         //Possible data types are Integer, Double, Boolean, Char(x), and Varchar(x)
-        int leftType = leftChild.getType(record, attributeTypes, attributeNames);
-        int rightType = rightChild.getType(record, attributeTypes, attributeNames);
-        Object leftVal = leftChild.getValue(record, attributeNames);
-        Object rightVal = rightChild.getValue(record, attributeNames);
+        int leftType = leftChild.getType(record, resultSet);
+        int rightType = rightChild.getType(record, resultSet);
+        Object leftVal = leftChild.getValue(record, resultSet);
+        Object rightVal = rightChild.getValue(record, resultSet);
         if (leftType != rightType) {
             System.err.println("ERROR: value types in where expression do not match");
             return false;
