@@ -407,7 +407,8 @@ public class StorageManager {
                 tableNamesForColumns.add(table.getName());
                 displayedColNames.add(colNames.get(i));
             }
-            typesForColumns.addAll(Catalog.instance.getTableAttributeTypesByName(table.getName()));
+            int tableSchemaId = Catalog.instance.getTableIdByName(table.getName());
+            typesForColumns.addAll(Catalog.instance.getSolelyTableAttributeTypes(tableSchemaId));
         }
 
         ArrayList<Record> cloneRecordOutput = new ArrayList<>();
