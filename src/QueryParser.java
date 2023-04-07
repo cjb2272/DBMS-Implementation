@@ -142,7 +142,7 @@ class QueryParser {
             System.out.println("Missing equals sign after SET");
             return null;
         }
-        String colName = equalSplit[0];
+        String colName = equalSplit[0].trim();
         List<Object> data = TypeCast( equalSplit[1].trim() );
         ConditionTree where = null;
         if(whereSplit.length != 1){
@@ -155,7 +155,9 @@ class QueryParser {
                 return null;
             }
         }
-        return new UpdateQuery(tableName, colName.trim(), data, where);
+        HashMap<String, ArrayList<String>> tableColumnDict = new HashMap<>();
+        tableColumnDict.put( tableName, new ArrayList<>(Arrays.asList( colName )) );
+        return new UpdateQuery(tableName, colName, tableColumnDict, data, where);
     }
 
     public DeleteQuery ParseDelete(String input){
@@ -175,7 +177,10 @@ class QueryParser {
                 return null;
             }
         }
-        return new DeleteQuery(tableName, where);
+        ArrayList<String> colNames = Catalog.instance.getAttributeNames(tableName);
+        HashMap<String, ArrayList<String>> tableColumnDict = new HashMap<>();
+        tableColumnDict.put( tableName, colNames );
+        return new DeleteQuery(tableName, where, tableColumnDict);
     }
 
     // display info <table>;
