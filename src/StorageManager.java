@@ -292,9 +292,11 @@ public class StorageManager {
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
         ArrayList<Integer> pageOrder = table.getPageOrder();
         int numPagesInTable = pageOrder.size();
+        boolean recordWasDeleted = false;
         for (int index = 0; index < numPagesInTable; index++) { //for each page in table
+            if (recordWasDeleted) { break; }
             try {
-                int pageNumber = pageOrder.get(index);
+                int pageNumber = pageOrder.get(index); //todo errored out here,
                 Page pageReference = buffer.GetPage(tableID, pageNumber);
                 int numRecordsInPage = pageReference.getRecordCount();
                 if (numRecordsInPage == 0) {
@@ -316,6 +318,7 @@ public class StorageManager {
                             //location on disk until a new page re-uses that page location and is wrote to disk
                             buffer.removeEmptyPageFromBuffer(tableID, pageNumber);
                         }
+                        recordWasDeleted = true;
                         break;
                     }
                     //if curRecord's pk > recordToDelete's pk
