@@ -423,6 +423,10 @@ class QueryParser {
                 }
                 colNames = new ArrayList<>( Arrays.asList( tokens[stepCounter].split( "," ) ) );
                 for ( int i = 0; i < colNames.size(); i++ ) {
+                    if(colNames.get( i ).trim().contains( "\s" )){
+                        System.out.println("Column names must be comma delimited.");
+                        return null;
+                    }
                     colNames.set( i, colNames.get( i ).trim() );
                 }
                 stepCounter++;
@@ -431,6 +435,10 @@ class QueryParser {
             if (stepCounter == 2){
                 tableNames = new ArrayList<>( Arrays.asList( tokens[stepCounter].split( "," ) ) );
                 for ( int i = 0; i < tableNames.size(); i++ ) {
+                    if(tableNames.get( i ).trim().contains( "\s" )){
+                        System.out.println("Table names must be comma delimited.");
+                        return null;
+                    }
                     tableNames.set( i, tableNames.get( i ).trim() );
                 }
                 stepCounter++;
