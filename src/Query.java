@@ -35,6 +35,7 @@ class UpdateQuery extends Query{
         this.data = data;
         this.where = where; //SHOULD BE 'null' if no where clause exists
         //this.tableColumnDictionary = tableColumnDict;
+        //this.starFlag = starFlag;
     }
 
     @Override
@@ -59,6 +60,7 @@ class DeleteQuery extends Query{
         this.table = tableName;
         this.where = where; //SHOULD BE 'null' if no where clause exists
         //this.tableColumnDictionary = tableColumnDict;
+        //this.starFlag = starFlag;
     }
 
     @Override
