@@ -300,8 +300,20 @@ class SelectQuery extends Query {
 
 
         // everything after this is printing logic
+        int max = 6;
 
-        int max = 8;
+        for(String t: this.getTableNames()){
+            ArrayList<Integer> attr = Catalog.instance.getTableAttributeTypesByName( t );
+            for(int i = 0; i < attr.size();i++){
+                if(attr.get( i ) == 4 || attr.get( i ) == 5){
+                    if(attr.get( i + 1 ) > max){
+                        max = attr.get( i + 1 );
+                    }
+                    i++;
+                }
+            }
+        }
+
         for (String col : displayedColNames) {
             if (col.length() > max) {
                 max = col.length();
@@ -318,13 +330,13 @@ class SelectQuery extends Query {
             if(col.length() == max){
                 columns.append(" |").append(col);
             } else {
-                columns.append(" |").append(padding, 0, max - col.length() - 1).append(col);
+                columns.append(" |").append(padding, 0, max - col.length()).append(col);
             }
             spacer.append( line);
         }
 
         System.out.println( spacer);
-        System.out.println(columns + " |");
+        System.out.println(columns + "|");
         System.out.println( spacer );
 
         for (Record record : finalRecordOutput) {
