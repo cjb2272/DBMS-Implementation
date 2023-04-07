@@ -42,9 +42,8 @@ class UpdateQuery extends Query{
     public void execute() {
         ResultSet resultSet = StorageManager.instance.generateFromResultSet(tableColumnDictionary, starFlag);
         int tableId = Catalog.instance.getTableIdByName(this.table);
-        String columnName = null; //column being updated
         String valueToSet = null; //value to update in column, "" EMPTY STRING IF NULL
-        StorageManager.instance.updateTable(resultSet, tableId, columnName, valueToSet, where);
+        StorageManager.instance.updateTable(resultSet, tableId, this.colName, valueToSet, where);
     }
 
 }
