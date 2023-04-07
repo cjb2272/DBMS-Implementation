@@ -43,7 +43,21 @@ class UpdateQuery extends Query{
     public void execute() {
         ResultSet resultSet = StorageManager.instance.generateFromResultSet(tableColumnDictionary, starFlag);
         int tableId = Catalog.instance.getTableIdByName(this.table);
-        StorageManager.instance.updateTable(resultSet, tableId, this.colName, this.data, where);
+        TableSchema tableSch = Catalog.instance.getTableSchemaById(tableId);
+        int[] attemptToInsert = StorageManager.instance.updateTable(resultSet, tableId, this.colName, this.data, where);
+
+        if (attemptToInsert.length > 1) {
+            int row = attemptToInsert[0];
+            //attemptToInsert[2] has value being pkIndex of record we failed to insert, while at index 1 value was
+            //existing record that resulted in incompatibility/error
+            if (attemptToInsert[2] != attemptToInsert[1]) { //todo are we catching this unique
+                System.out.println("row (" + row + "): Unique key value to update already exists for row (" + row +
+                        ") at column("+tableSch.getAttributes().get(attemptToInsert[1])+")");
+            } else {
+                System.out.println("row (" + row + "): Primary key value to update already exists for row (" + row + ")");
+            }
+            System.out.println("ERROR\n");
+        }
     }
 
 }

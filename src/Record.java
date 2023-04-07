@@ -33,6 +33,9 @@ public class Record {
         this.pkIndex = pkIndex;
     }
 
+    public void setTableNumber(int tableNum) { this.tableNumber = tableNum; }
+    public int getTableNumber() { return this.tableNumber; }
+
     /**
      * Record Constructor
      */

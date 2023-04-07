@@ -206,6 +206,7 @@ public class StorageManager {
      * @param recordToInsert the record to insert
      *
      * @return int[1] or int[2]. len 1 on succeed, len 2 with row insert failed on and column^
+     *         of int[3] on failure as well with a placeholder value at last index, 2
      */
     public int[] insertRecord(int tableID, Record recordToInsert) {
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
@@ -241,8 +242,9 @@ public class StorageManager {
                         Record curRecord = pageReference.getRecordsInPage().get(idx);
                         int comparison = sorter.compare(recordToInsert, curRecord);
                         if (comparison == 0) {
-                            return new int[]{totalRecords, curRecord.getPkIndex()};
-                        }
+                            //if primary keys are equal, this insert should not occur
+                            return new int[]{totalRecords, curRecord.getPkIndex(), 0}; //third value is placeholder,
+                        }                                                              //passed up for use in update
                         for (int i = 0; i < table.getAttributes().size(); i++) {
                             AttributeSchema attribute = table.getAttributes().get(i);
                             if ((attribute.getConstraints() == 1 || attribute.getConstraints() == 3)
@@ -435,9 +437,6 @@ public class StorageManager {
      * @param whereCondition ConditionTree, 'null' if no where clause exists
      */
     public void deleteFrom(ResultSet resultSet, int tableID, ConditionTree whereCondition) {
-        //ArrayList<String> allRecordsRequest = new ArrayList<>();
-        //allRecordsRequest.add("*");
-        //ArrayList<Record> allRecordsFromTable = selectData(tableID, allRecordsRequest);
         ArrayList<Record> allRecordsFromTable = resultSet.getRecords();
         for (Record curRecord : allRecordsFromTable) {
             boolean deleteRecord = true; //deleteing all Records by default
@@ -462,11 +461,15 @@ public class StorageManager {
      *
      * @param tableID the table record in question belongs to
      * @param recordToUpdate the record to update
+     * @param columnName .
+     * @param data .
      * @return receive return from insert and pass that along? not sure what return from insert does todo
      */
     public int[] updateRecord(int tableID, Record recordToUpdate, String columnName, List<Object> data) {
-        //todo if we are changing primary key value, need to determine where we
-        // will ensure that the new primary key value doesn't already exist
+        Record originalCopy = new Record();
+        originalCopy.setPkIndex(recordToUpdate.getPkIndex());
+        originalCopy.setRecordContents(recordToUpdate.getRecordContents());
+        originalCopy.setTableNumber(recordToUpdate.getTableNumber());
         Record copyOfRecordToUpdate = recordToUpdate; //make a copy of the record
         ArrayList<Object> copyOfRecordContents = copyOfRecordToUpdate.getRecordContents();
         deleteRecord(tableID, recordToUpdate);
@@ -480,12 +483,15 @@ public class StorageManager {
             }
             indexOfColumnToUpdate++;
         }
-        //int dataTypeCode = (int) data.get(0);
         Object valueToSet = data.get(1); //value to update in column
         //make change updating our copy of original record
         copyOfRecordContents.set(indexOfColumnToUpdate, valueToSet);
         copyOfRecordToUpdate.setRecordContents(copyOfRecordContents); //set content change
-        return insertRecord(tableID, copyOfRecordToUpdate);
+        int[] insertReturn = insertRecord(tableID, copyOfRecordToUpdate); //update
+        if (insertReturn.length > 1) { //our record failed to insert
+            insertRecord(tableID, originalCopy); //add original, unchanged record back in
+        }
+        return insertReturn; //todo?
     }
 
     /**
@@ -501,11 +507,8 @@ public class StorageManager {
      * @param data       includes value to update in column, "" empty string if null
      * @param whereCondition ConditionTree, 'null' if no where clause exists
      */
-    public void updateTable(ResultSet resultSet, int tableID, String columnName, List<Object> data,
+    public int[] updateTable(ResultSet resultSet, int tableID, String columnName, List<Object> data,
                             ConditionTree whereCondition) {
-        //ArrayList<String> allRecordsRequest = new ArrayList<>();
-        //allRecordsRequest.add("*");
-        //ArrayList<Record> allRecordsFromTable = selectData(tableID, allRecordsRequest);
         ArrayList<Record> allRecordsFromTable = resultSet.getRecords();
         //should an update query indicate at command line if table has no records at all. none to update?
         for (Record curRecord : allRecordsFromTable) {
@@ -514,9 +517,17 @@ public class StorageManager {
                 updateRecord = whereCondition.validateTree(curRecord, resultSet.getColumnTypes(), resultSet.getColumnNames());
             }
             if (updateRecord) {
-                updateRecord(tableID, curRecord, columnName, data);
+                int[] returnVal = updateRecord(tableID, curRecord, columnName, data);
+                //if our insert failed, we want to stop our iteration of updates, and push error upwards,
+                // all changes prior to error remain valid
+                if (returnVal.length > 1) {
+                    int pkIndex = curRecord.getPkIndex();
+                    returnVal[2] = pkIndex;
+                    return returnVal;
+                }
             }
         }
+        return new int[]{1}; //not sure if this needs to be specified some other way
     }
 
     /**
