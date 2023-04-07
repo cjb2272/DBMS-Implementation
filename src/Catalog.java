@@ -285,6 +285,27 @@ public class Catalog {
     }
 
     /**
+     * Returns the attribute schema of a specific column when given a table and column name
+     * @param tableName The name of the table being searched
+     * @param colName The name of the column being returned
+     * @return null if the table doesn't exist or the column doesn't exist
+     */
+    public AttributeSchema getAttributeSchemaByColNameAndTableName(String tableName, String colName){
+        TableSchema thisTable = Catalog.instance.getTableSchemaByName( tableName );
+
+        if(thisTable == null){
+            return null;
+        }
+
+        for(AttributeSchema attr : thisTable.getAttributes()){
+            if(attr.getName().equals( colName )){
+                return attr;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Returns an ordered list of a given table's attributes' types.
      * 1 - integer
      * 2 - double
