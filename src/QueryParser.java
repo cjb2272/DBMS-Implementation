@@ -9,6 +9,7 @@ import src.ConditionalTreeNodes.*;
 
 import java.util.*;
 
+@SuppressWarnings("rawtypes")
 class QueryParser {
 
     public QueryParser() {
@@ -23,7 +24,7 @@ class QueryParser {
         };
     }
 
-    public ConditionTree ParseConditional( String input, ArrayList<String> validColumns, ArrayList<String> overlapColumns){
+    public ConditionTree ParseConditional( String input, ArrayList<String> validColumns, ArrayList<String> overlapColumns, ArrayList<String> tableNames ){
         String[] tokens = input.split( " " );
         Deque<ConditionTree> outputQ = new ArrayDeque<>();
         Deque<String> operatorStack = new ArrayDeque<>();
@@ -35,6 +36,14 @@ class QueryParser {
             int prece = Precedence( token );
             if( prece == -1){
                 //operand
+                List<Object> data = TypeCast( token );
+                if(token.contains( "." ) && (int) data.get( 0 ) == 0){
+                    String[] tokenSplit =  token.split( "\\." );
+                    if(!tableNames.contains( tokenSplit[0] )){
+                        System.out.println("Table you reference is not used in this query: " + token);
+                        return null;
+                    }
+                }
                 if(validColumns.contains( token ) || validColumns.contains( token.split( "\\." )[token.split( "\\." ).length - 1] )){
                     //attribute
                     if(!token.contains( "." )){
@@ -46,7 +55,6 @@ class QueryParser {
                     outputQ.add( new AttributeNode( token ) );
                 } else{
                     //constant
-                    List<Object> data = TypeCast( token );
                     outputQ.add( new ConstantNode( data.get( 1 ), (int) data.get( 0 ) ) );
                 }
             } else {
@@ -125,7 +133,7 @@ class QueryParser {
             System.out.println("Missing SET keyword.");
             return null;
         }
-        String tableName = setSplit[0].replace( "update", "" );
+        String tableName = setSplit[0].replace( "update", "" ).trim();
         setSplit[1].replace( "set", "");
 
         String[] whereSplit = setSplit[1].split( "where" );
@@ -141,13 +149,13 @@ class QueryParser {
             //There is a where
             whereSplit[1].replace( "where", "" );
             //parse conditional
-            where = ParseConditional( whereSplit[1], Catalog.instance.getAttributeNames( tableName.trim() ), new ArrayList<>() );
+            where = ParseConditional( whereSplit[1], Catalog.instance.getAttributeNames( tableName ), new ArrayList<>(), new ArrayList<>(Arrays.asList( tableName )) );
             if(where == null){
                 System.out.println("Could not parse conditional statement.");
                 return null;
             }
         }
-        return new UpdateQuery(tableName.trim(), colName.trim(), data, where);
+        return new UpdateQuery(tableName, colName.trim(), data, where);
     }
 
     public DeleteQuery ParseDelete(String input){
@@ -158,16 +166,16 @@ class QueryParser {
         }
         String[] chunks = keywords[1].split( "where" );
         ConditionTree where = null;
-        String tableName = chunks[0].replace( "from", "" );
+        String tableName = chunks[0].replace( "from", "" ).trim();
         if(chunks.length != 1){
             //Where is present so chunks[0] is table name, chunks[1] is conditional
-            where = ParseConditional(chunks[1].replace( "where", "" ), Catalog.instance.getAttributeNames(tableName.trim()), new ArrayList<>() );
+            where = ParseConditional(chunks[1].replace( "where", "" ), Catalog.instance.getAttributeNames(tableName), new ArrayList<>(), new ArrayList<>(Arrays.asList( tableName )) );
             if(where == null){
                 System.out.println("Could not parse conditional statement");
                 return null;
             }
         }
-        return new DeleteQuery(tableName.trim(), where);
+        return new DeleteQuery(tableName, where);
     }
 
     // display info <table>;
@@ -527,7 +535,7 @@ class QueryParser {
         }
 
         if(!conditional.equals( "" )){
-            where = ParseConditional( conditional, validColumnNames, overlapColumns );
+            where = ParseConditional( conditional, validColumnNames, overlapColumns, tableNames );
             if(where == null){
                 System.out.println("Could not parse conditional statement.");
                 return null;

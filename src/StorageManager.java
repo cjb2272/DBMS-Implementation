@@ -425,20 +425,21 @@ public class StorageManager {
     }
 
     /**
-     * todo Called by Parser, or move into execute()?
      * should take in table we are working with as well as the tokens for where condition
+     * @param resultSet contains ALL Records for table in question,
      * @param tableID table intended to delete records from
      * @param whereCondition ConditionTree, 'null' if no where clause exists
      */
-    public void deleteFrom(int tableID, ConditionTree whereCondition) {
-        ArrayList<String> allRecordsRequest = new ArrayList<>();
-        allRecordsRequest.add("*");
-        ArrayList<Record> allRecordsFromTable = selectData(tableID, allRecordsRequest);
+    public void deleteFrom(ResultSet resultSet, int tableID, ConditionTree whereCondition) {
+        //ArrayList<String> allRecordsRequest = new ArrayList<>();
+        //allRecordsRequest.add("*");
+        //ArrayList<Record> allRecordsFromTable = selectData(tableID, allRecordsRequest);
+        ArrayList<Record> allRecordsFromTable = resultSet.getRecords(); //todo ensure this is same as selectData *
         for (Record curRecord : allRecordsFromTable) {
             boolean deleteRecord = true; //deleteing all Records by default
             if (whereCondition != null) {
-                //call method(s) to evaluate a single tuple for meeting where condition todo
-                deleteRecord = false;//whereCondition.validateTree(curRecord, );
+                //call method(s) to evaluate a single tuple for meeting where condition
+                deleteRecord = whereCondition.validateTree(curRecord, resultSet.getColumnTypes(), resultSet.getColumnNames());
             }
             if (deleteRecord) { //call deleteRecord on record if condition was met
                 deleteRecord(tableID, curRecord);
@@ -505,27 +506,29 @@ public class StorageManager {
     }
 
     /**
-     * todo needs params for where condition.. 'data' 'where'
      * Called by UpdateQuery's execute.
      * -- What of this belong in execute and what belongs here????
      * This Method iterates through all records for a given table, calling
      * updateRecord on the records that meet the condition specified in the
      * 'where' clause of the update statement
      *
+     * @param resultSet contains ALL Records for table in question, ...
      * @param tableID table in question
      * @param columnName column to update
      * @param valueToSet value to update in column, "" empty string if null
      * @param whereCondition ConditionTree, 'null' if no where clause exists
      */
-    public void updateTable(int tableID, String columnName, String valueToSet, ConditionTree whereCondition) {
-        ArrayList<String> allRecordsRequest = new ArrayList<>();
-        allRecordsRequest.add("*");
-        ArrayList<Record> allRecordsFromTable = selectData(tableID, allRecordsRequest);
+    public void updateTable(ResultSet resultSet, int tableID, String columnName, String valueToSet,
+                            ConditionTree whereCondition) {
+        //ArrayList<String> allRecordsRequest = new ArrayList<>();
+        //allRecordsRequest.add("*");
+        //ArrayList<Record> allRecordsFromTable = selectData(tableID, allRecordsRequest);
+        ArrayList<Record> allRecordsFromTable = resultSet.getRecords();
         //should an update query indicate at command line if table has no records at all. none to update?
         for (Record curRecord : allRecordsFromTable) {
             boolean updateRecord = true; //default to updating ALL COLUMNS
             if (whereCondition != null) { //if where condition exists
-                updateRecord = false; //whereCondition.validateTree(curRecord, );
+                updateRecord = whereCondition.validateTree(curRecord, resultSet.getColumnTypes(), resultSet.getColumnNames());
             }
             if (updateRecord) {
                 updateRecord(tableID, curRecord, columnName, valueToSet);
