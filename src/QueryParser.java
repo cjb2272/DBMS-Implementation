@@ -74,7 +74,14 @@ class QueryParser {
                 return null;
             }
         }
-        return outputQ.pop();
+
+        ConditionTree output = outputQ.pop();
+        if(output.getClass() != AndNode.class && output.getClass() != OrNode.class && output.getClass() != OperationNode.class){
+            System.out.println("Expected either an OrNode, an AndNode, or an OperationNode, received: " + output.getClass());
+            return null;
+        } else{
+            return output;
+        }
     }
 
     public int popOffOperatorStack(Deque<String> operatorStack, Deque<ConditionTree> outputQ){
@@ -128,15 +135,21 @@ class QueryParser {
     //set <column_1> = <value>
     //where <condition>;
     public UpdateQuery ParseUpdate(String input){
-        String[] setSplit = input.split( "set" );
-        if(setSplit.length < 2){
+        String[] setSplit = input.split( "(?i)set" );
+        if(setSplit.length != 2){
             System.out.println("Missing SET keyword.");
             return null;
         }
-        String tableName = setSplit[0].replace( "update", "" ).trim();
-        setSplit[1].replace( "set", "");
+        String tableName = setSplit[0].split( "(?i)update")[1].trim();
 
-        String[] whereSplit = setSplit[1].split( "where" );
+        if(Catalog.instance.getTableIdByName( tableName ) == -1){
+            System.out.println("Could not find table: " + tableName);
+            return null;
+        }
+
+        setSplit[1] = setSplit[1].replace( "set", "");
+
+        String[] whereSplit = setSplit[1].split( "(?i)where" );
         String[] equalSplit = whereSplit[0].split( "=" );
         if(equalSplit.length < 2){
             System.out.println("Missing equals sign after SET");
@@ -144,31 +157,78 @@ class QueryParser {
         }
         String colName = equalSplit[0].trim();
         List<Object> data = TypeCast( equalSplit[1].trim() );
+
+        if(!Catalog.instance.getAttributeNames( tableName ).contains( colName )){
+            System.out.println("Column '" + colName + "' does not exist in table '" + tableName + "'.");
+            return null;
+        }
+
+        AttributeSchema colAttr = Catalog.instance.getAttributeSchemaByColNameAndTableName( tableName, colName );
+        if(colAttr == null){
+            System.out.println("There was an error trying to find attribute schema for column: " + colName);
+            return null;
+        }
+        int colType = colAttr.getType();
+        int setType = (int) data.get( 0 );
+        switch (colType){
+            case 1, 2, 3:
+                if(colType != setType){
+                    System.out.println("Expected (" + CodeToString( colType ) + "), Received (" + CodeToString( setType )+ ").");
+                    return null;
+                }
+                break;
+            case 4:
+                if(setType != 0){
+                    System.out.println("Expected (" + CodeToString( colType ) + "), Received (" + CodeToString( setType )+ ").");
+                    return null;
+                } else{
+                    if (colAttr.getSize() != ((String) data.get( 1 )).length()){
+                        System.out.println("String must be exactly " + colAttr.getSize() + " char(s) long.");
+                        return null;
+                    }
+                }
+                break;
+            case 5:
+                if(setType != 0){
+                    System.out.println("Expected (" + CodeToString( colType ) + "), Received (" + CodeToString( setType ) + ").");
+                    return null;
+                } else{
+                    if (colAttr.getSize() < ((String) data.get( 1 )).length()){
+                        System.out.println("String must be no more than " + colAttr.getSize() + " char(s) long.");
+                        return null;
+                    }
+                }
+                break;
+            default:
+                System.out.println("Error with stored dataType for column: " + colName);
+                return null;
+        }
+
         ConditionTree where = null;
         if(whereSplit.length != 1){
             //There is a where
-            whereSplit[1].replace( "where", "" );
+            whereSplit[1] = whereSplit[1].replace( "where", "" );
             //parse conditional
-            where = ParseConditional( whereSplit[1], Catalog.instance.getAttributeNames( tableName ), new ArrayList<>(), new ArrayList<>(Arrays.asList( tableName )) );
+            where = ParseConditional( whereSplit[1], Catalog.instance.getAttributeNames( tableName ), new ArrayList<>(), new ArrayList<>( Collections.singletonList( tableName ) ) );
             if(where == null){
                 System.out.println("Could not parse conditional statement.");
                 return null;
             }
         }
         LinkedHashMap<String, ArrayList<String>> tableColumnDict = new LinkedHashMap<>();
-        tableColumnDict.put( tableName, new ArrayList<>(Arrays.asList( colName )) );
+        tableColumnDict.put( tableName, new ArrayList<>( Collections.singletonList( colName ) ) );
         return new UpdateQuery(tableName, colName, tableColumnDict, data, where);
     }
 
     public DeleteQuery ParseDelete(String input){
-        String[] keywords = input.split( "from" );
+        String[] keywords = input.split( "(?i)from" );
         if(keywords.length < 2){
             System.out.println("Missing FROM keyword.");
             return null;
         }
-        String[] chunks = keywords[1].split( "where" );
+        String[] chunks = keywords[1].split( "(?i)where" );
         ConditionTree where = null;
-        String tableName = chunks[0].replace( "from", "" ).trim();
+        String tableName = chunks[0].trim();
         if(chunks.length != 1){
             //Where is present so chunks[0] is table name, chunks[1] is conditional
             where = ParseConditional(chunks[1].replace( "where", "" ), Catalog.instance.getAttributeNames(tableName), new ArrayList<>(), new ArrayList<>(Arrays.asList( tableName )) );
@@ -199,14 +259,14 @@ class QueryParser {
         switch (tokens.length) {
             case 2 -> {
 
-                if (tokens[1].toLowerCase(Locale.ROOT).equals("schema")) {
+                if ( tokens[1].equalsIgnoreCase("schema")) {
                     return new DisplayQuery();
                 }
                 System.out.println("Expected 'schema' got: " + tokens[1]);
             }
             case 3 -> {
 
-                if (tokens[1].toLowerCase(Locale.ROOT).equals("info")) {
+                if ( tokens[1].equalsIgnoreCase("info")) {
                     return new DisplayQuery(tokens[2]);
                 }
                 System.out.println("Expected 'info' got: " + tokens[1]);
@@ -370,7 +430,7 @@ class QueryParser {
         String[] tokens = input.split(" ");
 
         if (tokens.length == 3) {
-            if (tokens[1].toLowerCase(Locale.ROOT).equals("table")) {
+            if (tokens[1].equalsIgnoreCase("table")) {
                 String tableName = tokens[2];
                 return new DropQuery(tableName);
             }
@@ -394,13 +454,21 @@ class QueryParser {
      *         if there is an error
      */
     public SelectQuery ParseSelect(String input) {
-        if ( !input.contains( "from" ) ) {
+        boolean whereFlag = false;
+        boolean orderByFlag = false;
+        if ( !input.toLowerCase().contains( "from" ) ) {
             System.out.println( "Missing FROM keyword." );
             return null;
         }
-        String[] tokens = input.split( "select|from|where|orderby" );
+        if(input.toLowerCase().contains( "where" )){
+            whereFlag = true;
+        }
+        if(input.toLowerCase().contains( "orderby" )){
+            orderByFlag = true;
+        }
+        String[] tokens = input.split( "(?i)select|from|where|orderby" );
         if ( tokens.length < 3 ) {
-            System.out.println( "Expected 'SELECT * FROM <table>' format." );
+            System.out.println( "Expected 'SELECT * FROM <table> WHERE <conditional> ORDERBY <column>' format." );
             return null;
         }
         int stepCounter = 0;
@@ -445,14 +513,23 @@ class QueryParser {
                 continue;
             }
             if (stepCounter == 3){
-                conditional = tokens[stepCounter];
+                if(whereFlag) {
+                    conditional = tokens[stepCounter];
+                    stepCounter++;
+                    continue;
+                }
                 stepCounter++;
-                continue;
             }
             if(stepCounter == 4){
-                orderBy = tokens[stepCounter].trim();
+                if(orderByFlag) {
+                    if(whereFlag) {
+                        orderBy = tokens[stepCounter].trim();
+                    } else{
+                        orderBy = tokens[stepCounter - 1].trim();
+                    }
+                    continue;
+                }
                 stepCounter++;
-                continue;
             }
         }
 
@@ -636,7 +713,7 @@ class QueryParser {
      *         an error
      */
     public InsertQuery ParseInsert(String input) {
-        String[] separate = input.split("values");
+        String[] separate = input.split("(?i)values");
         if (separate.length != 2) {
             System.out.println("Missing VALUES keyword.");
             return null;
@@ -648,7 +725,7 @@ class QueryParser {
             return null;
         }
 
-        if (!keywords[1].toLowerCase(Locale.ROOT).equals("into")) {
+        if (!keywords[1].equalsIgnoreCase("into")) {
             System.out.println("Missing into keyword.");
             return null;
         }
@@ -816,7 +893,6 @@ class QueryParser {
                     return null;
                 }
             } else if (temp.length > 4) {
-                //TODO fix usage method
                 System.out.println( """
                         Please ensure that attributes are in the following format:
                         <name> <type>     -or-

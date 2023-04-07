@@ -58,6 +58,7 @@ class UpdateQuery extends Query{
             }
             System.out.println("ERROR\n");
         }
+        System.out.println("SUCCESS\n");
     }
 
 }
@@ -81,6 +82,7 @@ class DeleteQuery extends Query{
         ResultSet resultSet = StorageManager.instance.generateFromResultSet(tableColumnDictionary, starFlag);
         int tableId = Catalog.instance.getTableIdByName(this.table);
         StorageManager.instance.deleteFrom(resultSet, tableId, where);
+        System.out.println("SUCCESS\n");
     }
 
 }
