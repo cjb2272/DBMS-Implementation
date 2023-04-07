@@ -29,13 +29,13 @@ class UpdateQuery extends Query{
 
     Boolean starFlag;
 
-    public UpdateQuery( String table, String colName, List<Object> data, ConditionTree where ) {
+    public UpdateQuery( String table, String colName, HashMap<String, ArrayList<String>> tableColumnDict, List<Object> data, ConditionTree where ) {
         this.table = table;
         this.colName = colName;
         this.data = data;
         this.where = where; //SHOULD BE 'null' if no where clause exists
-        //this.tableColumnDictionary = tableColumnDict;
-        //this.starFlag = starFlag;
+        this.tableColumnDictionary = tableColumnDict;
+        this.starFlag = true;
     }
 
     @Override
@@ -55,11 +55,11 @@ class DeleteQuery extends Query{
     HashMap<String, ArrayList<String>> tableColumnDictionary;
     Boolean starFlag;
 
-    public DeleteQuery( String tableName, ConditionTree where ){
+    public DeleteQuery( String tableName, ConditionTree where, HashMap<String, ArrayList<String>> tableColumnDict ){
         this.table = tableName;
         this.where = where; //SHOULD BE 'null' if no where clause exists
-        //this.tableColumnDictionary = tableColumnDict;
-        //this.starFlag = starFlag;
+        this.tableColumnDictionary = tableColumnDict;
+        this.starFlag = true;
     }
 
     @Override
@@ -182,9 +182,9 @@ class SelectQuery extends Query {
 
         }
          */
-        ArrayList<String> displayedColNames;
         ResultSet resultSet = StorageManager.instance.generateFromResultSet(tableColumnDictionary, starFlag);
-        displayedColNames = resultSet.getColumnNames();
+
+        ArrayList<String> displayedColNames = new ArrayList<>(resultSet.getColumnNames());
 
         // !!!!  do the filtering here  !!!!!
         // relevant objects: finalRecordOutput, tableNamesForColumns, typesForColumns, maybe displayedColNames?
@@ -213,7 +213,7 @@ class SelectQuery extends Query {
 
 
             // are there any other column names that match this one?
-            String currentColName = displayedColNames.get(colIdx);
+            String currentColName = resultSet.getColumnNames().get(colIdx);
 
             if (processedNames.contains(currentColName)) {
                 continue;
@@ -222,10 +222,12 @@ class SelectQuery extends Query {
             processedNames.add(currentColName);
 
 
-            for (int innerColIdx = colIdx+1; innerColIdx < displayedColNames.size(); innerColIdx++) {
+            for (int innerColIdx = colIdx+1; innerColIdx < resultSet.getColumnNames().size(); innerColIdx++) {
 
-                String innerColName = displayedColNames.get(innerColIdx);
+                String innerColName = resultSet.getColumnNames().get(innerColIdx);
                 if (currentColName.equals(innerColName)) {
+                    displayedColNames.set(colIdx, resultSet.getTableNamesForColumns().get(colIdx) + "." + resultSet.getColumnNames().get(colIdx));
+                    displayedColNames.set(innerColIdx, resultSet.getTableNamesForColumns().get(innerColIdx) + "." + resultSet.getColumnNames().get(innerColIdx));
 
                     // duplicate found, determine which one(s) to keep via the tableColumnDictionary
                     ArrayList<String> matchedTables = new ArrayList<>();
@@ -291,6 +293,11 @@ class SelectQuery extends Query {
         }
 
 
+        // any remaining duplicate column names need to have the tablename prepended to them
+
+
+
+
 
         // everything after this is printing logic
 
@@ -307,7 +314,7 @@ class SelectQuery extends Query {
         StringBuilder columns = new StringBuilder();
 
         spacer.append( " " );
-        for(String col : resultSet.getColumnNames()){
+        for(String col : displayedColNames){
             if(col.length() == max){
                 columns.append(" |").append(col);
             } else {
