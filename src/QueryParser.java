@@ -12,6 +12,8 @@ import java.util.*;
 @SuppressWarnings("rawtypes")
 class QueryParser {
 
+    public ArrayList<String> keywordArray =  new ArrayList<>(Arrays.asList( "select", "update", "alter", "delete", "display", "drop", "from", "where", "orderby", "insert", "set", "create", "table", "integer", "double", "boolean", "char", "varchar" ));
+
     public QueryParser() {
     }
 
@@ -360,6 +362,11 @@ class QueryParser {
                 size = Integer.BYTES;
             }
 
+            if(this.keywordArray.contains( tokens[4] )){
+                System.out.println("Cannot use keyword at column name: " + tokens[4]);
+                return null;
+            }
+
             return new AlterQuery( tableName, tokens[4], type, size);
 
         }
@@ -415,6 +422,11 @@ class QueryParser {
                 size = Double.BYTES;
             } else {
                 size = Integer.BYTES;
+            }
+
+            if(this.keywordArray.contains( tokens[4] )){
+                System.out.println("Cannot use keyword at column name: " + tokens[4]);
+                return null;
             }
 
             return new AlterQuery( tableName, tokens[4], typeCode,size, defaultStr);
@@ -939,6 +951,18 @@ class QueryParser {
         if (pk == null) {
             System.out.println("No primary key defined.");
             return null;
+        }
+
+        if(this.keywordArray.contains(keywords[2])){
+            System.out.println("Cannot use keywords for Table name: " + keywords[2]);
+            return null;
+        }
+
+        for (String c : columnNames){
+            if(this.keywordArray.contains( c.toLowerCase( Locale.ROOT ) )){
+                System.out.println("Cannot use keywords for column names: " + c);
+                return null;
+            }
         }
 
         return new CreateQuery(keywords[2], columnNames, dataTypes, varLengthSizes, pk, constraints);
