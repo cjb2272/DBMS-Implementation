@@ -158,6 +158,10 @@ class QueryParser {
         String colName = equalSplit[0].trim();
         List<Object> data = TypeCast( equalSplit[1].trim() );
 
+        if((int) data.get( 0 ) == 0){
+            data.set( 1, ( (String) data.get( 1 )).replace( "\"", "" ));
+        }
+
         if(!Catalog.instance.getAttributeNames( tableName ).contains( colName )){
             System.out.println("Column '" + colName + "' does not exist in table '" + tableName + "'.");
             return null;
