@@ -39,7 +39,7 @@ public class OperationNode extends ConditionTree {
         int rightType = rightChild.getType(record, resultSet);
         Object leftVal = leftChild.getValue(record, resultSet);
         Object rightVal = rightChild.getValue(record, resultSet);
-        if (leftType != rightType) {
+        if (leftType != rightType && ((leftType == 4 || leftType == 5 ) && rightType != 0)) {
             System.err.println("ERROR: value types in where expression do not match");
             return false;
         }

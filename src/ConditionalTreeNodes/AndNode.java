@@ -5,12 +5,11 @@ import src.ResultSet;
 
 public class AndNode extends ConditionTree {
 
-    private final OperationNode leftChild;
+    private final ConditionTree leftChild;
     private final String token; //should be "and" this might be redundant not needed
-    private final OperationNode rightChild;
+    private final ConditionTree rightChild;
 
-
-    public AndNode(OperationNode left, String token, OperationNode right) {
+    public AndNode( ConditionTree left, String token, ConditionTree right ) {
         this.leftChild = left;
         this.token = token;
         this.rightChild = right;

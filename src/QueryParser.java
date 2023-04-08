@@ -93,34 +93,37 @@ class QueryParser {
         String current = operatorStack.removeLast();
         ConditionTree R = outputQ.removeLast();
         ConditionTree L = outputQ.removeLast();
+        ArrayList<Class> AndOrChildren = new ArrayList<>(Arrays.asList( OperationNode.class, AndNode.class, OrNode.class ));
+        ArrayList<Class> OperatorChildren = new ArrayList<>(Arrays.asList( ConstantNode.class, AttributeNode.class ));
+
         switch (Precedence( current )){
             case 1:
                 //or
-                if(R.getClass() != OperationNode.class ){
-                    System.out.println("Expected OperationNode, got: " + R.getClass()+ ". Token: " + R.getToken());
+                if(!AndOrChildren.contains( R.getClass() )){
+                    System.out.println("Expected either an OrNode, an AndNode, or an OperationNode, received: " + R.getClass());
                     return -1;
-                } else if(L.getClass() != OperationNode.class){
-                    System.out.println("Expected OperationNode, got: " + L.getClass()+ ". Token: " + L.getToken());
+                } else if(!AndOrChildren.contains( L.getClass() )){
+                    System.out.println("Expected either an OrNode, an AndNode, or an OperationNode, received: " + L.getClass());
                     return -1;
                 } else{
-                    outputQ.add( new OrNode( (OperationNode) L, current, (OperationNode) R) );
+                    outputQ.add( new OrNode( L, current, R) );
                     return 1;
                 }
             case 2:
                 //and
-                if(R.getClass() != OperationNode.class ){
-                    System.out.println("Expected OperationNode, got: " + R.getClass()+ ". Token: " + R.getToken());
+                if(!AndOrChildren.contains( R.getClass() )){
+                    System.out.println("Expected either an OrNode, an AndNode, or an OperationNode, received: " + R.getClass());
                     return -1;
-                } else if(L.getClass() != OperationNode.class){
-                    System.out.println("Expected OperationNode, got: " + L.getClass()+ ". Token: " + L.getToken());
+                } else if(!AndOrChildren.contains( L.getClass() )){
+                    System.out.println("Expected either an OrNode, an AndNode, or an OperationNode, received: " + L.getClass());
                     return -1;
                 } else{
-                    outputQ.add( new AndNode( (OperationNode) L, current, (OperationNode) R) );
+                    outputQ.add( new AndNode( L, current, R) );
                     return 1;
                 }
             case 3:
                 //operator
-                if(R.getClass() != ConstantNode.class && R.getClass() != AttributeNode.class){
+                if(!OperatorChildren.contains( R.getClass() )){
                     System.out.println("Expected ConstantNode or AttributeNode, got: " + R.getClass()+ ". Token: " + R.getToken());
                     return -1;
                 } else if(L.getClass() != AttributeNode.class){

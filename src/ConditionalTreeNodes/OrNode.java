@@ -5,12 +5,12 @@ import src.ResultSet;
 
 public class OrNode extends ConditionTree {
 
-    private final OperationNode leftChild;
-    private final String token; //should be "or"
-    private final OperationNode rightChild;
+    private final ConditionTree leftChild;
+    private final String token; //should be "or" this might be redundant not needed
+    private final ConditionTree rightChild;
 
 
-    public OrNode(OperationNode left, String token, OperationNode right) {
+    public OrNode(ConditionTree left, String token, ConditionTree right ) {
         this.leftChild = left;
         this.token = token;
         this.rightChild = right;
