@@ -128,15 +128,17 @@ class SelectQuery extends Query {
         // !!!!  do the filtering here  !!!!!
         // relevant objects: finalRecordOutput, tableNamesForColumns, typesForColumns, maybe displayedColNames?
 
-        ArrayList<Record> finalRecordOutput = new ArrayList<>(resultSet.getRecords());
+        ArrayList<Record> finalRecordOutput = new ArrayList<>();
 
-//        if (where != null) {
-//            for (Record record: resultSet.getRecords()) {
-//                if (where.validateTree(record, resultSet.getColumnTypes(), resultSet.getColumnNames())) {
-//                    finalRecordOutput.add(record);
-//                }
-//            }
-//        }
+        if (where != null) {
+            for (Record record: resultSet.getRecords()) {
+                if (where.validateTree(record, resultSet)) {
+                    finalRecordOutput.add(record);
+                }
+            }
+       } else {
+            finalRecordOutput.addAll(resultSet.getRecords());
+        }
 
 
 
