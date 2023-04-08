@@ -12,6 +12,13 @@ public class ResultSet {
 
     private ArrayList<String> qualifiedColumnNames;
 
+    /**
+     * Constructor for ResultSet.
+     * @param records - records.
+     * @param recordColumnNames - names of columns in records.
+     * @param recordColumnTypes - array of types in records.
+     * @param tableNamesForColumns - array of which table the columns in records belong to.
+     */
     public ResultSet(ArrayList<Record> records, ArrayList<String> recordColumnNames,
                      ArrayList<Integer> recordColumnTypes, ArrayList<String> tableNamesForColumns) {
         this.records = records;
@@ -60,10 +67,11 @@ public class ResultSet {
     public ArrayList<String> getQualifiedColumnNames() { return qualifiedColumnNames; }
 
     /**
-     * Gets the index of the given
-     * @param tableName
-     * @param columnName
-     * @return
+     * Gets the index of the given combination of table and column names. If there is a match returns an index and
+     * if there is no match returns -1.
+     * @param tableName - given table name
+     * @param columnName - given column name
+     * @return index of column and table match or -1.
      */
     public int getIndexOfColumn(String tableName, String columnName) {
         int index = -1;
