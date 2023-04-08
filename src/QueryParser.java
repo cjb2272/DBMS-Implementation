@@ -12,7 +12,7 @@ import java.util.*;
 @SuppressWarnings("rawtypes")
 class QueryParser {
 
-    public ArrayList<String> keywordArray =  new ArrayList<>(Arrays.asList( "select", "update", "alter", "delete", "display", "drop", "from", "where", "orderby", "insert", "set", "create", "table", "integer", "double", "boolean", "char", "varchar" ));
+    public ArrayList<String> keywordArray =  new ArrayList<>(Arrays.asList( "select", "update", "alter", "delete", "display", "drop", "from", "where", "orderby", "insert", "set", "create", "table", "integer", "double", "boolean", "char", "varchar", "add", "default" ));
 
     public QueryParser() {
     }
