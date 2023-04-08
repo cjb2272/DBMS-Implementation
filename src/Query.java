@@ -57,8 +57,10 @@ class UpdateQuery extends Query{
                 System.out.println("row (" + row + "): Primary key value to update already exists for row (" + row + ")");
             }
             System.out.println("ERROR\n");
+            return;
         }
         System.out.println("SUCCESS\n");
+        return;
     }
 
 }

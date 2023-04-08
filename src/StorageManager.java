@@ -252,7 +252,7 @@ public class StorageManager {
                             if ((attribute.getConstraints() == 1 || attribute.getConstraints() == 3)
                                     && i != Catalog.instance.getTablePKIndex(tableID)) {
                                 if (compareOnIndex(recordToInsert, curRecord, i) == 0) {
-                                    return new int[]{totalRecords, i};
+                                    return new int[]{totalRecords, i, 0};
                                 }
                             }
                         }
