@@ -55,6 +55,9 @@ class QueryParser {
                     outputQ.add( new AttributeNode( token ) );
                 } else{
                     //constant
+                    if((int) data.get( 0 ) == 0){
+                        data.set( 1, ( (String) data.get( 1 )).replace( "\"", "" ));
+                    }
                     outputQ.add( new ConstantNode( data.get( 1 ), (int) data.get( 0 ) ) );
                 }
             } else {
