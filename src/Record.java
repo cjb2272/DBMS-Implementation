@@ -302,4 +302,21 @@ class RecordSort implements Comparator<Record> {
             default -> 0;
         };
     }
+
+    public int compareOnGivenIndex(Record a, Record b, int index) {
+        if (a.equals(b))
+            return 0;
+
+        Object objA = a.getRecordContents().get(index);
+
+        Object objB = b.getRecordContents().get(index);
+
+        return switch (objA.getClass().getSimpleName()) {
+            case "String" -> CharSequence.compare((String) objA, (String) objB);
+            case "Integer" -> Integer.compare((int) objA, (int) objB);
+            case "Boolean" -> Boolean.compare((boolean) objA, (boolean) objB);
+            case "Double" -> Double.compare((double) objA, (double) objB);
+            default -> 0;
+        };
+    }
 }

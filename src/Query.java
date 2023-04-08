@@ -41,7 +41,7 @@ class UpdateQuery extends Query{
 
     @Override
     public void execute() {
-        ResultSet resultSet = StorageManager.instance.generateFromResultSet(tableColumnDictionary, starFlag);
+        ResultSet resultSet = StorageManager.instance.generateFromResultSet(tableColumnDictionary);
         int tableId = Catalog.instance.getTableIdByName(this.table);
         TableSchema tableSch = Catalog.instance.getTableSchemaById(tableId);
         int[] attemptToInsert = StorageManager.instance.updateTable(resultSet, tableId, this.colName, this.data, where);
@@ -79,7 +79,7 @@ class DeleteQuery extends Query{
 
     @Override
     public void execute() {
-        ResultSet resultSet = StorageManager.instance.generateFromResultSet(tableColumnDictionary, starFlag);
+        ResultSet resultSet = StorageManager.instance.generateFromResultSet(tableColumnDictionary);
         int tableId = Catalog.instance.getTableIdByName(this.table);
         StorageManager.instance.deleteFrom(resultSet, tableId, where);
         System.out.println("SUCCESS\n");
@@ -121,7 +121,7 @@ class SelectQuery extends Query {
         // NOTE: checking for valid names of tables and attributes should be done in the parse method upstream.
 
 
-        ResultSet resultSet = StorageManager.instance.generateFromResultSet(tableColumnDictionary, starFlag);
+        ResultSet resultSet = StorageManager.instance.generateFromResultSet(tableColumnDictionary);
 
         ArrayList<String> displayedColNames = new ArrayList<>(resultSet.getColumnNames());
 
@@ -136,12 +136,39 @@ class SelectQuery extends Query {
                     finalRecordOutput.add(record);
                 }
             }
-       } else {
+        } else {
             finalRecordOutput.addAll(resultSet.getRecords());
         }
 
-
-
+        // Orderby
+        if (!orderBy.isEmpty()) {
+            RecordSort sorter = new RecordSort();
+            int index = resultSet.getIndexOfColumn(orderBy.get(0), orderBy.get(1));
+            ArrayList<Record> tempRecordOutput = finalRecordOutput;
+            finalRecordOutput = new ArrayList<>();
+            for (int i  = 0; i < tempRecordOutput.size(); i++) {
+                if (finalRecordOutput.isEmpty()) {
+                    finalRecordOutput.add(tempRecordOutput.get(i));
+                } else {
+                    for (int j = 0; j < finalRecordOutput.size(); j++) {
+                        int comparison = sorter.compareOnGivenIndex(tempRecordOutput.get(i),
+                                finalRecordOutput.get(j), index);
+                        if (comparison < 0) {
+                            finalRecordOutput.add(j, tempRecordOutput.get(i));
+                            break;
+                        } else if  (comparison == 0) {
+                            finalRecordOutput.add(j+1, tempRecordOutput.get(i));
+                            break;
+                        } else {
+                            if (j == finalRecordOutput.size() - 1) {
+                                finalRecordOutput.add(tempRecordOutput.get(i));
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
 
         // remove duplicate column, leaving only the column for the desired table for that column

@@ -58,4 +58,15 @@ public class ResultSet {
 
     public ArrayList<String> getTableNamesForColumns() { return tableNamesForColumns; }
     public ArrayList<String> getQualifiedColumnNames() { return qualifiedColumnNames; }
+
+    public int getIndexOfColumn(String tableName, String columnName) {
+        int index = -1;
+        for (int i = 0; i < columnNames.size(); i++) {
+            if (tableName.equals(tableNamesForColumns.get(i)) && columnName.equals(columnNames.get(i))) {
+                index = i;
+                continue;
+            }
+        }
+        return index;
+    }
 }
