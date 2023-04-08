@@ -225,6 +225,8 @@ public class StorageManager {
         } else {
             int totalRecords = 1;
             int numPagesInTable = pageOrder.size();
+            int indexToInsertAt = -1;
+            Page pageToInsertAt = null;
             for (int index = 0; index < numPagesInTable; index++) {
                 try {
                     Page pageReference = buffer.GetPage(tableID, pageOrder.get(index));
@@ -254,21 +256,24 @@ public class StorageManager {
                                 }
                             }
                         }
-                        if (comparison < 0) {
-                            pageReference.getRecordsInPage().add(idx, recordToInsert);
-                            pageReference.setIsModified(true);
-                            if (pageReference.computeSizeInBytes() > Main.pageSize) {
-                                buffer.PageSplit(pageReference, tableID);
-                            }
-                            break;
+                        if (comparison < 0 && indexToInsertAt == -1) {
+                            indexToInsertAt = idx;
+                            pageToInsertAt = pageReference;
+                            //pageReference.getRecordsInPage().add(idx, recordToInsert);
+                            //pageReference.setIsModified(true);
+                            //if (pageReference.computeSizeInBytes() > Main.pageSize) {
+                            //    buffer.PageSplit(pageReference, tableID);
+                            //}
                         }
-                        if (index == numPagesInTable - 1 && idx == numRecordsInPage - 1) {
-                            pageReference.getRecordsInPage().add(idx + 1, recordToInsert);
-                            pageReference.setIsModified(true);
-                            if (pageReference.computeSizeInBytes() > Main.pageSize) {
-                                buffer.PageSplit(pageReference, tableID);
-                            }
-                            break;
+                        if (index == numPagesInTable - 1 && idx == numRecordsInPage - 1 && indexToInsertAt == -1) {
+                            indexToInsertAt = idx + 1;
+                            pageToInsertAt = pageReference;
+                            //pageReference.getRecordsInPage().add(idx + 1, recordToInsert);
+                            //pageReference.setIsModified(true);
+                            //if (pageReference.computeSizeInBytes() > Main.pageSize) {
+                            //    buffer.PageSplit(pageReference, tableID);
+                            //}
+                            //break;
                         }
                         totalRecords++;
                     }
@@ -276,6 +281,16 @@ public class StorageManager {
                     throw new RuntimeException(e);
                 }
             }
+            try {
+                pageToInsertAt.getRecordsInPage().add(indexToInsertAt, recordToInsert);
+                pageToInsertAt.setIsModified(true);
+                if (pageToInsertAt.computeSizeInBytes() > Main.pageSize) {
+                    buffer.PageSplit(pageToInsertAt, tableID);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
             return new int[]{1};
         }
     }
