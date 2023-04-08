@@ -225,6 +225,8 @@ public class StorageManager {
         } else {
             int totalRecords = 1;
             int numPagesInTable = pageOrder.size();
+            int indexToInsertAt = -1;
+            Page pageToInsertAt = null;
             for (int index = 0; index < numPagesInTable; index++) {
                 try {
                     Page pageReference = buffer.GetPage(tableID, pageOrder.get(index));
@@ -250,25 +252,17 @@ public class StorageManager {
                             if ((attribute.getConstraints() == 1 || attribute.getConstraints() == 3)
                                     && i != Catalog.instance.getTablePKIndex(tableID)) {
                                 if (compareOnIndex(recordToInsert, curRecord, i) == 0) {
-                                    return new int[]{totalRecords, i};
+                                    return new int[]{totalRecords, i, 0};
                                 }
                             }
                         }
-                        if (comparison < 0) {
-                            pageReference.getRecordsInPage().add(idx, recordToInsert);
-                            pageReference.setIsModified(true);
-                            if (pageReference.computeSizeInBytes() > Main.pageSize) {
-                                buffer.PageSplit(pageReference, tableID);
-                            }
-                            break;
+                        if (comparison < 0 && indexToInsertAt == -1) {
+                            indexToInsertAt = idx;
+                            pageToInsertAt = pageReference;
                         }
-                        if (index == numPagesInTable - 1 && idx == numRecordsInPage - 1) {
-                            pageReference.getRecordsInPage().add(idx + 1, recordToInsert);
-                            pageReference.setIsModified(true);
-                            if (pageReference.computeSizeInBytes() > Main.pageSize) {
-                                buffer.PageSplit(pageReference, tableID);
-                            }
-                            break;
+                        if (index == numPagesInTable - 1 && idx == numRecordsInPage - 1 && indexToInsertAt == -1) {
+                            indexToInsertAt = idx + 1;
+                            pageToInsertAt = pageReference;
                         }
                         totalRecords++;
                     }
@@ -276,6 +270,16 @@ public class StorageManager {
                     throw new RuntimeException(e);
                 }
             }
+            try {
+                pageToInsertAt.getRecordsInPage().add(indexToInsertAt, recordToInsert);
+                pageToInsertAt.setIsModified(true);
+                if (pageToInsertAt.computeSizeInBytes() > Main.pageSize) {
+                    buffer.PageSplit(pageToInsertAt, tableID);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
             return new int[]{1};
         }
     }
@@ -337,9 +341,12 @@ public class StorageManager {
     }
 
     /**
-     *
-     * @param tableColumnDict
-     * @return
+     * Generates a resultSet from the given tables. If tableColumnDict includes more than one table
+     * the cartesian product of the tables is created and put into the resultSet.
+     * @param tableColumnDict - linked hashmap containing the table name as key and the names of its columns as
+     *                        its value.
+     * @return a resultSet including the records, array of column names, array of column names that distinguishes
+     *          duplicate column names, array of types for the columns, and array of the table each column belongs to.
      */
     public ResultSet generateFromResultSet(LinkedHashMap<String, ArrayList<String>> tableColumnDict) {
         // ask the storage manager for this data. It will in turn ask the buffer first,
