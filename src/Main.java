@@ -5,6 +5,8 @@ package src;/*
 
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.*;
 
 import src.*;
@@ -22,6 +24,9 @@ public class Main {
             System.out.println(args.length);
             return;
         }
+
+        long startTime = System.currentTimeMillis();
+
         db_loc = args[0]; // this is expected to be a folder path. No empty folder is created.
         pageSize = Integer.parseInt(args[1]);
         bufferSizeLimit = Integer.parseInt(args[2]);
@@ -71,6 +76,7 @@ public class Main {
                 System.out.println("Exiting the database...");
                 Catalog.instance.writeCatalogToFile();
                 StorageManager.instance.writeOutBuffer();
+
                 break;
             }
 
@@ -88,5 +94,11 @@ public class Main {
             }
 
         }
+
+        long endTime   = System.currentTimeMillis();
+        NumberFormat formatter = new DecimalFormat("#0.00000");
+        System.out.print("Execution time was " + formatter.format((endTime - startTime) / 1000d) + " seconds");
+
+
     }
 }

@@ -942,6 +942,9 @@ class QueryParser {
             if (result == 4 || result == 5) {
                 int charLength = GetLength(temp[1]);
                 varLengthSizes.add(charLength);
+
+                // todo: Having the length in the dataTypes is causing issues in code that parses dataTypes
+                // this is causing issues when using varchar attributes
                 dataTypes.add(charLength);
             } else {
                 varLengthSizes.add(-1);
@@ -1017,7 +1020,7 @@ class QueryParser {
                 try {
                     if (dataAttrList.get(i + 1) > tableAttrList.get(i + j + 1)) {
                         System.out.println("Error! Got VarChar with length " + dataAttrList.get(i + 1).toString()
-                                + ", expected Char with length up to" + tableAttrList.get(i + j + 1).toString());
+                                + ", expected Char with length up to " + tableAttrList.get(i + j + 1).toString());
                         return false;
                     }
                 } catch (ArrayIndexOutOfBoundsException e) {
