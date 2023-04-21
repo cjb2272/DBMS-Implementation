@@ -434,12 +434,14 @@ class CreateQuery extends Query {
         ArrayList<Object> attributeInfo = new ArrayList<>();
 
         int index = 0;
+        int offset = 0;
         for (int i = 0; i < 5 * columnNames.size(); i += 5) {
             attributeInfo.add(i, columnNames.get(index));
-            attributeInfo.add(i + 1, dataTypes.get(index));
+            attributeInfo.add(i + 1, dataTypes.get(index + offset));
 
-            if (dataTypes.get(index) == 5 || dataTypes.get(index) == 4) { // varchar or char
+            if (dataTypes.get(index + offset) == 5 || dataTypes.get(index + offset) == 4 || dataTypes.get( index + offset ) == 0) { // varchar or char
                 attributeInfo.add(i + 2, varLengthSizes.get(index));
+                offset++;
             } else {
                 attributeInfo.add(i + 2, QueryParser.getDataTypeSize(dataTypes.get(index)));
             }

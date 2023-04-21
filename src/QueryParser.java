@@ -998,7 +998,7 @@ class QueryParser {
 
         for (int i = 0; i < dataAttrList.size(); i++) {
             if(dataAttrList.get( i ) == 6){
-                if(tableAttrList.get( i + j) == 4 || tableAttrList.get( i + j) == 6){
+                if(tableAttrList.get( i + j) == 4 || tableAttrList.get( i + j) == 5){
                     j++;
                 }
                 continue;
