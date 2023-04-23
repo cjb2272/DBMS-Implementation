@@ -1,9 +1,9 @@
 package src.BPlusTree;
 
 public class BPlusNode {
-    public Object value;
-    public boolean isInner;
-    public int type;
+    public final Object value;
+    public final boolean isInner;
+    public final int type;
     public BPlusNode less = null; //Left
     public BPlusNode greaterOrEqual = null; //Right
     public BPlusNode parent = null;
@@ -145,10 +145,6 @@ public class BPlusNode {
 
     public void setGreaterOrEqual( BPlusNode greaterOrEqual ) {
         this.greaterOrEqual = greaterOrEqual;
-    }
-
-    public BPlusNode getParent() {
-        return parent;
     }
 
     public void setParent( BPlusNode parent ) {
