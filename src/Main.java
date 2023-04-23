@@ -16,11 +16,12 @@ public class Main {
     public static int pageSize; // these values should be final
     public static int bufferSizeLimit;
     public static String db_loc;
+    public static String indexing;
 
     // java Main <db loc> <page size> <buffer size>
     public static void main(String[] args) {
-        if (args.length != 3) {
-            System.out.println("Usage is java Main <db loc> <page size> <buffer size>");
+        if (args.length != 4) {
+            System.out.println("Usage is java Main <db loc> <page size> <buffer size> <indexing>");
             System.out.println(args.length);
             return;
         }
@@ -30,6 +31,7 @@ public class Main {
         db_loc = args[0]; // this is expected to be a folder path. No empty folder is created.
         pageSize = Integer.parseInt(args[1]);
         bufferSizeLimit = Integer.parseInt(args[2]);
+        indexing = args[3];
 
         System.out.println("Looking at " + db_loc + " for existing db...");
 
@@ -39,7 +41,16 @@ public class Main {
                 System.out.println("No existing db found");
                 System.out.println("Creating new db at " + db_loc);
                 catalog.createNewFile();
-                Catalog.instance = new Catalog(pageSize, db_loc);
+                char indexChar;
+                if (indexing.equals("true")) {
+                    indexChar = 't';
+                } else if (indexing.equals("false")) {
+                    indexChar = 'f';
+                } else {
+                    System.out.println("Error: Wrong input for indexing. Must be true or false.");
+                    return;
+                }
+                Catalog.instance = new Catalog(pageSize, db_loc, indexChar);
                 System.out.println("New db created successfully");
             } catch (IOException e) {
                 System.out.println("Error in creating catalog file.");
@@ -51,8 +62,21 @@ public class Main {
             Catalog.instance = Catalog.readCatalogFromFile(db_loc);
             pageSize = Catalog.instance.getPageSize(); // reset so we retain page original db page size
             System.out.println("\tIgnoring provided pages size, using stored page size");
-
         }
+
+        if (indexing.equals("false") && Catalog.instance.getIndexing() == 't') {
+            System.out.println("Error: Cannot set indexing to false on database that is currently set to true.");
+            return;
+        } else {
+            char indexChar;
+            if (indexing.equals("true")) {
+                indexChar = 't';
+            } else {
+                indexChar = 'f';
+            }
+            Catalog.instance.setIndexing(indexChar);
+        }
+
         src.StorageManager.instance = new StorageManager(db_loc);
 
         System.out.println("Page size: " + pageSize);
@@ -98,7 +122,5 @@ public class Main {
         long endTime   = System.currentTimeMillis();
         NumberFormat formatter = new DecimalFormat("#0.00000");
         System.out.print("Execution time was " + formatter.format((endTime - startTime) / 1000d) + " seconds");
-
-
     }
 }
