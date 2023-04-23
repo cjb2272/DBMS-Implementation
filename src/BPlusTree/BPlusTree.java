@@ -20,6 +20,10 @@ public class BPlusTree {
             root = newNode;
             return true;
         } else{
+            if(newNode.type != root.type){
+                System.out.println("ERROR: new node must have this type code: " + root.type);
+                return false;
+            }
             if(!root.isInner){
                 //One layer tree, just add to leaf Node. Split if needed
                 if(!root.hasSiblings()){
@@ -48,7 +52,7 @@ public class BPlusTree {
                 BPlusNode current = root;
 
                 while(current.isInner){
-                    int comparison = current.compare( newNode.getValue() );
+                    int comparison = current.compare( newNode.getValue());
                     if (comparison > 0){
                         current = current.less;
                     } else{
@@ -81,6 +85,51 @@ public class BPlusTree {
             current = current.parent.getLeftMostSibling();
         }
         return current;
+    }
+
+    /**
+     * This function finds a node in the tree using binary search
+     * @param type The data type code for the object you're searching for
+     * @param target The key that is being looked for
+     * @return The BPlusLeafNode with the key given, null otherwise
+     */
+    public BPlusLeafNode findNode(int type, Object target){
+        if(root == null){
+            System.out.println("The tree is empty.");
+            return null;
+        }
+
+        if(type != root.type){
+            System.out.println("ERROR: search target must be same type as");
+            return null;
+        }
+
+        BPlusNode current = root;
+
+        //must traverse the tree
+        while(current.isInner){
+            int comparison = current.compare( target );
+            if (comparison > 0){
+                current = current.less;
+            } else{
+                if(current.hasRight){
+                    current = current.rightSib;
+                } else {
+                    current = current.greaterOrEqual;
+                }
+            }
+        }
+
+        //Move right through the siblings
+        while(current.compare( target ) != 0 && current.hasRight){
+            current = current.rightSib;
+        }
+
+        if(current.compare( target ) == 0){
+            return (BPlusLeafNode) current;
+        } else{
+            return null;
+        }
     }
 
     /**

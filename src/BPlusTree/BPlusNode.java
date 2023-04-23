@@ -26,37 +26,31 @@ public class BPlusNode {
      * @return negative if A < B, 0 for A == B, and positive for A > B
      */
     public int compare(Object Bval){
-        if(this.value.getClass() != Bval.getClass()){
-            System.out.println("ERROR types must be the same to compare.");
-            return 0;
-        } else{
-            switch (this.type) {
-                case 1 -> {
-                    int AIn = (int) this.value;
-                    int BIn = (int) Bval;
-                    return Integer.compare( AIn, BIn );
-                }
-                case 2 -> {
-                    double ADb = (double) this.value;
-                    double BDb = (double) Bval;
-                    return Double.compare( ADb, BDb );
-                }
-                case 3 -> {
-                    boolean ABo = (boolean) this.value;
-                    boolean BBo = (boolean) Bval;
-                    return Boolean.compare( ABo, BBo );
-                }
-                case 4, 5 -> {
-                    String ASt = (String) this.value;
-                    String BSt = (String) Bval;
-                    return ASt.compareTo( BSt );
-                }
-                default -> {
-                    System.out.println( "Didn't recognize data type." );
-                    return 0;
-                }
+        switch (this.type) {
+            case 1 -> {
+                int AIn = (int) this.value;
+                int BIn = (int) Bval;
+                return Integer.compare( AIn, BIn );
             }
-
+            case 2 -> {
+                double ADb = (double) this.value;
+                double BDb = (double) Bval;
+                return Double.compare( ADb, BDb );
+            }
+            case 3 -> {
+                boolean ABo = (boolean) this.value;
+                boolean BBo = (boolean) Bval;
+                return Boolean.compare( ABo, BBo );
+            }
+            case 4, 5 -> {
+                String ASt = (String) this.value;
+                String BSt = (String) Bval;
+                return ASt.compareTo( BSt );
+            }
+            default -> {
+                System.out.println( "Didn't recognize data type." );
+                return 0;
+            }
         }
     }
 
