@@ -3,7 +3,6 @@ package src.BPlusTree;
 public class BPlusNode {
     public Object value;
     public boolean isInner;
-    public int limit;
     public int type;
     public BPlusNode less = null; //Left
     public BPlusNode greaterOrEqual = null; //Right
@@ -13,17 +12,16 @@ public class BPlusNode {
     public boolean hasLeft = false;
     public boolean hasRight = false;
 
-    public BPlusNode( Object value, boolean isInner, int limit, int type){
+    public BPlusNode( Object value, boolean isInner, int type){
         this.value = value;
         this.isInner = isInner;
-        this.limit = limit;
         this.type = type;
     }
 
     /**
      * This function compares the value of two different nodes
      * @param Bval The value of a node being compared to the current node
-     * @return negative if A < B, 0 for A == B, and positive for A > B
+     * @return negative if A > B, 0 for A == B, and positive for A < B
      */
     public int compare(Object Bval){
         switch (this.type) {
@@ -59,27 +57,33 @@ public class BPlusNode {
      * Recursively prints the tree
      * @return string for current node and all children
      */
-    public String toString(){
+    public String printTree(){
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append( this.value.toString() ).append( "\t" );
 
         BPlusNode current = this;
         if(this.less != null) {
-            stringBuilder.append( this.getLess().toString() );
-            stringBuilder.append( this.getGreaterOrEqual().toString() );
+            stringBuilder.append( this.getLess().printTree() );
+            stringBuilder.append( this.getGreaterOrEqual().printTree() );
         }
         while(current.hasRight){
             current = current.rightSib;
             stringBuilder.append( current.getValue().toString() ).append( "\t" );
             if(current.less != null) {
-                stringBuilder.append( current.getGreaterOrEqual().toString() );
+                stringBuilder.append( current.getGreaterOrEqual().printTree() );
             }
         }
 
-
-
         return stringBuilder.toString();
 
+    }
+
+    /**
+     * Prints the value of the current node
+     * @return String of the value
+     */
+    public String toString(){
+        return this.value.toString();
     }
 
     /**
@@ -92,9 +96,6 @@ public class BPlusNode {
             return false;
         }
         BPlusNode BNode = (BPlusNode) B;
-        if(this.limit != BNode.limit){
-            return false;
-        }
 
         if(this.isInner != BNode.isInner){
             return false;
@@ -103,6 +104,10 @@ public class BPlusNode {
         return this.compare( BNode.getValue() ) == 0;
     }
 
+    /**
+     * Moves left until it reaches the last node
+     * @return The left most Node
+     */
     public BPlusNode getLeftMostSibling(){
         BPlusNode current = this;
         while(current.hasLeft){

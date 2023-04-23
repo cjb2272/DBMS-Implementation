@@ -5,8 +5,8 @@ public class BPlusLeafNode extends BPlusNode{
     //TODO add pointer to mem location
 
 
-    public BPlusLeafNode( Object value, int limit, int type ) {
-        super( value, false, limit, type );
+    public BPlusLeafNode( Object value, int type ) {
+        super( value, false, type );
 
     }
 

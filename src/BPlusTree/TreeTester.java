@@ -8,7 +8,7 @@ public class TreeTester {
         BPlusTree tree = new BPlusTree( limit );
         for(int i = 1; i < 11; i++){
             //System.out.println(Integer.toString( i )  + ": " + tree.addNode( new BPlusLeafNode(  i, limit, 1 ))); //Debugging insert
-            tree.addNode( new BPlusLeafNode(  i, limit, 1 ));
+            tree.addNode( new BPlusLeafNode(  i, 1 ));
         }
 
         System.out.println(tree.findNode( 1, 5 ).toString());

@@ -3,10 +3,10 @@ package src.BPlusTree;
 import java.util.ArrayList;
 
 public class BPlusTree {
-    private int limit;
+    private final int limit;
     public BPlusNode root = null;
 
-    public BPlusTree( int limit){
+    public BPlusTree( int limit ){
         this.limit = limit;
     }
 
@@ -160,7 +160,7 @@ public class BPlusTree {
         BPlusNode L = left.get( 0 );
         BPlusNode R = right.get( 0 );
 
-        BPlusNode newRoot = new BPlusNode( R.getValue(), true, this.limit, current.type );
+        BPlusNode newRoot = new BPlusNode( R.getValue(), true, current.type );
         if(!start.isInner) {
             //if leaf nodes splitting then middle node is kept
             newRoot.setLess( L );
@@ -195,7 +195,13 @@ public class BPlusTree {
         return newRoot;
     }
 
-    public void insertSibling(BPlusNode current, BPlusNode addition){
+    /**
+     * This function inserts a node between siblings by comparing each one
+     * @param start The left most node in the row being inserted into
+     * @param addition The new node being added to the siblings
+     */
+    public void insertSibling(BPlusNode start, BPlusNode addition){
+        BPlusNode current = start;
         while(current.hasRight && (current.compare( addition.getValue() ) < 0)){
             current = current.rightSib;
         }
@@ -206,6 +212,12 @@ public class BPlusTree {
         }
     }
 
+    /**
+     * This functions counts the number of siblings in a row
+     *      to check if a row needs to split
+     * @param start The left most sibling in the row
+     * @return True the row needs to split, False if not
+     */
     public boolean checkDegree( BPlusNode start){
         int counter = 1;
         while(start.hasRight){
@@ -215,6 +227,11 @@ public class BPlusTree {
         return counter >= this.limit;
     }
 
+    /**
+     * Removes the Left and Right nodes as siblings
+     * @param L Left node
+     * @param R Right node
+     */
     public void removedSibling(BPlusNode L, BPlusNode R){
         L.rightSib = null;
         R.leftSib = null;
@@ -222,6 +239,11 @@ public class BPlusTree {
         R.hasLeft = false;
     }
 
+    /**
+     * adds the left and right nodes as their respective siblings
+     * @param L Left node
+     * @param R Right node
+     */
     public void addSibling(BPlusNode L, BPlusNode R){
         L.rightSib = R;
         R.leftSib = L;
@@ -232,7 +254,7 @@ public class BPlusTree {
 
 
     public String toString(){
-        return root.toString();
+        return root.printTree();
     }
 
     public boolean removeNode(Object value, int type){
