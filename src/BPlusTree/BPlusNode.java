@@ -12,7 +12,7 @@ public class BPlusNode {
     public boolean hasLeft = false;
     public boolean hasRight = false;
 
-    public BPlusNode( Object value, boolean isInner, int type){
+    public BPlusNode( Object value, boolean isInner, int type ) {
         this.value = value;
         this.isInner = isInner;
         this.type = type;
@@ -20,10 +20,11 @@ public class BPlusNode {
 
     /**
      * This function compares the value of two different nodes
+     *
      * @param Bval The value of a node being compared to the current node
      * @return negative if A > B, 0 for A == B, and positive for A < B
      */
-    public int compare(Object Bval){
+    public int compare( Object Bval ) {
         switch (this.type) {
             case 1 -> {
                 int AIn = (int) this.value;
@@ -55,21 +56,22 @@ public class BPlusNode {
 
     /**
      * Recursively prints the tree
+     *
      * @return string for current node and all children
      */
-    public String printTree(){
+    public String printTree() {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append( this.value.toString() ).append( "\t" );
 
         BPlusNode current = this;
-        if(this.less != null) {
+        if ( this.less != null ) {
             stringBuilder.append( this.getLess().printTree() );
             stringBuilder.append( this.getGreaterOrEqual().printTree() );
         }
-        while(current.hasRight){
+        while (current.hasRight) {
             current = current.rightSib;
             stringBuilder.append( current.getValue().toString() ).append( "\t" );
-            if(current.less != null) {
+            if ( current.less != null ) {
                 stringBuilder.append( current.getGreaterOrEqual().printTree() );
             }
         }
@@ -80,24 +82,26 @@ public class BPlusNode {
 
     /**
      * Prints the value of the current node
+     *
      * @return String of the value
      */
-    public String toString(){
+    public String toString() {
         return this.value.toString();
     }
 
     /**
      * This function checks if two nodes are equal
+     *
      * @param B The object being compared against this
      * @return True if they're equal, false if not
      */
-    public boolean equals(Object B){
-        if(B.getClass() != BPlusNode.class){
+    public boolean equals( Object B ) {
+        if ( B.getClass() != BPlusNode.class ) {
             return false;
         }
         BPlusNode BNode = (BPlusNode) B;
 
-        if(this.isInner != BNode.isInner){
+        if ( this.isInner != BNode.isInner ) {
             return false;
         }
 
@@ -106,11 +110,12 @@ public class BPlusNode {
 
     /**
      * Moves left until it reaches the last node
+     *
      * @return The left most Node
      */
-    public BPlusNode getLeftMostSibling(){
+    public BPlusNode getLeftMostSibling() {
         BPlusNode current = this;
-        while(current.hasLeft){
+        while (current.hasLeft) {
             current = current.leftSib;
         }
         return current;
@@ -118,7 +123,7 @@ public class BPlusNode {
 
     //Getters and Setters
 
-    public boolean hasSiblings(){
+    public boolean hasSiblings() {
         return this.hasLeft || this.hasRight;
     }
 
@@ -130,12 +135,12 @@ public class BPlusNode {
         return less;
     }
 
-    public BPlusNode getGreaterOrEqual() {
-        return greaterOrEqual;
-    }
-
     public void setLess( BPlusNode less ) {
         this.less = less;
+    }
+
+    public BPlusNode getGreaterOrEqual() {
+        return greaterOrEqual;
     }
 
     public void setGreaterOrEqual( BPlusNode greaterOrEqual ) {

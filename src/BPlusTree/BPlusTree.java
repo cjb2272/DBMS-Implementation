@@ -6,57 +6,58 @@ public class BPlusTree {
     private final int limit;
     public BPlusNode root = null;
 
-    public BPlusTree( int limit ){
+    public BPlusTree( int limit ) {
         this.limit = limit;
     }
 
     /**
      * This is where the logic of adding a node to a tree is
+     *
      * @param newNode The new Node being added to this tree
      * @return True if success and False if failed
      */
-    public boolean addNode(BPlusNode newNode){
-        if(root == null){
+    public boolean addNode( BPlusNode newNode ) {
+        if ( root == null ) {
             root = newNode;
             return true;
-        } else{
-            if(newNode.type != root.type){
-                System.out.println("ERROR: new node must have this type code: " + root.type);
+        } else {
+            if ( newNode.type != root.type ) {
+                System.out.println( "ERROR: new node must have this type code: " + root.type );
                 return false;
             }
-            if(!root.isInner){
+            if ( !root.isInner ) {
                 //One layer tree, just add to leaf Node. Split if needed
-                if(!root.hasSiblings()){
+                if ( !root.hasSiblings() ) {
                     int comparison = root.compare( newNode.getValue() );
-                    if(comparison == 0){
-                        System.out.println("Error, cannot have duplicate keys in B+ Tree.");
+                    if ( comparison == 0 ) {
+                        System.out.println( "Error, cannot have duplicate keys in B+ Tree." );
                         return false;
-                    } else if(comparison > 0){
+                    } else if ( comparison > 0 ) {
                         addSibling( newNode, root );
                         this.root = newNode;
                         return true;
-                    }  else{
+                    } else {
                         addSibling( root, newNode );
                         return true;
                     }
-                } else{
+                } else {
                     insertSibling( root, newNode );
                     BPlusNode start = newNode.getLeftMostSibling();
-                    if( checkDegree( start )){
+                    if ( checkDegree( start ) ) {
                         this.root = split( start );
                     }
                     return true;
                 }
-            } else{
+            } else {
                 //Need to traverse tree
                 BPlusNode current = root;
 
-                while(current.isInner){
-                    int comparison = current.compare( newNode.getValue());
-                    if (comparison > 0){
+                while (current.isInner) {
+                    int comparison = current.compare( newNode.getValue() );
+                    if ( comparison > 0 ) {
                         current = current.less;
-                    } else{
-                        if(current.hasRight){
+                    } else {
+                        if ( current.hasRight ) {
                             current = current.rightSib;
                         } else {
                             current = current.greaterOrEqual;
@@ -66,10 +67,10 @@ public class BPlusTree {
 
                 insertSibling( current, newNode );
                 BPlusNode start = newNode.getLeftMostSibling();
-                while(checkDegree( start )) {
-                     start = split( start ).getLeftMostSibling();
+                while (checkDegree( start )) {
+                    start = split( start ).getLeftMostSibling();
                 }
-                this.root = findRoot( start.getLeftMostSibling());
+                this.root = findRoot( start.getLeftMostSibling() );
                 return true;
             }
         }
@@ -77,11 +78,12 @@ public class BPlusTree {
 
     /**
      * Goes left and up the tree until it finds the highest node
+     *
      * @param current starting node
      * @return Root of the tree
      */
-    public BPlusNode findRoot(BPlusNode current){
-        while(current.parent !=  null){
+    public BPlusNode findRoot( BPlusNode current ) {
+        while (current.parent != null) {
             current = current.parent.getLeftMostSibling();
         }
         return current;
@@ -89,30 +91,31 @@ public class BPlusTree {
 
     /**
      * This function finds a node in the tree using binary search
-     * @param type The data type code for the object you're searching for
+     *
+     * @param type   The data type code for the object you're searching for
      * @param target The key that is being looked for
      * @return The BPlusLeafNode with the key given, null otherwise
      */
-    public BPlusLeafNode findNode(int type, Object target){
-        if(root == null){
-            System.out.println("The tree is empty.");
+    public BPlusLeafNode findNode( int type, Object target ) {
+        if ( root == null ) {
+            System.out.println( "The tree is empty." );
             return null;
         }
 
-        if(type != root.type){
-            System.out.println("ERROR: search target must be same type as");
+        if ( type != root.type ) {
+            System.out.println( "ERROR: search target must be same type as" );
             return null;
         }
 
         BPlusNode current = root;
 
         //must traverse the tree
-        while(current.isInner){
+        while (current.isInner) {
             int comparison = current.compare( target );
-            if (comparison > 0){
+            if ( comparison > 0 ) {
                 current = current.less;
-            } else{
-                if(current.hasRight){
+            } else {
+                if ( current.hasRight ) {
                     current = current.rightSib;
                 } else {
                     current = current.greaterOrEqual;
@@ -121,35 +124,36 @@ public class BPlusTree {
         }
 
         //Move right through the siblings
-        while(current.compare( target ) != 0 && current.hasRight){
+        while (current.compare( target ) != 0 && current.hasRight) {
             current = current.rightSib;
         }
 
-        if(current.compare( target ) == 0){
+        if ( current.compare( target ) == 0 ) {
             return (BPlusLeafNode) current;
-        } else{
+        } else {
             return null;
         }
     }
 
     /**
      * This functions splits the cluster of nodes that start is apart of
+     *
      * @param start The left-most sibling of this cluster
      * @return The new parent node that resulted from the split
      */
-    public BPlusNode split( BPlusNode start ){
+    public BPlusNode split( BPlusNode start ) {
         int middle = this.limit / 2;
         int counter = 0;
         ArrayList<BPlusNode> left = new ArrayList<>();
         ArrayList<BPlusNode> right = new ArrayList<>();
         BPlusNode current = start;
         //split siblings in half
-        while(counter < middle){
+        while (counter < middle) {
             left.add( current );
             current = current.rightSib;
             counter++;
         }
-        while(current.hasRight){
+        while (current.hasRight) {
             right.add( current );
             current = current.rightSib;
             counter++;
@@ -161,7 +165,7 @@ public class BPlusTree {
         BPlusNode R = right.get( 0 );
 
         BPlusNode newRoot = new BPlusNode( R.getValue(), true, current.type );
-        if(!start.isInner) {
+        if ( !start.isInner ) {
             //if leaf nodes splitting then middle node is kept
             newRoot.setLess( L );
             newRoot.setGreaterOrEqual( R );
@@ -175,7 +179,7 @@ public class BPlusTree {
             R.setParent( newRoot );
 
             removedSibling( left.get( left.size() - 1 ), R );
-        } else{
+        } else {
             //If inner then middle node is removed and set up a level
             R = right.get( 1 );
             newRoot.setLess( L );
@@ -197,12 +201,13 @@ public class BPlusTree {
 
     /**
      * This function inserts a node between siblings by comparing each one
-     * @param start The left most node in the row being inserted into
+     *
+     * @param start    The left most node in the row being inserted into
      * @param addition The new node being added to the siblings
      */
-    public void insertSibling(BPlusNode start, BPlusNode addition){
+    public void insertSibling( BPlusNode start, BPlusNode addition ) {
         BPlusNode current = start;
-        while(current.hasRight && (current.compare( addition.getValue() ) < 0)){
+        while (current.hasRight && ( current.compare( addition.getValue() ) < 0 )) {
             current = current.rightSib;
         }
         if ( current.compare( addition.getValue() ) > 0 || current.hasRight ) {
@@ -214,13 +219,14 @@ public class BPlusTree {
 
     /**
      * This functions counts the number of siblings in a row
-     *      to check if a row needs to split
+     * to check if a row needs to split
+     *
      * @param start The left most sibling in the row
      * @return True the row needs to split, False if not
      */
-    public boolean checkDegree( BPlusNode start){
+    public boolean checkDegree( BPlusNode start ) {
         int counter = 1;
-        while(start.hasRight){
+        while (start.hasRight) {
             start = start.rightSib;
             counter++;
         }
@@ -229,10 +235,11 @@ public class BPlusTree {
 
     /**
      * Removes the Left and Right nodes as siblings
+     *
      * @param L Left node
      * @param R Right node
      */
-    public void removedSibling(BPlusNode L, BPlusNode R){
+    public void removedSibling( BPlusNode L, BPlusNode R ) {
         L.rightSib = null;
         R.leftSib = null;
         L.hasRight = false;
@@ -241,10 +248,11 @@ public class BPlusTree {
 
     /**
      * adds the left and right nodes as their respective siblings
+     *
      * @param L Left node
      * @param R Right node
      */
-    public void addSibling(BPlusNode L, BPlusNode R){
+    public void addSibling( BPlusNode L, BPlusNode R ) {
         L.rightSib = R;
         R.leftSib = L;
         L.hasRight = true;
@@ -252,12 +260,11 @@ public class BPlusTree {
     }
 
 
-
-    public String toString(){
+    public String toString() {
         return root.printTree();
     }
 
-    public boolean removeNode(Object value, int type){
+    public boolean removeNode( Object value, int type ) {
         return false;
     }
 }

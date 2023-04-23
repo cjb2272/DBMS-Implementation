@@ -1,6 +1,6 @@
 package src.BPlusTree;
 
-public class BPlusLeafNode extends BPlusNode{
+public class BPlusLeafNode extends BPlusNode {
 
     //TODO add pointer to mem location
 
