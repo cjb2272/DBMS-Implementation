@@ -12,10 +12,15 @@ public class BPlusNode {
     public boolean hasLeft = false;
     public boolean hasRight = false;
 
-    public BPlusNode( Object value, boolean isInner, int type ) {
+    public int pageIndex;
+    public int recordIndex;
+
+    public BPlusNode( Object value, boolean isInner, int type, int page, int record ) {
         this.value = value;
         this.isInner = isInner;
         this.type = type;
+        this.pageIndex = page;
+        this.recordIndex = record;
     }
 
     /**

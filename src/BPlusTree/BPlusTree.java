@@ -190,7 +190,7 @@ public class BPlusTree {
      * @param target The key that is being looked for
      * @return The BPlusLeafNode with the key given, null otherwise
      */
-    public BPlusLeafNode findNode( int type, Object target ) {
+    public BPlusNode findNode( int type, Object target ) {
         if ( root == null ) {
             System.out.println( "The tree is empty." );
             return null;
@@ -223,7 +223,7 @@ public class BPlusTree {
         }
 
         if ( current.compare( target ) == 0 ) {
-            return (BPlusLeafNode) current;
+            return (BPlusNode) current;
         } else {
             return null;
         }
@@ -258,7 +258,8 @@ public class BPlusTree {
         BPlusNode L = left.get( 0 );
         BPlusNode R = right.get( 0 );
 
-        BPlusNode newRoot = new BPlusNode( R.getValue(), true, current.type );
+        //TODO change 0 to mem location
+        BPlusNode newRoot = new BPlusNode( R.getValue(), true, current.type, 0, 0 );
         if ( !start.isInner ) {
             //if leaf nodes splitting then middle node is kept
             newRoot.setLess( L );
