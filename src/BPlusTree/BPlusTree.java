@@ -76,6 +76,100 @@ public class BPlusTree {
         }
     }
 
+
+    public boolean deleteNode(int type, Object value){
+        if(root.type != type){
+            System.out.println("ERROR: Must enter the correct data type.");
+            return false;
+        }
+
+        BPlusNode nodeToDelete = this.findNode( type, value );
+
+        if(nodeToDelete == null){
+            System.out.println("ERROR: could not find leaf node with " + value.toString() + " as a key.");
+            return false;
+        }
+
+        if(nodeToDelete.getNumOfSiblings() < this.limit / 2 && nodeToDelete.parent != null){
+            //need to merge
+            return removeAndMerge( nodeToDelete );
+        } else{
+            if(nodeToDelete.parent != null){
+                removeFromFamily( nodeToDelete );
+            } else{
+                if(nodeToDelete.hasLeft){
+                    if(nodeToDelete.hasRight){
+                        addSibling( nodeToDelete.leftSib, nodeToDelete.rightSib );
+                    } else{
+                        removeSibling( nodeToDelete.leftSib, nodeToDelete );
+                    }
+                } else{
+                    if(nodeToDelete.hasRight){
+                        this.root = nodeToDelete.rightSib;
+                        removeSibling( nodeToDelete, nodeToDelete.rightSib );
+                    } else{
+                        this.root = null;
+                    }
+                }
+            }
+            return true;
+        }
+    }
+
+    public boolean removeAndMerge(BPlusNode nodeToDelete){
+        BPlusNode parent = nodeToDelete.parent;
+        boolean isLess = parent.getLess().equals( nodeToDelete.getLeftMostSibling() );
+
+        //First check if a node can be borrowed from the other side of their parent
+        if(isLess){
+            if(parent.getGreaterOrEqual().getNumOfSiblings() >= this.limit / 2){
+                //move key from greater than to less than
+                addSibling(nodeToDelete.getRightMostSibling(), parent.getGreaterOrEqual());
+                parent.setGreaterOrEqual( parent.getGreaterOrEqual().rightSib );
+                parent.value = parent.getGreaterOrEqual().getValue();
+                removeSibling( parent.getGreaterOrEqual().leftSib, parent.getGreaterOrEqual() );
+                if(nodeToDelete.hasLeft){
+                    removeSibling( nodeToDelete.leftSib, nodeToDelete );
+                } else{
+                    parent.setLess( nodeToDelete.rightSib );
+                }
+                removeSibling( nodeToDelete, nodeToDelete.rightSib );
+                return true;
+            }
+        } else{
+            if(parent.getLess().getNumOfSiblings() >= this.limit / 2){
+                //move key from less than to greater than
+                addSibling( parent.getLess().getRightMostSibling(), parent.getGreaterOrEqual() );
+                parent.setGreaterOrEqual( parent.getGreaterOrEqual().leftSib );
+                parent.value = parent.getGreaterOrEqual().getValue();
+                removeSibling( parent.getGreaterOrEqual().leftSib, parent.getGreaterOrEqual() );
+                if(nodeToDelete.hasRight){
+                    removeSibling( nodeToDelete, nodeToDelete.rightSib );
+                }
+                removeSibling( nodeToDelete.leftSib, nodeToDelete );
+                return true;
+            }
+        }
+
+        //cannot borrow, must merge two sets of siblings
+        //TODO
+        return false;
+    }
+
+    public void removeFromFamily(BPlusNode child){
+        if(child.hasLeft){
+            addSibling( child.leftSib, child.rightSib );
+        } else{
+            boolean isLess = child.parent.getLess().equals( child );
+            if(isLess){
+                child.parent.setLess( child.rightSib );
+            } else{
+                child.parent.setGreaterOrEqual( child.rightSib );
+            }
+            removeSibling( child, child.rightSib );
+        }
+    }
+
     /**
      * Goes left and up the tree until it finds the highest node
      *
@@ -178,7 +272,7 @@ public class BPlusTree {
             L.setParent( newRoot );
             R.setParent( newRoot );
 
-            removedSibling( left.get( left.size() - 1 ), R );
+            removeSibling( left.get( left.size() - 1 ), R );
         } else {
             //If inner then middle node is removed and set up a level
             R = right.get( 1 );
@@ -193,8 +287,8 @@ public class BPlusTree {
             L.setParent( newRoot );
             R.setParent( newRoot );
             //separating nodes that split
-            removedSibling( left.get( left.size() - 1 ), right.get( 0 ) );
-            removedSibling( right.get( 0 ), R );
+            removeSibling( left.get( left.size() - 1 ), right.get( 0 ) );
+            removeSibling( right.get( 0 ), R );
         }
         return newRoot;
     }
@@ -239,7 +333,7 @@ public class BPlusTree {
      * @param L Left node
      * @param R Right node
      */
-    public void removedSibling( BPlusNode L, BPlusNode R ) {
+    public void removeSibling( BPlusNode L, BPlusNode R ) {
         L.rightSib = null;
         R.leftSib = null;
         L.hasRight = false;
@@ -261,10 +355,9 @@ public class BPlusTree {
 
 
     public String toString() {
+        if(root == null){
+            return "Empty Tree";
+        }
         return root.printTree();
-    }
-
-    public boolean removeNode( Object value, int type ) {
-        return false;
     }
 }

@@ -1,7 +1,7 @@
 package src.BPlusTree;
 
 public class BPlusNode {
-    public final Object value;
+    public Object value;
     public final boolean isInner;
     public final int type;
     public BPlusNode less = null; //Left
@@ -96,7 +96,7 @@ public class BPlusNode {
      * @return True if they're equal, false if not
      */
     public boolean equals( Object B ) {
-        if ( B.getClass() != BPlusNode.class ) {
+        if ( B.getClass() != this.getClass() ) {
             return false;
         }
         BPlusNode BNode = (BPlusNode) B;
@@ -119,6 +119,29 @@ public class BPlusNode {
             current = current.leftSib;
         }
         return current;
+    }
+
+    /**
+     * Moves right until it reaches the last node
+     *
+     * @return The right most Node
+     */
+    public BPlusNode getRightMostSibling() {
+        BPlusNode current = this;
+        while (current.hasRight) {
+            current = current.rightSib;
+        }
+        return current;
+    }
+
+    public int getNumOfSiblings(){
+        BPlusNode start = this.getLeftMostSibling();
+        int counter = 0;
+        while(start.hasRight){
+            start = start.rightSib;
+            counter++;
+        }
+        return counter;
     }
 
     //Getters and Setters
