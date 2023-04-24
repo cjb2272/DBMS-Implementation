@@ -22,16 +22,36 @@ public class Catalog {
     // Integer representing size of pages in the database.
     private int pageSize;
 
+    private char indexing;
+
     /**
      * Creates an instance of the Catalog object.
      * 
      * @param pageSize : The size in bytes a page in this database will be.
      * @param rootPath : The path to the database folder.
+     * @param indexing : Character to indicate if database has indexing turned on or off.
      */
-    public Catalog(int pageSize, String rootPath) {
+    public Catalog(int pageSize, String rootPath, char indexing) {
         this.tableSchemas = new ArrayList<>();
         this.pageSize = pageSize;
         this.rootPath = rootPath;
+        this.indexing = indexing;
+    }
+
+    /**
+     * A setter to change the character for indexing.
+     * @param indexing : Character to indicate if database has indexing turned on or off.
+     */
+    public void setIndexing(char indexing) {
+        this.indexing = indexing;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public char getIndexing() {
+        return indexing;
     }
 
     /**
@@ -383,7 +403,7 @@ public class Catalog {
      * @return Integer representing the number of bytes.
      */
     private int getSizeInBytes() {
-        int size = Integer.BYTES + Integer.BYTES;
+        int size = Integer.BYTES + Character.BYTES + Integer.BYTES;
         for (TableSchema tableSchema : tableSchemas) {
             size += tableSchema.getSizeInBytes();
         }
@@ -406,8 +426,10 @@ public class Catalog {
 
             // Reads in the page size and number of table schemas
             int pageSize = byteProcessor.readInt();
-            Catalog catalog = new Catalog(pageSize, rootPath);
+            char indexChar = byteProcessor.readChar();
+            Catalog catalog = new Catalog(pageSize, rootPath, indexChar);
             int numOfTables = byteProcessor.readInt();
+            int indexing = byteProcessor.readChar();
             for (int i = 0; i < numOfTables; i++) {
                 // Reads in the table id and table name
                 int tableId = byteProcessor.readInt();
@@ -468,6 +490,7 @@ public class Catalog {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         // Writes page size and number of table schemas
         buffer.putInt(pageSize);
+        buffer.putChar(indexing);
         buffer.putInt(tableSchemas.size());
         for (TableSchema tableSchema : tableSchemas) {
             // Writes table id, table name length, table name
