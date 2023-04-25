@@ -17,7 +17,7 @@ public class BPlusNode {
 
     public BPlusNode( Object value, boolean isInner, int type, int page, int record ) {
         this.value = value;     // the Search Key value for this node
-        this.isInner = isInner; // 
+        this.isInner = isInner; //
         this.type = type;       // data type int
         this.pageIndex = page;
         this.recordIndex = record;

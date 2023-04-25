@@ -26,6 +26,7 @@ public class TreeTester {
 
         BPlusTree tree = new BPlusTree( limit );
 
+        
         for ( int i = 1; i < 6; i++ ) {
             //System.out.println(Integer.toString( i )  + ": " + tree.addNode( new BPlusLeafNode(  i, limit, 1 ))); //Debugging insert
             tree.addNode( new BPlusNode( i, false, 1, 0,0 ) );
@@ -41,8 +42,9 @@ public class TreeTester {
 
         System.out.println( tree.toString() );
 
+
         /*
-        CODE FOR TESTING ALONG WITH EXAMPLE FROM CLASS ACTIVITY
+        //CODE FOR TESTING ALONG WITH EXAMPLE FROM CLASS ACTIVITY
 
         tree.addNode( new BPlusNode( 1, false, 1, 0,0 ) );
         tree.addNode( new BPlusNode( 4, false, 1, 0,0 ) );
@@ -82,10 +84,25 @@ public class TreeTester {
 
         tree.addNode( new BPlusNode( 12, false, 1, 0,0 ) );
         tree.addNode( new BPlusNode( 15, false, 1, 0,0 ) );
-        tree.deleteNode(1, 70);
+        tree.deleteNode(1, 5);
 
         System.out.println( tree.toString() );
 
-         */
+        tree.addNode( new BPlusNode( 49, false, 1, 0,0 ) );
+        tree.addNode( new BPlusNode( 48, false, 1, 0,0 ) );
+        tree.deleteNode(1, 22);
+
+        System.out.println( tree.toString() );
+
+        tree.addNode( new BPlusNode( 90, false, 1, 0,0 ) );
+        tree.addNode( new BPlusNode( 95, false, 1, 0,0 ) );
+        tree.addNode( new BPlusNode( 78, false, 1, 0,0 ) );
+        tree.addNode( new BPlusNode( 85, false, 1, 0,0 ) );
+        tree.addNode( new BPlusNode( 100, false, 1, 0,0 ) );
+        tree.deleteNode(1, 20);
+
+        System.out.println( tree.toString() );
+        */
+
     }
 }
