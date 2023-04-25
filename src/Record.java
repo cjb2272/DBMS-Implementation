@@ -77,7 +77,6 @@ public class Record implements Cloneable{
             if (includeNullChars) {
                 sizeOfRecordInBytes = sizeOfRecordInBytes + Character.BYTES;
             }
-            // not sure if this will work todo
             if (obj == null)
                 continue; //do nothing, null does not add to size
             else if (obj instanceof Integer) {
@@ -172,7 +171,6 @@ public class Record implements Cloneable{
      * @return a byte array containing all the record's data in byte form
      */
     public byte[] toBytes(int tableNum) {
-        //byte[] bytes = new byte[(this.recordContents.size() * Character.BYTES) + this.compute_size()]; //todo commented out line should be correct not this one
         byte[] bytes = new byte[this.compute_size(true)];
         ByteBuffer bytesBuffer = ByteBuffer.wrap(bytes);
         byte[] attrBytes = new byte[this.compute_size(false)];
@@ -240,8 +238,6 @@ public class Record implements Cloneable{
     }
 
 
-
-
     public String displayRecords(int padLen){
         StringBuilder result = new StringBuilder();
 
@@ -265,7 +261,6 @@ public class Record implements Cloneable{
         return result + "|";
     }
 
-
     // Takes two records and merges their data into a new record.
     // This is used for the cartesian product.
     public static Record mergeRecords(Record record1, Record record2) {
@@ -284,8 +279,6 @@ public class Record implements Cloneable{
 
 class RecordSort implements Comparator<Record> {
     public int compare(Record a, Record b) {
-
-
 
         if (a.equals(b))
             return 0;

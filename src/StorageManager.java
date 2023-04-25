@@ -29,7 +29,7 @@ public class StorageManager {
         this.buffer = new BufferManager();
     }
 
-    /*
+    /**
      * Called by the SQL parser to create a new table file on disk.
      * The SQL parser should have already verified that the table doesn't already
      * exist (and has valid attributes)
@@ -37,6 +37,10 @@ public class StorageManager {
      * The Table object is returned as a convenience, but since everything is
      * page-based (and the Table object is never
      * directly in the buffer), this isn't strictly needed.
+     * @param ID .
+     * @param name .
+     * @param columnNames .
+     * @param dataTypes .
      */
     public void createTable(int ID, String name, ArrayList<String> columnNames, ArrayList<Integer> dataTypes) {
 
@@ -330,7 +334,7 @@ public class StorageManager {
                     //if curRecord's pk > recordToDelete's pk
                     if (comparison < 0) {
                         //record to delete does not exist, stop our search
-                        return new int[]{1}; //todo how does this return come into play
+                        return new int[]{1};
                     }
                 }
             } catch (IOException e) {
@@ -450,7 +454,7 @@ public class StorageManager {
     public void deleteFrom(ResultSet resultSet, int tableID, ConditionTree whereCondition) {
         ArrayList<Record> allRecordsFromTable = resultSet.getRecords();
         for (Record curRecord : allRecordsFromTable) {
-            boolean deleteRecord = true; //deleteing all Records by default
+            boolean deleteRecord = true; //deleting all Records by default
             if (whereCondition != null) {
                 //call method(s) to evaluate a single tuple for meeting where condition
                 deleteRecord = whereCondition.validateTree(curRecord, resultSet);
@@ -462,7 +466,6 @@ public class StorageManager {
     }
 
     /**
-     * --missing params helping with change--
      * This Method updates a record, by first deleting the existing record, and then
      * inserting the updated version of that record. The insertRecord method
      * handled recomputation of page size when the updated record is added, indicating
@@ -472,9 +475,9 @@ public class StorageManager {
      *
      * @param tableID the table record in question belongs to
      * @param recordToUpdate the record to update
-     * @param columnName .
-     * @param data .
-     * @return receive return from insert and pass that along? not sure what return from insert does todo
+     * @param columnName column
+     * @param data contains value we want to update column with
+     * @return receive return from insert and pass that up
      */
     public int[] updateRecord(int tableID, Record recordToUpdate, String columnName, List<Object> data) {
         Record copyOfRecordToUpdate = null; //make a copy of the record
@@ -507,7 +510,7 @@ public class StorageManager {
             //recordToUpdate.setRecordContents(originalRecordContents);
             insertRecord(tableID, recordToUpdate); //add original, unchanged record back in
         }
-        return insertReturn; // t o d o ?
+        return insertReturn;
     }
 
     /**
@@ -686,9 +689,7 @@ public class StorageManager {
      * The Buffer is in place to ideally reduce read/writes to file system
      */
     private class BufferManager {
-
         // will be THE NEXT value to assign when page is accessed
-        // will increase indefinitely (long better than int...)
         private long counterForLRU = 0;
         // The Program Wide Buffer Itself
         ArrayList<Page> PageBuffer = new ArrayList<>();

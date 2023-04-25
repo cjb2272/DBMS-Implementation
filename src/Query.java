@@ -50,7 +50,7 @@ class UpdateQuery extends Query{
             int row = attemptToInsert[0];
             //attemptToInsert[2] has value being pkIndex of record we failed to insert, while at index 1 value was
             //existing record that resulted in incompatibility/error
-            if (attemptToInsert[2] != attemptToInsert[1]) { //todo are we catching this unique
+            if (attemptToInsert[2] != attemptToInsert[1]) {
                 System.out.println("row (" + row + "): Unique key value to update already exists for row (" + row +
                         ") at column("+tableSch.getAttributes().get(attemptToInsert[1])+")");
             } else {
