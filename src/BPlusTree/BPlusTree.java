@@ -172,12 +172,14 @@ public class BPlusTree {
                 parent.setGreaterOrEqual( parent.getGreaterOrEqual().rightSib );
                 parent.value = parent.getGreaterOrEqual().getValue();
                 removeSibling( parent.getGreaterOrEqual().leftSib, parent.getGreaterOrEqual() );
-                if(nodeToDelete.hasLeft){
-                    removeSibling( nodeToDelete.leftSib, nodeToDelete );
-                } else{
+                if(nodeToDelete.hasLeft && nodeToDelete.hasRight){
+                    addSibling( nodeToDelete.leftSib, nodeToDelete.rightSib );
+                } else if (!nodeToDelete.hasLeft) {
                     parent.setLess( nodeToDelete.rightSib );
+                    if ( nodeToDelete.hasRight ) {
+                        removeSibling( nodeToDelete, nodeToDelete.rightSib );
+                    }
                 }
-                removeSibling( nodeToDelete, nodeToDelete.rightSib );
                 return true;
             }
         } else{
@@ -187,10 +189,14 @@ public class BPlusTree {
                 parent.setGreaterOrEqual( parent.getGreaterOrEqual().leftSib );
                 parent.value = parent.getGreaterOrEqual().getValue();
                 removeSibling( parent.getGreaterOrEqual().leftSib, parent.getGreaterOrEqual() );
-                if(nodeToDelete.hasRight){
-                    removeSibling( nodeToDelete, nodeToDelete.rightSib );
+                if(nodeToDelete.hasLeft && nodeToDelete.hasRight){
+                    addSibling( nodeToDelete.leftSib, nodeToDelete.rightSib );
+                } else if (!nodeToDelete.hasLeft) {
+                    parent.setLess( nodeToDelete.rightSib );
+                    if ( nodeToDelete.hasRight ) {
+                        removeSibling( nodeToDelete, nodeToDelete.rightSib );
+                    }
                 }
-                removeSibling( nodeToDelete.leftSib, nodeToDelete );
                 return true;
             }
         }
