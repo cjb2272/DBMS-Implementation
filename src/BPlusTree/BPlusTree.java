@@ -6,7 +6,6 @@ import src.Main;
 import src.TableSchema;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 
 public class BPlusTree {
@@ -320,6 +319,16 @@ public class BPlusTree {
             R1.setParent( newRoot );
 
             removeSibling( left.get( left.size() - 1 ), R1 );
+            for(BPlusNode c : left){
+                if(c.parent == null) {
+                    c.setParent( newRoot );
+                }
+            }
+            for(BPlusNode c : right){
+                if(c.parent == null) {
+                    c.setParent( newRoot );
+                }
+            }
         } else {
             //If inner then middle node is removed and set up a level (we split an internal node)
             BPlusNode R2 = right.get( 1 );
@@ -336,17 +345,32 @@ public class BPlusTree {
             //separating nodes that split
             removeSibling( left.get( left.size() - 1 ), R1 );
             removeSibling( R1, R2 );
-        }
 
-        for(BPlusNode c : left){
-            if(c.parent == null) {
-                c.setParent( newRoot );
+            BPlusNode leftChild =  left.get( left.size() - 1 ).getGreaterOrEqual();
+            leftChild.setParent( left.get( left.size() - 1 ) );
+            while(leftChild.hasRight){
+                leftChild = leftChild.rightSib;
+                leftChild.setParent( left.get( left.size() - 1 ) );
+            }
+
+            BPlusNode rightChild = R2.getLess();
+            rightChild.setParent( R2 );
+            while(rightChild.hasRight){
+                rightChild = rightChild.rightSib;
+                rightChild.setParent( R2 );
+            }
+
+            for(BPlusNode c : left){
+                if(c.parent == null) {
+                    c.setParent( newRoot );
+                }
+            }
+            for(BPlusNode c : right){
+                if(c.parent == null) {
+                    c.setParent( newRoot );
+                }
             }
         }
-        for(BPlusNode c : right){
-            if(c.parent == null) {
-                c.setParent( newRoot );
-            }        }
         return newRoot;
     }
 
