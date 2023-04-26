@@ -26,22 +26,22 @@ public class BPlusTree {
                 return false;
             }
             if ( !root.isInner ) {
-                //One layer tree, just add to leaf Node. Split if needed
+                // One layer tree, just add to leaf Node. Split if needed
                 if ( !root.hasSiblings() ) {
                     int comparison = root.compare( newNode.getValue() );
                     if ( comparison == 0 ) {
                         System.out.println( "Error, cannot have duplicate keys in B+ Tree." );
                         return false;
-                    } else if ( comparison > 0 ) {
+                    } else if ( comparison > 0 ) { //newNode/value belongs as left sibling of root
                         addSibling( newNode, root );
-                        this.root = newNode;
+                        this.root = newNode; // our root, leftmost value is now newNode
                         return true;
                     } else {
-                        addSibling( root, newNode );
+                        addSibling( root, newNode ); //newNode/value belongs as right sibling of root
                         return true;
                     }
-                } else {
-                    insertSibling( root, newNode );
+                } else { // Root has Siblings
+                    insertSibling( root, newNode ); //root is leftmost node of this 'root row', newNode is node being added to row
                     BPlusNode start = newNode.getLeftMostSibling();
                     if ( checkDegree( start ) ) {
                         this.root = split( start );
@@ -207,17 +207,17 @@ public class BPlusTree {
         while (current.isInner) {
             int comparison = current.compare( target );
             if ( comparison > 0 ) {
-                current = current.less;
+                current = current.less; // move to left child
             } else {
                 if ( current.hasRight ) {
                     current = current.rightSib;
                 } else {
-                    current = current.greaterOrEqual;
+                    current = current.greaterOrEqual; //move to right child
                 }
             }
         }
 
-        //Move right through the siblings
+        //Move right through the siblings (we have reached leftmost node of leaf cluster to perform action on)
         while (current.compare( target ) != 0 && current.hasRight) {
             current = current.rightSib;
         }
@@ -238,10 +238,10 @@ public class BPlusTree {
     public BPlusNode split( BPlusNode start ) {
         int middle = this.limit / 2;
         int counter = 0;
-        ArrayList<BPlusNode> left = new ArrayList<>();
-        ArrayList<BPlusNode> right = new ArrayList<>();
+        ArrayList<BPlusNode> left = new ArrayList<>(); //left cluster/row
+        ArrayList<BPlusNode> right = new ArrayList<>(); //right cluster/row
         BPlusNode current = start;
-        //split siblings in half
+        //split siblings in half, initializing left and right clusters
         while (counter < middle) {
             left.add( current );
             current = current.rightSib;
@@ -275,7 +275,7 @@ public class BPlusTree {
 
             removeSibling( left.get( left.size() - 1 ), R );
         } else {
-            //If inner then middle node is removed and set up a level
+            //If inner then middle node is removed and set up a level (we split an internal node)
             R = right.get( 1 );
             newRoot.setLess( L );
             newRoot.setGreaterOrEqual( R );

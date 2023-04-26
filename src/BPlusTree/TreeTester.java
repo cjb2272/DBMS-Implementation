@@ -23,10 +23,11 @@ public class TreeTester {
          */
 
         int limit = 4;
+        //int limit = 5;
 
         BPlusTree tree = new BPlusTree( limit );
 
-        
+
         for ( int i = 1; i < 6; i++ ) {
             //System.out.println(Integer.toString( i )  + ": " + tree.addNode( new BPlusLeafNode(  i, limit, 1 ))); //Debugging insert
             tree.addNode( new BPlusNode( i, false, 1, 0,0 ) );
@@ -43,9 +44,9 @@ public class TreeTester {
         System.out.println( tree.toString() );
 
 
-        /*
         //CODE FOR TESTING ALONG WITH EXAMPLE FROM CLASS ACTIVITY
 
+        /*
         tree.addNode( new BPlusNode( 1, false, 1, 0,0 ) );
         tree.addNode( new BPlusNode( 4, false, 1, 0,0 ) );
         tree.addNode( new BPlusNode( 7, false, 1, 0,0 ) );
@@ -64,6 +65,7 @@ public class TreeTester {
         System.out.println( tree.toString() );
 
         tree.addNode( new BPlusNode( 18, false, 1, 0,0 ) );
+        System.out.println( tree.toString() );
         tree.deleteNode(1, 17);
 
         System.out.println( tree.toString() );
@@ -102,7 +104,8 @@ public class TreeTester {
         tree.deleteNode(1, 20);
 
         System.out.println( tree.toString() );
-        */
+
+         */
 
     }
 }
