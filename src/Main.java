@@ -64,10 +64,12 @@ public class Main {
             System.out.println("\tIgnoring provided pages size, using stored page size");
         }
 
-        if (indexing.equals("false") && Catalog.instance.getIndexing() == 't') {
-            System.out.println("Error: Cannot set indexing to false on database that is currently set to true.");
+        if (indexing.equals("false") && Catalog.instance.getIndexing() == 't' ||
+                indexing.equals("true") && Catalog.instance.getIndexing() == 'f') {
+            System.out.println("Error: Cannot change index setting from original setting at database creation.");
             return;
-        } else {
+        }
+        /*else {
             char indexChar;
             if (indexing.equals("true")) {
                 indexChar = 't';
@@ -75,7 +77,7 @@ public class Main {
                 indexChar = 'f';
             }
             Catalog.instance.setIndexing(indexChar);
-        }
+        }*/
 
         src.StorageManager.instance = new StorageManager(db_loc);
 

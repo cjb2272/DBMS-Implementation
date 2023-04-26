@@ -252,7 +252,7 @@ public class Catalog {
      * @param tableId : integer representing a tableId
      * @return A tableSchema or null.
      */
-    protected TableSchema getTableSchemaById(int tableId) {
+    public TableSchema getTableSchemaById(int tableId) {
         for (TableSchema tableSchema : tableSchemas) {
             if (tableSchema.getTableId() == tableId) {
                 return tableSchema;

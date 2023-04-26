@@ -1,5 +1,12 @@
 package src.BPlusTree;
 
+import src.AttributeSchema;
+import src.Catalog;
+import src.Main;
+import src.TableSchema;
+
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class BPlusTree {
@@ -8,6 +15,41 @@ public class BPlusTree {
 
     public BPlusTree( int limit ) {
         this.limit = limit;
+    }
+
+    /**
+     * Creates A bPlusTree Folder to store bPlusTree files in if its doesn't exist then creates a bPlusTree
+     * file of a given table ID. Creates a bPlusTree object and returns that.
+     *
+     * @param tableId
+     * @return
+     */
+    public static BPlusTree createBPlusTreeFile(int tableId) {
+        try {
+        String bPlusTreeFolderPath = Main.db_loc + File.separatorChar + "bPlusTrees";
+        File bPlusTrees = new File(bPlusTreeFolderPath);
+        if (!bPlusTrees.exists()) {
+            bPlusTrees.mkdirs();
+        }
+        String bPlusTreePath = bPlusTreeFolderPath + File.separatorChar + tableId + ".bPlusTree";
+        File bPlusTreeFile = new File(bPlusTreePath);
+        bPlusTreeFile.createNewFile();
+
+        double pageSize = Catalog.instance.getPageSize();
+        TableSchema table = Catalog.instance.getTableSchemaById(tableId);
+        ArrayList<AttributeSchema> tableAttributes = table.getAttributes();
+        int indexOfSearchKeyColumn = Catalog.instance.getTablePKIndex(tableId); // SET VALUE ACCORDINGLY
+        int dataTypeSize = tableAttributes.get(indexOfSearchKeyColumn).getSize(); //gets size of attribute
+        double searchKeyPagePointerPairSize = dataTypeSize + 4; // +4 for page pointer size being int
+        int N = ( (int) Math.floor((pageSize / searchKeyPagePointerPairSize)) ) - 1;
+        BPlusTree bPlusTree = new BPlusTree(N);
+
+        return bPlusTree;
+        } catch (Exception e) {
+            System.out.println("Error in creating BPlusTree file and object.");
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**

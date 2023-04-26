@@ -4,6 +4,7 @@ package src;
  * @author Duncan Small, Austin Cepalia
  */
 
+import src.BPlusTree.BPlusTree;
 import src.ConditionalTreeNodes.ConditionTree;
 
 import java.io.IOException;
@@ -463,6 +464,9 @@ class CreateQuery extends Query {
         int availableId = Catalog.instance.getNextAvailableId();
         StorageManager.instance.createTable(availableId, tableName, columnNames, dataTypes);
         Catalog.instance.addTableSchema(availableId, tableName, attributeInfo);
+        //if(Main.indexing.equals("true")) {
+        //    BPlusTree.createBPlusTreeFile(availableId);
+        //}
         System.out.println("SUCCESS\n");
     }
 }
