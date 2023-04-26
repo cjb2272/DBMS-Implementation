@@ -24,6 +24,26 @@ public class BPlusNode {
     }
 
     /**
+     * This method will take a byte array containing the data for a node from the BPlusTree file
+     * and convert it into a BPlusNode object
+     * @param tree The corresponding BPlusTree object that this node belongs to
+     * @param pageInBytes A byte array that was read from disk and contains the data for the node object
+     * @return The BPlusNode object created from the binary data
+     */
+    public static BPlusNode parseBytes(BPlusTree tree, byte[] pageInBytes) {
+        return null;
+    }
+
+    /**
+     * Given a BPlusNode, serialize it into a byte array that can be written to disk
+     * @param node The node to convert into binary
+     * @return A byte array containing the data within the node that can be written to disk
+     */
+    public static byte[] parseNode(BPlusNode node) {
+        return null;
+    }
+
+    /**
      * This function compares the value of two different nodes
      *
      * @param Bval The value of a node being compared to the current node
