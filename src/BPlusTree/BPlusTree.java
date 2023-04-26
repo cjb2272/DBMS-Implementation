@@ -132,7 +132,10 @@ public class BPlusTree {
             return false;
         }
 
-        if(nodeToDelete.getNumOfSiblings() < this.limit / 2 && nodeToDelete.parent != null){
+        boolean mergeCondition1 = nodeToDelete.getNumOfSiblings() < this.limit / 2 && !nodeToDelete.isInner;
+        boolean mergeCondition2 = nodeToDelete.getNumOfSiblings() <  Math.ceil( this.limit / 2.0 ) && nodeToDelete.isInner;
+
+        if((mergeCondition1 || mergeCondition2) && nodeToDelete.parent != null){
             //need to merge
             return removeAndMerge( nodeToDelete );
         } else{
@@ -195,6 +198,7 @@ public class BPlusTree {
 
         //cannot borrow, must merge two sets of siblings
         //TODO
+
         return false;
     }
 
@@ -222,7 +226,7 @@ public class BPlusTree {
         while (current.parent != null) {
             current = current.parent.getLeftMostSibling();
         }
-        return current;
+        return current.getLeftMostSibling();
     }
 
     /**
@@ -265,7 +269,7 @@ public class BPlusTree {
         }
 
         if ( current.compare( target ) == 0 ) {
-            return (BPlusNode) current;
+            return current;
         } else {
             return null;
         }
@@ -298,41 +302,51 @@ public class BPlusTree {
 
         //The leftmost node in each side of siblings
         BPlusNode L = left.get( 0 );
-        BPlusNode R = right.get( 0 );
+        BPlusNode R1 = right.get( 0 );
 
         //TODO change 0 to mem location
-        BPlusNode newRoot = new BPlusNode( R.getValue(), true, current.type, 0, 0 );
+        BPlusNode newRoot = new BPlusNode( R1.getValue(), true, current.type, 0, 0 );
         if ( !start.isInner ) {
             //if leaf nodes splitting then middle node is kept
             newRoot.setLess( L );
-            newRoot.setGreaterOrEqual( R );
-            if ( L.parent != null ) {
+            newRoot.setGreaterOrEqual( R1 );
+            if ( L.parent != null  && L.parent.compare( newRoot.getValue() ) < 0) {
                 addSibling( L.parent, newRoot );
             }
-            if ( R.parent != null ) {
-                addSibling( newRoot, R.parent );
+            if ( R1.parent != null && R1.parent.compare( newRoot.getValue() ) > 0 ) {
+                addSibling( newRoot, R1.parent );
             }
             L.setParent( newRoot );
-            R.setParent( newRoot );
+            R1.setParent( newRoot );
 
-            removeSibling( left.get( left.size() - 1 ), R );
+            removeSibling( left.get( left.size() - 1 ), R1 );
         } else {
             //If inner then middle node is removed and set up a level (we split an internal node)
-            R = right.get( 1 );
+            BPlusNode R2 = right.get( 1 );
             newRoot.setLess( L );
-            newRoot.setGreaterOrEqual( R );
-            if ( L.parent != null ) {
+            newRoot.setGreaterOrEqual( R2 );
+            if ( L.parent != null  && L.parent.compare( newRoot.getValue() ) < 0) {
                 addSibling( L.parent, newRoot );
             }
-            if ( R.parent != null ) {
-                addSibling( newRoot, R.parent );
+            if ( R2.parent != null && R2.parent.compare( newRoot.getValue() ) > 0 ) {
+                addSibling( newRoot, R2.parent );
             }
             L.setParent( newRoot );
-            R.setParent( newRoot );
+            R2.setParent( newRoot );
             //separating nodes that split
-            removeSibling( left.get( left.size() - 1 ), right.get( 0 ) );
-            removeSibling( right.get( 0 ), R );
+            removeSibling( left.get( left.size() - 1 ), R1 );
+            removeSibling( R1, R2 );
         }
+
+        for(BPlusNode c : left){
+            if(c.parent == null) {
+                c.setParent( newRoot );
+            }
+        }
+        for(BPlusNode c : right){
+            if(c.parent == null) {
+                c.setParent( newRoot );
+            }        }
         return newRoot;
     }
 
@@ -348,9 +362,15 @@ public class BPlusTree {
             current = current.rightSib;
         }
         if ( current.compare( addition.getValue() ) > 0 || current.hasRight ) {
+            if(current.hasLeft){
+                addSibling( current.leftSib, addition );
+            }
             addSibling( addition, current );
         } else {
             addSibling( current, addition );
+        }
+        if(current.parent != null){
+            addition.setParent( current.parent );
         }
     }
 
@@ -363,6 +383,7 @@ public class BPlusTree {
      */
     public boolean checkDegree( BPlusNode start ) {
         int counter = 1;
+        start = start.getLeftMostSibling();
         while (start.hasRight) {
             start = start.rightSib;
             counter++;

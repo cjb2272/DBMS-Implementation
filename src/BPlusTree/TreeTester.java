@@ -1,12 +1,10 @@
 package src.BPlusTree;
 
-import src.AttributeSchema;
-import src.Catalog;
-import src.TableSchema;
-
+import java.util.Arrays;
 import java.util.ArrayList;
-
 public class TreeTester {
+
+
     public static void main( String[] args ) {
 
         /*
@@ -22,12 +20,11 @@ public class TreeTester {
         int N = ( (int) Math.floor((pageSize / searchKeyPagePointerPairSize)) ) - 1;
          */
 
-        int limit = 4;
-        //int limit = 5;
+        int limit = 5;
 
         BPlusTree tree = new BPlusTree( limit );
 
-
+        /*
         for ( int i = 1; i < 6; i++ ) {
             //System.out.println(Integer.toString( i )  + ": " + tree.addNode( new BPlusLeafNode(  i, limit, 1 ))); //Debugging insert
             tree.addNode( new BPlusNode( i, false, 1, 0,0 ) );
@@ -43,33 +40,24 @@ public class TreeTester {
 
         System.out.println( tree.toString() );
 
+        */
 
         //CODE FOR TESTING ALONG WITH EXAMPLE FROM CLASS ACTIVITY
 
-        /*
-        tree.addNode( new BPlusNode( 1, false, 1, 0,0 ) );
-        tree.addNode( new BPlusNode( 4, false, 1, 0,0 ) );
-        tree.addNode( new BPlusNode( 7, false, 1, 0,0 ) );
-        tree.addNode( new BPlusNode( 10, false, 1, 0,0 ) );
-        tree.addNode( new BPlusNode( 17, false, 1, 0,0 ) );
-        tree.addNode( new BPlusNode( 19, false, 1, 0,0 ) );
-        tree.addNode( new BPlusNode( 20, false, 1, 0,0 ) );
-        tree.addNode( new BPlusNode( 22, false, 1, 0,0 ) );
-        tree.addNode( new BPlusNode( 45, false, 1, 0,0 ) );
-        tree.addNode( new BPlusNode( 50, false, 1, 0,0 ) );
-        tree.addNode( new BPlusNode( 70, false, 1, 0,0 ) );
-        tree.addNode( new BPlusNode( 73, false, 1, 0,0 ) );
-        tree.addNode( new BPlusNode( 75, false, 1, 0,0 ) );
-        tree.addNode( new BPlusNode( 80, false, 1, 0,0 ) );
-
-        System.out.println( tree.toString() );
+        ArrayList<Integer> testcase = new ArrayList<>( Arrays.asList(1,4,7,10,17,19,20,22,45,50,70,73,75,80));
+        for(int i : testcase){
+            tree.addNode( new BPlusNode( i, false, 1, 0, 0 ) );
+            System.out.println(tree.toString());
+        }
 
         tree.addNode( new BPlusNode( 18, false, 1, 0,0 ) );
-        System.out.println( tree.toString() );
+
+        System.out.println(tree.toString());
         tree.deleteNode(1, 17);
 
         System.out.println( tree.toString() );
 
+        /*
         tree.deleteNode(1, 1);
 
         System.out.println( tree.toString() );
