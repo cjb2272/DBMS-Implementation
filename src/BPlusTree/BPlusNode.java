@@ -4,9 +4,9 @@ public class BPlusNode {
     public Object value;
     public final boolean isInner;
     public final int type;
-    public BPlusNode less = null; //Left
-    public BPlusNode greaterOrEqual = null; //Right
-    public BPlusNode parent = null;
+    public BPlusNode less = null; //the leftmost node of this nodes LEFT child cluster
+    public BPlusNode greaterOrEqual = null; //the leftmost node of this nodes RIGHT child cluster
+    public BPlusNode parent = null; //
     public BPlusNode leftSib = null;
     public BPlusNode rightSib = null;
     public boolean hasLeft = false;
