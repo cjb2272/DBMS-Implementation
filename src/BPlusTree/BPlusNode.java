@@ -1,8 +1,12 @@
 package src.BPlusTree;
 
+import src.Main;
+
+import java.nio.ByteBuffer;
+
 public class BPlusNode {
     public Object value;
-    public final boolean isInner;
+    public final boolean isInner; //TODO this will be replaced by a function
     public final int type;
     public BPlusNode less = null; //the leftmost node of this nodes LEFT child cluster
     public BPlusNode greaterOrEqual = null; //the leftmost node of this nodes RIGHT child cluster
@@ -12,8 +16,8 @@ public class BPlusNode {
     public boolean hasLeft = false;
     public boolean hasRight = false;
 
-    public int pageIndex;
-    public int recordIndex;
+    public int pageIndex; // location of the page that the search key is in
+    public int recordIndex; // the index within the page that the search key's record is in
 
     public BPlusNode( Object value, boolean isInner, int type, int page, int record ) {
         this.value = value;     // the Search Key value for this node
@@ -27,11 +31,65 @@ public class BPlusNode {
      * This method will take a byte array containing the data for a node from the BPlusTree file
      * and convert it into a BPlusNode object
      * @param tree The corresponding BPlusTree object that this node belongs to
-     * @param pageInBytes A byte array that was read from disk and contains the data for the node object
+     * @param nodeInBytes A byte array that was read from disk and contains the data for the node object
      * @return The BPlusNode object created from the binary data
      */
-    public static BPlusNode parseBytes(BPlusTree tree, byte[] pageInBytes) {
-        return null;
+    public static BPlusNode parseBytes(BPlusTree tree, byte[] nodeInBytes) {
+        /*
+        The structure of the byte array is as follows:
+        (Obj)   searchKeyValue      the value of the Node, being an int, double, bool, char(x), or varchar(x)
+        (int)   pageIndex           the index of the table's page where the stored Search Key's record is
+        (int)   recordIndex         the index of the record within the table's page that the record is in
+        (int)   parentIndex         the location of the parent on file (-1 if root)
+        (int)   leftSiblingIndex    the location of the left sibling on file (-1 if leftmost)
+        (int)   rightSiblingIndex   the location of the right sibling on file (-1 if rightmost)
+        (int)   lessIndex    the location of the child node where the key is less than this node (-1 if leaf)
+        (int)   greaterOrEqualIndex   the location of the child node where the key is greater than this node (-1 if leaf)
+         */
+        ByteBuffer byteBuffer = ByteBuffer.wrap(nodeInBytes);
+        Object value;
+        switch (tree.type) {
+            case 1 -> //Integer
+                    value = byteBuffer.getInt();
+            case 2 -> //Double
+                    value = byteBuffer.getDouble();
+            case 3 -> { //Boolean
+                char boolChar = byteBuffer.getChar(); // A Boolean is either 't' or 'f' on disk
+                if (boolChar == 't')
+                    value = true;
+                else
+                    value = false;
+            }
+            case 4, 5 -> { //Char(x) and Varchar(x)
+                // Char(x) standard string fixed array of len x
+                int numCharXChars = byteBuffer.getInt();
+                StringBuilder chars = new StringBuilder();
+                for (int ch = 0; ch < numCharXChars; ch++) {
+                    chars.append(byteBuffer.getChar()); // get next 2 BYTES
+                }
+                value = chars.toString();
+            }
+            default -> {
+                System.err.println("Unexpected type int found (" + tree.type + "), returning null");
+                return null;
+            }
+        }
+        int pageIndex = byteBuffer.getInt();
+        int recordIndex = byteBuffer.getInt();
+        int parentIndex = byteBuffer.getInt();
+        int leftSiblingIndex = byteBuffer.getInt();
+        int rightSiblingIndex = byteBuffer.getInt();
+        int lessIndex = byteBuffer.getInt();
+        int greaterOrEqualIndex = byteBuffer.getInt();
+        boolean isInner = lessIndex != -1 && greaterOrEqualIndex != -1;
+        BPlusNode node = new BPlusNode(value, isInner, tree.type, pageIndex, recordIndex);
+        //TODO uncomment when File I/O becomes the method for accessing nodes
+//        node.parent = parentIndex;
+//        node.leftSib = leftSiblingIndex;
+//        node.rightSib = rightSiblingIndex;
+//        node.less = lessIndex;
+//        node.greaterOrEqual = greaterOrEqualIndex;
+        return node;
     }
 
     /**
@@ -198,4 +256,17 @@ public class BPlusNode {
     public void setParent( BPlusNode parent ) {
         this.parent = parent;
     }
+
+    //TODO uncomment this when the variable by the same name is removed
+
+    /**
+     * Determines if the node is an internal node or not
+     * @return true if the node is internal, false if not
+     */
+//    public boolean isInner() {
+//        if (less != -1 && greaterOrEqual != -1) {
+//            return true;
+//        }
+//        return false;
+//    }
 }

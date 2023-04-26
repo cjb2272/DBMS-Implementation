@@ -11,6 +11,7 @@ import java.util.ArrayList;
 public class BPlusTree {
     private final int limit;
     public BPlusNode root = null;
+    public int type;    // The type int corresponding to this tree's search keys
 
     public BPlusTree( int limit ) {
         this.limit = limit;
