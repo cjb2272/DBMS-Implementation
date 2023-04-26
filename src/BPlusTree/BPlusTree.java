@@ -201,6 +201,47 @@ public class BPlusTree {
             }
         }
 
+        if(nodeToDelete.parent.hasLeft){
+            if(isLess){
+                //adding sibling from row to the left to current row
+                if(nodeToDelete.hasLeft) {
+                    addSibling( parent.leftSib.getLess().getRightMostSibling(),nodeToDelete.getLeftMostSibling() );
+                    removeSibling( nodeToDelete.leftSib, nodeToDelete );
+                    if(nodeToDelete.hasRight){
+                        removeSibling( nodeToDelete, nodeToDelete.rightSib );
+                    }
+                } else{
+                    if(nodeToDelete.hasRight){
+                        addSibling( parent.leftSib.getLess().getRightMostSibling(),nodeToDelete.rightSib );
+                    }
+                }
+                if(parent.leftSib.equals( parent.getLeftMostSibling() ) && parent.parent != null){
+                    //connect upwards
+                    if(parent.parent.getGreaterOrEqual().equals( parent.leftSib )){
+                        parent.parent.setGreaterOrEqual( parent );
+                    } else{
+                        parent.parent.setLess( parent );
+                    }
+                }
+                BPlusNode current = nodeToDelete;
+                while(current.hasLeft){
+                    current = current.leftSib;
+                    current.setParent( parent );
+                }
+
+                return true;
+
+            } else{
+                if(nodeToDelete.hasLeft){
+
+                }
+            }
+        } else if (nodeToDelete.hasRight){
+
+        } else{
+            // parent has no siblings, so it is deleted. pull parent's parent down if it exists
+        }
+
         //cannot borrow, must merge two sets of siblings
         //TODO
 
