@@ -1,8 +1,10 @@
 package src.BPlusTree;
 
 import src.Main;
+import src.Record;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 public class BPlusNode {
     public Object value;
@@ -94,11 +96,67 @@ public class BPlusNode {
 
     /**
      * Given a BPlusNode, serialize it into a byte array that can be written to disk
-     * @param node The node to convert into binary
+     * @param node  The node to convert into binary
      * @return A byte array containing the data within the node that can be written to disk
      */
     public static byte[] parseNode(BPlusNode node) {
-        return null;
+        byte[] byteArray = new byte[node.size()];
+        ByteBuffer byteBuffer = ByteBuffer.wrap(byteArray);
+        switch (node.type) {
+            case 1 -> //Integer
+                    byteBuffer.putInt((Integer) node.value);
+            case 2 -> //Double
+                    byteBuffer.putDouble((Double) node.value);
+            case 3 -> { // Boolean
+                boolean val = (boolean) node.value;
+                if (val) // A Boolean is either 't' or 'f' on disk
+                    byteBuffer.putChar('t');
+                else
+                    byteBuffer.putChar('f');
+            }
+            case 4, 5 -> { // Char(x) standard string fixed array of len x
+                String chars = (String) node.value;
+                byteBuffer.putInt(chars.length());
+                for (int j = 0; j < chars.length(); ++j) {
+                    byteBuffer.putChar(chars.charAt(j));
+                }
+            }
+        }
+        byteBuffer.putInt(node.pageIndex);
+        byteBuffer.putInt(node.recordIndex);
+        //TODO uncomment when File I/O becomes the method for accessing nodes
+//        byteBuffer.putInt(node.parent);
+//        byteBuffer.putInt(node.leftSib);
+//        byteBuffer.putInt(node.rightSib);
+//        byteBuffer.putInt(node.less);
+//        byteBuffer.putInt(node.greaterOrEqual);
+        return byteArray;
+    }
+
+    /**
+     * Calculates the size of the Node in bytes
+     * A node contains the search key and seven indexes
+     * @return the size of the node in bytes
+     */
+    public int size(){
+        int size = 0;
+        // The size of the search key
+        if (value instanceof Integer) {
+            size += Integer.BYTES;
+        } else if (value instanceof Double) {
+            size += Double.BYTES;
+        } else if (value instanceof Boolean) {
+            size += Character.BYTES;
+        }
+        // case for char(x) and varchar(x), add 2 bytes for each char
+        else if (value instanceof String) {
+            size += Integer.BYTES; // 4 bytes for each int that comes
+            int numCharsInString = value.toString().length(); // before char or varchar
+            int charBytes = numCharsInString * Character.BYTES;
+            size += charBytes;
+        }
+        size += Integer.BYTES * 7; // Nodes have 7 indexes to store
+        return size;
     }
 
     /**
