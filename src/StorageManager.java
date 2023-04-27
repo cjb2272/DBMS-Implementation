@@ -203,6 +203,73 @@ public class StorageManager {
     }
 
     /**
+     * Pre-Condition: Search Key for this record, did not already exist in node of b+tree,
+     *                cant have duplicate primary key. if that was the case error was thrown.
+     * Method: This method inserts a record directly after the location of the record of the prior
+     *         search key value in the B+Tree.
+     *         REQUIRES updates to record pointers in B+Tree. If page splitting occurs,
+     *         updates to record pointers need to involve change to nodes' 'pageIndex's, not just 'recordIndex's
+     *
+     * @param tableID table for which record belongs
+     * @param pageNumber page for which record is intended to belong: say we want to insert 23 between 22 and 25,
+     *                   22 has pointer of (page11,3rdRecordInPage) and 25 has pointer of (page11,4thRecordInPage)
+     *                   then pageNumber should be equal to the value 11.
+     * @param recordIndex index within page that record is intended to belong. Given example above^
+     *                    recordIndex should be equal to the value 4 (+1 after 3).
+     * @param recordToInsert the Record with search key from B+Tree
+     *
+     *                       todo update return appropriately for ease of use on updating pointers in b+tree
+     * @return int[]: int[0] contains value '0' if page split DID NOT occur, and value '1' if page split DID occur
+     *                       (indicates the extent to which record pointers need to be updated in B+Tree)
+     *                int[1] contains pageIndex: what page record was inserted in, this could
+     *                                           differ from pageNumber param as result of split
+     *                int[2] contains recordIndex: the index within the page that the search key's record is in,
+     *                                             can also differ
+     */
+    public int[] indexedInsertRecord(int tableID, int pageNumber, int recordIndex, Record recordToInsert) {
+        TableSchema table = Catalog.instance.getTableSchemaById(tableID);
+        ArrayList<Integer> pageOrder = table.getPageOrder();
+        // If no pages exists for this table - case of very first insert into table/b+tree
+        if (0 == pageOrder.size()) {
+            try {
+                Page emptyPageInbuffer = buffer.CreateNewPage(tableID, 0);
+                // insert the record, no comparator needed here, because this is the
+                // first record of the table
+                emptyPageInbuffer.getRecordsInPage().add(recordToInsert);
+                return new int[]{0, 0, 0};
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            try {
+                //get the page for which we intend for record to belong
+                Page pageReference = buffer.GetPage(tableID, pageNumber);
+                int numRecordsInPage = pageReference.getRecordCount();
+                //if the page has zero records
+                if (numRecordsInPage == 0) {
+                    pageReference.getRecordsInPage().add(0, recordToInsert);
+                    pageReference.setIsModified(true);
+                    if (pageReference.computeSizeInBytes() > Main.pageSize) {
+                        buffer.PageSplit(pageReference, tableID);
+                        return new int[]{1, pageNumber, 0};
+                    }
+                    return new int[]{0, pageNumber, 0};
+                } else { //insert the record at its intended location
+                    pageReference.getRecordsInPage().add(recordIndex, recordToInsert);
+                    pageReference.setIsModified(true);
+                    if (pageReference.computeSizeInBytes() > Main.pageSize) {
+                        buffer.PageSplit(pageReference, tableID);
+                        return new int[]{1, pageNumber, recordIndex};
+                    }
+                    return new int[]{0, pageNumber, recordIndex};
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    /**
      * Inserts the given record into the given table. Returns a length one int array to show if it succeeded, int array[1],
      * or a length two int array with the row the insert failed on and the column that holds the value it failed on.
      * @param tableID        the table for which we want to insert a record into its
@@ -286,6 +353,37 @@ public class StorageManager {
 
             return new int[]{1};
         }
+    }
+
+    /**
+     * Pre-Condition: Search Key for recordToDelete existed in B+Tree
+     * Method: This method deletes the record with a given search key value in the B+Tree.
+     *         REQUIRES updates to record pointers in B+Tree.
+     *
+     * @param tableID table for which record exists
+     * @param pageNumber page for which record exists in
+     * @param recordIndex index of record within page that record exists at
+     * @param recordToDelete the Record with search key from B+Tree
+     *
+     * @return int[]: int[0] contains: ....
+     */
+    public int[] indexedDeleteRecord(int tableID, int pageNumber, int recordIndex, Record recordToDelete) {
+        TableSchema table = Catalog.instance.getTableSchemaById(tableID);
+        try {
+            Page pageReference = buffer.GetPage(tableID, pageNumber);
+            pageReference.getRecordsInPage().remove(recordIndex); //delete the record
+            pageReference.setIsModified(true);
+            if (pageReference.getRecordCount() == 0) { //if page is empty as a result of delete
+                // label this page as EMPTY (reusable) even though this is not reflected on the disk
+                table.removePageFromPageOrdering(pageNumber);
+                //remove the page from the buffer, our data will remain populated and outdated at that
+                //location on disk until a new page re-uses that page location and is wrote to disk
+                buffer.removeEmptyPageFromBuffer(tableID, pageNumber);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return new int[0];
     }
 
     /**
@@ -463,6 +561,55 @@ public class StorageManager {
                 deleteRecord(tableID, curRecord);
             }
         }
+    }
+
+
+    /**
+     * Pre-Condition: Search Key for record being updated should have been in b+tree- record to update exists
+     *
+     * "Updating a search key will involve inserting a new search key an deleting a the old one if
+     * the primary key or location changed"
+     * @param tableID .
+     * @param pageNumber .
+     * @param recordIndex .
+     * @param recordToUpdate ??????
+     * @param columnName .
+     * @param data .
+     * @return forward along inserts return? what to do here
+     */
+    public int[] indexedUpdateRecord(int tableID, int pageNumber, int recordIndex,
+                                     Record recordToUpdate, String columnName, List<Object> data) {
+        //TODO likely much of this is unneeded, need to determine,how update is initiated and what that involves
+
+        Record copyOfRecordToUpdate = null; //make a copy of the record
+        try {
+            copyOfRecordToUpdate = (Record) recordToUpdate.clone();
+
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+        ArrayList<Object> copyOfRecordContents = new ArrayList<>(copyOfRecordToUpdate.getRecordContents());
+        indexedDeleteRecord(tableID, pageNumber, recordIndex, recordToUpdate);
+
+        //find index of column to update
+        int indexOfColumnToUpdate = 0;
+        TableSchema table = Catalog.instance.getTableSchemaById(tableID);
+        ArrayList<AttributeSchema> tableColumns = table.getAttributes();
+        for (AttributeSchema attribute : tableColumns) {
+            if (Objects.equals(attribute.getName(), columnName)) {
+                break;
+            }
+            indexOfColumnToUpdate++;
+        }
+        //IF COLUMN TO UPDATE IS THE PRIMARY KEY COLUMN... TODO
+        //great changes to how we update b+tree
+
+        Object valueToSet = data.get(1); //value to update in column
+        //make change updating our copy of original record
+        copyOfRecordContents.set(indexOfColumnToUpdate, valueToSet);
+        copyOfRecordToUpdate.setRecordContents(copyOfRecordContents); //set content change
+        int[] insertReturn = indexedInsertRecord(tableID, pageNumber, recordIndex, copyOfRecordToUpdate); //update
+        return insertReturn;
     }
 
     /**

@@ -49,7 +49,7 @@ public class BPlusTree {
         double pageSize = Catalog.instance.getPageSize();
         TableSchema table = Catalog.instance.getTableSchemaById(tableId);
         ArrayList<AttributeSchema> tableAttributes = table.getAttributes();
-        int indexOfSearchKeyColumn = Catalog.instance.getTablePKIndex(tableId); // SET VALUE ACCORDINGLY
+        int indexOfSearchKeyColumn = Catalog.instance.getTablePKIndex(tableId);
         int dataType = tableAttributes.get(indexOfSearchKeyColumn).getType();
         int dataTypeSize = tableAttributes.get(indexOfSearchKeyColumn).getSize(); //gets size of attribute
         double searchKeyPagePointerPairSize = dataTypeSize + 4; // +4 for page pointer size being int
