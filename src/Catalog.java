@@ -429,7 +429,6 @@ public class Catalog {
             char indexChar = byteProcessor.readChar();
             Catalog catalog = new Catalog(pageSize, rootPath, indexChar);
             int numOfTables = byteProcessor.readInt();
-            int indexing = byteProcessor.readChar();
             for (int i = 0; i < numOfTables; i++) {
                 // Reads in the table id and table name
                 int tableId = byteProcessor.readInt();
