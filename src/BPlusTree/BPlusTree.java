@@ -89,23 +89,7 @@ public class BPlusTree {
         String bPlusTreeFolderPath = Main.db_loc + File.separatorChar + "bPlusTrees";
         String bPlusTreePath = bPlusTreeFolderPath + File.separatorChar + tableId + ".bPlusTree";
         File bPlusTreeFile = new File(bPlusTreePath);
-        int sizeOfNode = 0; // The size of the node in bytes
-        switch (dataType) {
-            case 1 -> //Integer
-                sizeOfNode += Integer.BYTES;
-            case 2 -> //Double
-                sizeOfNode += Double.BYTES;
-            case 3 -> { // Boolean
-                sizeOfNode += Character.BYTES;
-            }
-            case 4, 5 -> { // Char(x) standard string fixed array of len x
-                if (dataSize == -1) {
-                    System.err.println("ERROR: received string but given length is -1, exiting function...");
-                    return null;
-                }
-                sizeOfNode += Integer.BYTES + dataSize * Character.BYTES; // int to store length, then the string itself
-            }
-        }
+        int sizeOfNode = calcNodeSize(dataType, dataSize); // The size of the node in bytes
         long amountToSeek = Integer.BYTES * 5 + (long) sizeOfNode * nodeIndex;
         try {
             RandomAccessFile byteProcessor = new RandomAccessFile(bPlusTreeFile, "r");
@@ -113,6 +97,7 @@ public class BPlusTree {
             byteProcessor.seek(amountToSeek);
             byte[] nodeBytes = new byte[sizeOfNode];
             byteProcessor.read(nodeBytes, 0, sizeOfNode);
+            byteProcessor.close();
             return BPlusNode.parseBytes(this, nodeBytes);
         } catch (FileNotFoundException e) {
             System.err.println("ERROR: BPlusTree file not found. File name: " + bPlusTreePath);
@@ -132,7 +117,54 @@ public class BPlusTree {
      * @param nodeIndex The index to write the node to
      */
     public void writeNode(BPlusNode node, int nodeIndex) {
+        String bPlusTreeFolderPath = Main.db_loc + File.separatorChar + "bPlusTrees";
+        String bPlusTreePath = bPlusTreeFolderPath + File.separatorChar + tableId + ".bPlusTree";
+        File bPlusTreeFile = new File(bPlusTreePath);
+        long amountToSeek = Integer.BYTES * 5 + (long) calcNodeSize(dataType, dataSize) * nodeIndex;
+        try {
+            RandomAccessFile byteProcessor = new RandomAccessFile(bPlusTreeFile, "w");
+            // Seek ahead past the metadata and all the other nodes to the spot where we'll read
+            byteProcessor.seek(amountToSeek);
+            byte[] nodeBytes = BPlusNode.parseNode(node);
+            byteProcessor.write(nodeBytes, 0, node.size()); // Might not need to specify length here, doing so in case
+            byteProcessor.close();
+        } catch (FileNotFoundException e) {
+            System.err.println("ERROR: BPlusTree file not found. File name: " + bPlusTreePath);
+            e.printStackTrace();
+        } catch (IOException e) {
+            System.err.println("ERROR: Couldn't seek in file. Seek distance (in bytes): " + amountToSeek);
+            e.printStackTrace();
+        }
+    }
 
+    /**
+     * Calculates the size of a node with the given search key typeInt and sizeInt
+     * @param typeInt   The type int of the search key. A number 1-5
+     * @param sizeInt   The size int of the search key. For strings this is the # or chars, otherwise it's -1
+     * @return          The size of the node in bytes
+     */
+    public static int calcNodeSize(int typeInt, int sizeInt) {
+        int sizeOfNode = 0;
+        // Find the size of the contained Search Key value
+        switch (typeInt) {
+            case 1 -> //Integer
+                    sizeOfNode += Integer.BYTES;
+            case 2 -> //Double
+                    sizeOfNode += Double.BYTES;
+            case 3 -> { // Boolean
+                sizeOfNode += Character.BYTES;
+            }
+            case 4, 5 -> { // Char(x) standard string fixed array of len x
+                if (sizeInt == -1) {
+                    System.err.println("ERROR: received string but given length is -1, exiting function...");
+                    return -1;
+                }
+                sizeOfNode += Integer.BYTES + sizeInt * Character.BYTES; // int to store length, then the string itself
+            }
+        }
+        // add on the size of all the connected node's indices, and the page and record locations for the contained key
+        sizeOfNode += Integer.BYTES * 7;
+        return sizeOfNode;
     }
 
 /*
