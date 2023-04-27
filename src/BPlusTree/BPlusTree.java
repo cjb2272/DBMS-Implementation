@@ -6,13 +6,17 @@ import src.Main;
 import src.TableSchema;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 
 public class BPlusTree {
     private final int limit;
     public BPlusNode root = null;
-    public int type;    // The type int corresponding to this tree's search keys
+    public int dataType;    // The type int corresponding to this tree's search keys
+    public int dataSize;    // The size of the data
+    public int tableId; // The table ID corresponding to this tree
 
     public BPlusTree( int limit ) {
         this.limit = limit;
@@ -75,6 +79,46 @@ public class BPlusTree {
             return;
         }
     }
+
+    /**
+     * Reads in the data for the node at the given index, turns it into a BPlusNode object, and returns it
+     * @param nodeIndex The index where the node is located on file
+     * @return          The BPlusNode created from the data on file
+     */
+    public BPlusNode readNode(int nodeIndex) {
+        String bPlusTreeFolderPath = Main.db_loc + File.separatorChar + "bPlusTrees";
+        String bPlusTreePath = bPlusTreeFolderPath + File.separatorChar + tableId + ".bPlusTree";
+        File bPlusTreeFile = new File(bPlusTreePath);
+        int sizeOfNode; // The size of the node in bytes
+        long amountToSeek = Integer.BYTES * 5 + (long) sizeOfNode * nodeIndex;
+        try {
+            RandomAccessFile byteProcessor = new RandomAccessFile(bPlusTreeFile, "r");
+            // Seek ahead past the metadata and all the other nodes to the spot where we'll read
+            byteProcessor.seek(amountToSeek);
+            byte[] nodeBytes = new byte[sizeOfNode];
+            byteProcessor.read(nodeBytes, 0, sizeOfNode);
+            return BPlusNode.parseBytes(this, nodeBytes);
+        } catch (FileNotFoundException e) {
+            System.err.println("ERROR: BPlusTree file not found. File name: " + bPlusTreePath);
+            e.printStackTrace();
+            return null;
+        } catch (IOException e) {
+            System.err.println("ERROR: Couldn't seek in file. Seek distance (in bytes): " + amountToSeek);
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Writes the data for the given node to the given index in the BPlusTree file
+     * Will overwrite anything that was already in the given index
+     * @param node      The node to write to file
+     * @param nodeIndex The index to write the node to
+     */
+    public void writeNode(BPlusNode node, int nodeIndex) {
+
+    }
+
 /*
     public int[] getIndex(Object pkValue, int tableID) {
         try {

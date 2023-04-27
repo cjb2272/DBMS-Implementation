@@ -1,10 +1,6 @@
 package src.BPlusTree;
 
-import src.Main;
-import src.Record;
-
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 
 public class BPlusNode {
     public Object value;
@@ -50,7 +46,7 @@ public class BPlusNode {
          */
         ByteBuffer byteBuffer = ByteBuffer.wrap(nodeInBytes);
         Object value;
-        switch (tree.type) {
+        switch (tree.dataType) {
             case 1 -> //Integer
                     value = byteBuffer.getInt();
             case 2 -> //Double
@@ -72,7 +68,7 @@ public class BPlusNode {
                 value = chars.toString();
             }
             default -> {
-                System.err.println("Unexpected type int found (" + tree.type + "), returning null");
+                System.err.println("Unexpected type int found (" + tree.dataType + "), returning null");
                 return null;
             }
         }
@@ -84,7 +80,7 @@ public class BPlusNode {
         int lessIndex = byteBuffer.getInt();
         int greaterOrEqualIndex = byteBuffer.getInt();
         boolean isInner = lessIndex != -1 && greaterOrEqualIndex != -1;
-        BPlusNode node = new BPlusNode(value, isInner, tree.type, pageIndex, recordIndex);
+        BPlusNode node = new BPlusNode(value, isInner, tree.dataType, pageIndex, recordIndex);
         //TODO uncomment when File I/O becomes the method for accessing nodes
 //        node.parent = parentIndex;
 //        node.leftSib = leftSiblingIndex;
