@@ -204,7 +204,8 @@ public class StorageManager {
     }
 
     /**
-     * Method: This method is called with each record we intend to insert, given at the command line.
+     * Method: TODO this is a bit inaccurate
+     *         This method is called with each record we intend to insert, given at the command line.
      *         First, we obtain the searchKey from this recordToInsert.
      *         Second, call a method of bPlusTree, which will insert this search key into the bPlusTree,
      *         and simultaneously return a pageNumber-recordIndex pair indicating directly where to insert
@@ -222,11 +223,17 @@ public class StorageManager {
         int tableID = bPlusTree.tableId; //todo use getter here
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
         //OBTAIN SEARCH KEY
-
-
+        ArrayList<AttributeSchema> tableAttributes = table.getAttributes();
+        int indexOfPrimaryKeyColumn = Catalog.instance.getTablePKIndex(tableID);
+        int typeOfSearchKey = tableAttributes.get(indexOfPrimaryKeyColumn).getType();
+        Object searchKeyValue = recordToInsert.getRecordContents().get(indexOfPrimaryKeyColumn);
         //CALL B+TREE METHOD TO INSERT SEARCH KEY AND RETURN pageNumber & recordIndex
             //some throw if search key already existed in b+tree cant have duplicate primary key
-
+        //int[] pageAndRecordIndices = bPlusTree.search(typeOfSearchKey, searchKeyValue, true);
+        // NEW APPROACH HERE INSTEAD OF SEARCH WE WILL CALLSEARCH FOR OPENING WHICH WILL RETURN the pageNumber and
+        // recordIndex as well as a boolean of coming before or after that opening,
+        //int pageNumber = pageAndRecordIndices[0];
+        //int recordIndex = pageAndRecordIndices[1];
         int pageNumber = 0;
         int recordIndex = 0;
         //INSERT RECORD INTO DATA
@@ -271,6 +278,7 @@ public class StorageManager {
         }
 
         //UPDATE POINTERS IN B+TREE TODO
+
     }
 
     /**
@@ -372,12 +380,16 @@ public class StorageManager {
         int tableID = bPlusTree.tableId; //todo use getter here
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
         //OBTAIN SEARCH KEY
-
+        ArrayList<AttributeSchema> tableAttributes = table.getAttributes();
+        int indexOfPrimaryKeyColumn = Catalog.instance.getTablePKIndex(tableID);
+        int typeOfSearchKey = tableAttributes.get(indexOfPrimaryKeyColumn).getType();
+        Object searchKeyValue = recordToDelete.getRecordContents().get(indexOfPrimaryKeyColumn);
         //CALL B+TREE METHOD TO DELETE SEARCH KEY AND RETURN pageNumber & recordIndex
-            // some throw for Search Key for recordToDelete DOES NOT EXIST in B+Tree
-
-        int pageNumber = 0;
-        int recordIndex = 0;
+            // some throw for Search Key for recordToDelete DOES NOT EXIST in B+Tree //todo
+        //int[] pageAndRecordIndices = bPlusTree.search(typeOfSearchKey, searchKeyValue, false);
+        int pageNumber = 0; //pageAndRecordIndices[0];
+        int recordIndex = 0; //pageAndRecordIndices[1];
+        //DELETE THE RECORD
         try {
             Page pageReference = buffer.GetPage(tableID, pageNumber);
             pageReference.getRecordsInPage().remove(recordIndex); //delete the record
@@ -582,7 +594,7 @@ public class StorageManager {
      * "Updating a search key will involve inserting a new search key an deleting a the old one if
      * the primary key or location changed"
      * @param tableID .
-     * @param bPlusTree . 
+     * @param bPlusTree .
      * @param recordToUpdate ??????
      * @param columnName .
      * @param data .
