@@ -255,6 +255,102 @@ public class BPlusTree {
     }
 
 
+    public boolean balanceTree(){
+        if(!root.isInner){
+            return true;
+        }
+
+        if(root.getLess().getLess() == null){
+            //2 layers becomes one
+            addSibling( root.getLess().getRightMostSibling(), root.getGreaterOrEqual().getLeftMostSibling() );
+            root = root.getLess();
+            BPlusNode current = root;
+            while(current.hasRight){
+                current.setParent( null );
+                current = current.rightSib;
+            }
+            current.setParent( null );
+            return true;
+        }
+
+        if( root.getLess().getNumOfSiblings()  <  Math.ceil( this.limit / 2.0 ) - 1){
+            //try to borrow from greater side
+            if( root.getGreaterOrEqual().getNumOfSiblings() >=  Math.ceil( this.limit / 2.0 ) - 1){
+                //greater than becomes root, root becomes rightmost sib on left side
+                // less than greater than becomes greater than root
+                BPlusNode G1 = root.getGreaterOrEqual();
+                BPlusNode G2 = G1.rightSib;
+                BPlusNode L = root.getLess().getRightMostSibling();
+
+                Object newRootValue = G1.value;
+                G1.value = root.getValue();
+                root.value = newRootValue;
+
+                root.setGreaterOrEqual( G2 );
+
+                removeSibling( G1, G2 );
+                addSibling( root.getLess().getRightMostSibling(), G1 );
+
+
+                BPlusNode current = G2.getLess();
+                while(current.hasRight){
+                    current.setParent( G2 );
+                    current = current.rightSib;
+                }
+                current.setParent( G2 );
+
+                G1.setGreaterOrEqual( G1.getLess() );
+                G1.setLess( L.getGreaterOrEqual() );
+                return true;
+            }
+        } else if (root.getGreaterOrEqual().getNumOfSiblings() <  Math.ceil( this.limit / 2.0 ) - 1){
+            if( root.getGreaterOrEqual().getNumOfSiblings() >=  Math.ceil( this.limit / 2.0 ) - 1) {
+                //less than right most sib becomes root, root becomes greater than
+                //greater than less becomes less than root
+                BPlusNode G = root.getGreaterOrEqual();
+                BPlusNode L1 = root.getLess().getRightMostSibling();
+                BPlusNode L2 = L1.leftSib;
+
+                Object newRootValue = L1.getValue();
+                L1.value = root.getValue();
+                root.value = newRootValue;
+
+                root.setGreaterOrEqual( L1 );
+
+                removeSibling( L2, L1 );
+                addSibling( L1, G );
+
+                BPlusNode current = G.getLess();
+                while(current.hasRight){
+                    current.setParent( L1 );
+                    current = current.rightSib;
+                }
+                current.setParent( L1 );
+
+                L1.setLess( L1.getGreaterOrEqual() );
+                L1.setGreaterOrEqual( G.getLess() );
+                return true;
+            }
+        }
+
+        //delete root and move down a layer
+        BPlusNode L = root.getLess();
+        BPlusNode G = root.getGreaterOrEqual();
+
+        addSibling( L, root );
+        addSibling( root, G );
+        root.setGreaterOrEqual( G.getLess() );
+        root.setLess( L.getGreaterOrEqual() );
+        root = L.getLeftMostSibling();
+        BPlusNode current = root;
+        while(current.hasRight){
+            current.setParent( null );
+            current = current.rightSib;
+        }
+        current.setParent( null );
+        return true;
+    }
+
     public boolean deleteNode(int type, Object value){
         if(root.type != type){
             System.out.println("ERROR: Must enter the correct data type.");
@@ -268,12 +364,14 @@ public class BPlusTree {
             return false;
         }
 
-        boolean mergeCondition1 = nodeToDelete.getNumOfSiblings() < this.limit / 2 && !nodeToDelete.isInner;
-        boolean mergeCondition2 = nodeToDelete.getNumOfSiblings() <  Math.ceil( this.limit / 2.0 ) && nodeToDelete.isInner;
-
-        if((mergeCondition1 || mergeCondition2) && nodeToDelete.parent != null){
+        if(nodeToDelete.getNumOfSiblings() < this.limit / 2 && nodeToDelete.parent != null){
             //need to merge
-            return removeAndMerge( nodeToDelete );
+            if(!removeAndMerge( nodeToDelete )){
+                //must be rebalanced
+                return balanceTree();
+            } else{
+                return true;
+            }
         } else{
             if(nodeToDelete.parent != null){
                 removeFromFamily( nodeToDelete );
@@ -447,6 +545,8 @@ public class BPlusTree {
                 }
             }
         }
+
+
 
         return false;
     }
