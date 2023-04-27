@@ -6,6 +6,7 @@ import src.Main;
 import src.TableSchema;
 
 import java.io.File;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 
 public class BPlusTree {
@@ -20,11 +21,17 @@ public class BPlusTree {
     /**
      * Creates A bPlusTree Folder to store bPlusTree files in if its doesn't exist then creates a bPlusTree
      * file of a given table ID. Creates a bPlusTree object and returns that.
+     * Writes the following to file:
+     * Offset index for root, -1 indicates there is no root set yet
+     * Integer Data Type
+     * Size of Data Type
+     * Next available free index
+     * The N of the bPlusTree
      *
      * @param tableId
      * @return
      */
-    public static BPlusTree createBPlusTreeFile(int tableId) {
+    public static void createBPlusTreeFile(int tableId) {
         try {
         String bPlusTreeFolderPath = Main.db_loc + File.separatorChar + "bPlusTrees";
         File bPlusTrees = new File(bPlusTreeFolderPath);
@@ -39,19 +46,56 @@ public class BPlusTree {
         TableSchema table = Catalog.instance.getTableSchemaById(tableId);
         ArrayList<AttributeSchema> tableAttributes = table.getAttributes();
         int indexOfSearchKeyColumn = Catalog.instance.getTablePKIndex(tableId); // SET VALUE ACCORDINGLY
+        int dataType = tableAttributes.get(indexOfSearchKeyColumn).getType();
         int dataTypeSize = tableAttributes.get(indexOfSearchKeyColumn).getSize(); //gets size of attribute
         double searchKeyPagePointerPairSize = dataTypeSize + 4; // +4 for page pointer size being int
         int N = ( (int) Math.floor((pageSize / searchKeyPagePointerPairSize)) ) - 1;
-        BPlusTree bPlusTree = new BPlusTree(N);
+        RandomAccessFile byteProcessor = new RandomAccessFile(bPlusTreeFile, "w");
+        // Offset index for root, -1 indicates there is no root set yet
+        byteProcessor.writeInt(-1);
+        // Integer Data Type
+        byteProcessor.writeInt(dataType);
+        // Size of Data Type
+        byteProcessor.writeInt(dataTypeSize);
+        //if (dataType == 4 || dataType == 5) {
+        //    byteProcessor.writeInt(dataTypeSize);
+        //}
+        // Next available free index
+        byteProcessor.writeInt(0);
+        // The N of the bPlusTree
+        byteProcessor.writeInt(N);
+        byteProcessor.close();
+        //BPlusTree bPlusTree = new BPlusTree(N);
 
-        return bPlusTree;
+
+        //return bPlusTree;
         } catch (Exception e) {
             System.out.println("Error in creating BPlusTree file and object.");
             e.printStackTrace();
+            return;
+        }
+    }
+/*
+    public int[] getIndex(Object pkValue, int tableID) {
+        try {
+            String bPlusTreePath = Main.db_loc + File.separatorChar + tableID + ".bPlusTree";
+            File bPlusTreeFile = new File(bPlusTreePath);
+            RandomAccessFile byteProcessor = new RandomAccessFile(bPlusTreeFile, "rw");
+            int rootOffset = byteProcessor.readInt();
+            int dataType = byteProcessor.readInt();
+            int dataTypeSize = byteProcessor.readInt();
+            int nextAvailableNodeIndex = byteProcessor.readInt();
+
+            if (rootOffset == -1) {
+                BPlusNode root = new BPlusNode(pkValue, false, dataType, 0, )
+            }
+
+            return null;
+        } catch (Exception e) {
             return null;
         }
     }
-
+*/
     /**
      * This is where the logic of adding a node to a tree is
      *

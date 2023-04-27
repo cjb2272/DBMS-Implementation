@@ -21,12 +21,12 @@ public class BPlusNode {
     public int pageIndex; // location of the page that the search key is in
     public int recordIndex; // the index within the page that the search key's record is in
 
-    public BPlusNode( Object value, boolean isInner, int type, int page, int record ) {
+    public BPlusNode( Object value, boolean isInner, int type, int page, int recordIndex ) {
         this.value = value;     // the Search Key value for this node
         this.isInner = isInner; //
         this.type = type;       // data type int
         this.pageIndex = page;
-        this.recordIndex = record;
+        this.recordIndex = recordIndex;
     }
 
     /**
