@@ -6,12 +6,17 @@ import src.Main;
 import src.TableSchema;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 
 public class BPlusTree {
     private final int limit;
     public BPlusNode root = null;
-    public int type;    // The type int corresponding to this tree's search keys
+    public int dataType;    // The type int corresponding to this tree's search keys
+    public int dataSize;    // The size of the data. # of characters if a String, -1 otherwise
+    public int tableId; // The table ID corresponding to this tree
 
     public BPlusTree( int limit ) {
         this.limit = limit;
@@ -20,11 +25,17 @@ public class BPlusTree {
     /**
      * Creates A bPlusTree Folder to store bPlusTree files in if its doesn't exist then creates a bPlusTree
      * file of a given table ID. Creates a bPlusTree object and returns that.
+     * Writes the following to file:
+     * Offset index for root, -1 indicates there is no root set yet
+     * Integer Data Type
+     * Size of Data Type
+     * Next available free index
+     * The N of the bPlusTree
      *
      * @param tableId
      * @return
      */
-    public static BPlusTree createBPlusTreeFile(int tableId) {
+    public static void createBPlusTreeFile(int tableId) {
         try {
         String bPlusTreeFolderPath = Main.db_loc + File.separatorChar + "bPlusTrees";
         File bPlusTrees = new File(bPlusTreeFolderPath);
@@ -38,20 +49,145 @@ public class BPlusTree {
         double pageSize = Catalog.instance.getPageSize();
         TableSchema table = Catalog.instance.getTableSchemaById(tableId);
         ArrayList<AttributeSchema> tableAttributes = table.getAttributes();
-        int indexOfSearchKeyColumn = Catalog.instance.getTablePKIndex(tableId); // SET VALUE ACCORDINGLY
+        int indexOfSearchKeyColumn = Catalog.instance.getTablePKIndex(tableId);
+        int dataType = tableAttributes.get(indexOfSearchKeyColumn).getType();
         int dataTypeSize = tableAttributes.get(indexOfSearchKeyColumn).getSize(); //gets size of attribute
         double searchKeyPagePointerPairSize = dataTypeSize + 4; // +4 for page pointer size being int
         int N = ( (int) Math.floor((pageSize / searchKeyPagePointerPairSize)) ) - 1;
-        BPlusTree bPlusTree = new BPlusTree(N);
+        RandomAccessFile byteProcessor = new RandomAccessFile(bPlusTreeFile, "w");
+        // Offset index for root, -1 indicates there is no root set yet
+        byteProcessor.writeInt(-1);
+        // Integer Data Type
+        byteProcessor.writeInt(dataType);
+        // Size of Data Type
+        byteProcessor.writeInt(dataTypeSize);
+        //if (dataType == 4 || dataType == 5) {
+        //    byteProcessor.writeInt(dataTypeSize);
+        //}
+        // Next available free index
+        byteProcessor.writeInt(0);
+        // The N of the bPlusTree
+        byteProcessor.writeInt(N);
+        byteProcessor.close();
+        //BPlusTree bPlusTree = new BPlusTree(N);
 
-        return bPlusTree;
+
+        //return bPlusTree;
         } catch (Exception e) {
             System.out.println("Error in creating BPlusTree file and object.");
             e.printStackTrace();
-            return null;
+            return;
         }
     }
 
+    /**
+     * Reads in the data for the node at the given index, turns it into a BPlusNode object, and returns it
+     * @param nodeIndex The index where the node is located on file
+     * @return          The BPlusNode created from the data on file
+     */
+    public BPlusNode readNode(int nodeIndex) {
+        String bPlusTreeFolderPath = Main.db_loc + File.separatorChar + "bPlusTrees";
+        String bPlusTreePath = bPlusTreeFolderPath + File.separatorChar + tableId + ".bPlusTree";
+        File bPlusTreeFile = new File(bPlusTreePath);
+        int sizeOfNode = calcNodeSize(dataType, dataSize); // The size of the node in bytes
+        long amountToSeek = Integer.BYTES * 5 + (long) sizeOfNode * nodeIndex;
+        try {
+            RandomAccessFile byteProcessor = new RandomAccessFile(bPlusTreeFile, "r");
+            // Seek ahead past the metadata and all the other nodes to the spot where we'll read
+            byteProcessor.seek(amountToSeek);
+            byte[] nodeBytes = new byte[sizeOfNode];
+            byteProcessor.read(nodeBytes, 0, sizeOfNode);
+            byteProcessor.close();
+            return BPlusNode.parseBytes(this, nodeBytes);
+        } catch (FileNotFoundException e) {
+            System.err.println("ERROR: BPlusTree file not found. File name: " + bPlusTreePath);
+            e.printStackTrace();
+            return null;
+        } catch (IOException e) {
+            System.err.println("ERROR: Couldn't seek in file. Seek distance (in bytes): " + amountToSeek);
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * Writes the data for the given node to the given index in the BPlusTree file
+     * Will overwrite anything that was already in the given index
+     * @param node      The node to write to file
+     * @param nodeIndex The index to write the node to
+     */
+    public void writeNode(BPlusNode node, int nodeIndex) {
+        String bPlusTreeFolderPath = Main.db_loc + File.separatorChar + "bPlusTrees";
+        String bPlusTreePath = bPlusTreeFolderPath + File.separatorChar + tableId + ".bPlusTree";
+        File bPlusTreeFile = new File(bPlusTreePath);
+        long amountToSeek = Integer.BYTES * 5 + (long) calcNodeSize(dataType, dataSize) * nodeIndex;
+        try {
+            RandomAccessFile byteProcessor = new RandomAccessFile(bPlusTreeFile, "w");
+            // Seek ahead past the metadata and all the other nodes to the spot where we'll read
+            byteProcessor.seek(amountToSeek);
+            byte[] nodeBytes = BPlusNode.parseNode(node);
+            byteProcessor.write(nodeBytes, 0, node.size()); // Might not need to specify length here, doing so in case
+            byteProcessor.close();
+        } catch (FileNotFoundException e) {
+            System.err.println("ERROR: BPlusTree file not found. File name: " + bPlusTreePath);
+            e.printStackTrace();
+        } catch (IOException e) {
+            System.err.println("ERROR: Couldn't seek in file. Seek distance (in bytes): " + amountToSeek);
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Calculates the size of a node with the given search key typeInt and sizeInt
+     * @param typeInt   The type int of the search key. A number 1-5
+     * @param sizeInt   The size int of the search key. For strings this is the # or chars, otherwise it's -1
+     * @return          The size of the node in bytes
+     */
+    public static int calcNodeSize(int typeInt, int sizeInt) {
+        int sizeOfNode = 0;
+        // Find the size of the contained Search Key value
+        switch (typeInt) {
+            case 1 -> //Integer
+                    sizeOfNode += Integer.BYTES;
+            case 2 -> //Double
+                    sizeOfNode += Double.BYTES;
+            case 3 -> { // Boolean
+                sizeOfNode += Character.BYTES;
+            }
+            case 4, 5 -> { // Char(x) standard string fixed array of len x
+                if (sizeInt == -1) {
+                    System.err.println("ERROR: received string but given length is -1, exiting function...");
+                    return -1;
+                }
+                sizeOfNode += Integer.BYTES + sizeInt * Character.BYTES; // int to store length, then the string itself
+            }
+        }
+        // add on the size of all the connected node's indices, and the page and record locations for the contained key
+        sizeOfNode += Integer.BYTES * 7;
+        return sizeOfNode;
+    }
+
+/*
+    public int[] getIndex(Object pkValue, int tableID) {
+        try {
+            String bPlusTreePath = Main.db_loc + File.separatorChar + tableID + ".bPlusTree";
+            File bPlusTreeFile = new File(bPlusTreePath);
+            RandomAccessFile byteProcessor = new RandomAccessFile(bPlusTreeFile, "rw");
+            int rootOffset = byteProcessor.readInt();
+            int dataType = byteProcessor.readInt();
+            int dataTypeSize = byteProcessor.readInt();
+            int nextAvailableNodeIndex = byteProcessor.readInt();
+
+            if (rootOffset == -1) {
+                BPlusNode root = new BPlusNode(pkValue, false, dataType, 0, )
+            }
+
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+*/
     /**
      * This is where the logic of adding a node to a tree is
      *
