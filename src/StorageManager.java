@@ -5,6 +5,7 @@ package src;
  * @author(s) Charlie Baker, Austin Cepalia, Duncan Small (barely), Tristan Hoenninger
  */
 
+import src.BPlusTree.BPlusTree;
 import src.ConditionalTreeNodes.ConditionTree;
 
 import java.io.*;
@@ -203,31 +204,32 @@ public class StorageManager {
     }
 
     /**
-     * Pre-Condition: Search Key for this record, did not already exist in node of b+tree,
-     *                cant have duplicate primary key. if that was the case error was thrown.
-     * Method: This method inserts a record directly after the location of the record of the prior
-     *         search key value in the B+Tree.
-     *         REQUIRES updates to record pointers in B+Tree. If page splitting occurs,
-     *         updates to record pointers need to involve change to nodes' 'pageIndex's, not just 'recordIndex's
+     * Method: This method is called with each record we intend to insert, given at the command line.
+     *         First, we obtain the searchKey from this recordToInsert.
+     *         Second, call a method of bPlusTree, which will insert this search key into the bPlusTree,
+     *         and simultaneously return a pageNumber-recordIndex pair indicating directly where to insert
+     *         recordToInsert in data.
+     *         Third, insert record into data
+     *         Fourth, iterate through our records, whose search keys need updated pointer in our bPlusTree,
+     *         by calling bPlusTree's update pointer method.
      *
-     * @param tableID table for which record belongs
-     * @param pageNumber page for which record is intended to belong: say we want to insert 23 between 22 and 25,
-     *                   22 has pointer of (page11,3rdRecordInPage) and 25 has pointer of (page11,4thRecordInPage)
-     *                   then pageNumber should be equal to the value 11.
-     * @param recordIndex index within page that record is intended to belong. Given example above^
-     *                    recordIndex should be equal to the value 4 (+1 after 3).
-     * @param recordToInsert the Record with search key from B+Tree
+     * @param bPlusTree the B+Tree we are dealing with. Contains tableID for which record belongs
+     * @param recordToInsert the Record to insert
      *
-     *                       todo update return appropriately for ease of use on updating pointers in b+tree
-     * @return int[]: int[0] contains value '0' if page split DID NOT occur, and value '1' if page split DID occur
-     *                       (indicates the extent to which record pointers need to be updated in B+Tree)
-     *                int[1] contains pageIndex: what page record was inserted in, this could
-     *                                           differ from pageNumber param as result of split
-     *                int[2] contains recordIndex: the index within the page that the search key's record is in,
-     *                                             can also differ
+     * @return int[]: int[0] ...
      */
-    public int[] indexedInsertRecord(int tableID, int pageNumber, int recordIndex, Record recordToInsert) {
+    public int[] indexedInsertRecord(BPlusTree bPlusTree, Record recordToInsert) {
+        int tableID = bPlusTree.tableId; //todo use getter here
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
+        //OBTAIN SEARCH KEY
+
+
+        //CALL B+TREE METHOD TO INSERT SEARCH KEY AND RETURN pageNumber & recordIndex
+            //some throw if search key already existed in b+tree cant have duplicate primary key
+
+        int pageNumber = 0;
+        int recordIndex = 0;
+        //INSERT RECORD INTO DATA
         ArrayList<Integer> pageOrder = table.getPageOrder();
         // If no pages exists for this table - case of very first insert into table/b+tree
         if (0 == pageOrder.size()) {
@@ -236,7 +238,7 @@ public class StorageManager {
                 // insert the record, no comparator needed here, because this is the
                 // first record of the table
                 emptyPageInbuffer.getRecordsInPage().add(recordToInsert);
-                return new int[]{0, 0, 0};
+                return new int[]{0};
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -251,22 +253,24 @@ public class StorageManager {
                     pageReference.setIsModified(true);
                     if (pageReference.computeSizeInBytes() > Main.pageSize) {
                         buffer.PageSplit(pageReference, tableID);
-                        return new int[]{1, pageNumber, 0};
+                        return new int[]{1};
                     }
-                    return new int[]{0, pageNumber, 0};
+                    return new int[]{0};
                 } else { //insert the record at its intended location
                     pageReference.getRecordsInPage().add(recordIndex, recordToInsert);
                     pageReference.setIsModified(true);
                     if (pageReference.computeSizeInBytes() > Main.pageSize) {
                         buffer.PageSplit(pageReference, tableID);
-                        return new int[]{1, pageNumber, recordIndex};
+                        //TODO IF OUR PAGE SPLITS,.... update pointer changes
                     }
-                    return new int[]{0, pageNumber, recordIndex};
+                    return new int[]{0};
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
+
+        //UPDATE POINTERS IN B+TREE TODO
     }
 
     /**
@@ -356,19 +360,24 @@ public class StorageManager {
     }
 
     /**
-     * Pre-Condition: Search Key for recordToDelete existed in B+Tree
      * Method: This method deletes the record with a given search key value in the B+Tree.
      *         REQUIRES updates to record pointers in B+Tree.
      *
-     * @param tableID table for which record exists
-     * @param pageNumber page for which record exists in
-     * @param recordIndex index of record within page that record exists at
+     * @param bPlusTree the B+Tree we are dealing with. Contains tableID
      * @param recordToDelete the Record with search key from B+Tree
      *
      * @return int[]: int[0] contains: ....
      */
-    public int[] indexedDeleteRecord(int tableID, int pageNumber, int recordIndex, Record recordToDelete) {
+    public int[] indexedDeleteRecord(BPlusTree bPlusTree, Record recordToDelete) {
+        int tableID = bPlusTree.tableId; //todo use getter here
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
+        //OBTAIN SEARCH KEY
+
+        //CALL B+TREE METHOD TO DELETE SEARCH KEY AND RETURN pageNumber & recordIndex
+            // some throw for Search Key for recordToDelete DOES NOT EXIST in B+Tree
+
+        int pageNumber = 0;
+        int recordIndex = 0;
         try {
             Page pageReference = buffer.GetPage(tableID, pageNumber);
             pageReference.getRecordsInPage().remove(recordIndex); //delete the record
@@ -383,6 +392,9 @@ public class StorageManager {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        //UPDATE POINTERS IN B+TREE TODO
+
         return new int[0];
     }
 
@@ -570,14 +582,13 @@ public class StorageManager {
      * "Updating a search key will involve inserting a new search key an deleting a the old one if
      * the primary key or location changed"
      * @param tableID .
-     * @param pageNumber .
-     * @param recordIndex .
+     * @param bPlusTree . 
      * @param recordToUpdate ??????
      * @param columnName .
      * @param data .
      * @return forward along inserts return? what to do here
      */
-    public int[] indexedUpdateRecord(int tableID, int pageNumber, int recordIndex,
+    public int[] indexedUpdateRecord(int tableID, BPlusTree bPlusTree,
                                      Record recordToUpdate, String columnName, List<Object> data) {
         //TODO likely much of this is unneeded, need to determine,how update is initiated and what that involves
 
@@ -589,7 +600,7 @@ public class StorageManager {
             throw new RuntimeException(e);
         }
         ArrayList<Object> copyOfRecordContents = new ArrayList<>(copyOfRecordToUpdate.getRecordContents());
-        indexedDeleteRecord(tableID, pageNumber, recordIndex, recordToUpdate);
+        indexedDeleteRecord(bPlusTree, recordToUpdate);
 
         //find index of column to update
         int indexOfColumnToUpdate = 0;
@@ -608,7 +619,7 @@ public class StorageManager {
         //make change updating our copy of original record
         copyOfRecordContents.set(indexOfColumnToUpdate, valueToSet);
         copyOfRecordToUpdate.setRecordContents(copyOfRecordContents); //set content change
-        int[] insertReturn = indexedInsertRecord(tableID, pageNumber, recordIndex, copyOfRecordToUpdate); //update
+        int[] insertReturn = indexedInsertRecord(bPlusTree, copyOfRecordToUpdate); //update
         return insertReturn;
     }
 
