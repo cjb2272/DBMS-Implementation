@@ -15,7 +15,7 @@ public class BPlusTree {
     private final int limit;
     public BPlusNode root = null;
     public int dataType;    // The type int corresponding to this tree's search keys
-    public int dataSize;    // The size of the data
+    public int dataSize;    // The size of the data. # of characters if a String, -1 otherwise
     public int tableId; // The table ID corresponding to this tree
 
     public BPlusTree( int limit ) {
@@ -89,7 +89,23 @@ public class BPlusTree {
         String bPlusTreeFolderPath = Main.db_loc + File.separatorChar + "bPlusTrees";
         String bPlusTreePath = bPlusTreeFolderPath + File.separatorChar + tableId + ".bPlusTree";
         File bPlusTreeFile = new File(bPlusTreePath);
-        int sizeOfNode; // The size of the node in bytes
+        int sizeOfNode = 0; // The size of the node in bytes
+        switch (dataType) {
+            case 1 -> //Integer
+                sizeOfNode += Integer.BYTES;
+            case 2 -> //Double
+                sizeOfNode += Double.BYTES;
+            case 3 -> { // Boolean
+                sizeOfNode += Character.BYTES;
+            }
+            case 4, 5 -> { // Char(x) standard string fixed array of len x
+                if (dataSize == -1) {
+                    System.err.println("ERROR: received string but given length is -1, exiting function...");
+                    return null;
+                }
+                sizeOfNode += Integer.BYTES + dataSize * Character.BYTES; // int to store length, then the string itself
+            }
+        }
         long amountToSeek = Integer.BYTES * 5 + (long) sizeOfNode * nodeIndex;
         try {
             RandomAccessFile byteProcessor = new RandomAccessFile(bPlusTreeFile, "r");
