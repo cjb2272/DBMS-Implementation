@@ -84,7 +84,16 @@ class DeleteQuery extends Query{
     public void execute() {
         ResultSet resultSet = StorageManager.instance.generateFromResultSet(tableColumnDictionary);
         int tableId = Catalog.instance.getTableIdByName(this.table);
-        StorageManager.instance.deleteFrom(resultSet, tableId, where);
+
+        if (Catalog.instance.getIndexing() == 't') {
+            BPlusTree bpt = Catalog.instance.getBPlusTreeByTableID(tableId);
+            StorageManager.instance.deleteFrom(resultSet, tableId, where, true, bpt);
+        }
+        else {
+            StorageManager.instance.deleteFrom(resultSet, tableId, where, false, null);
+        }
+
+
         System.out.println("SUCCESS\n");
     }
 
@@ -390,7 +399,17 @@ class InsertQuery extends Query {
                     return;
                 }
             }
-            int[] attemptToInsert = StorageManager.instance.insertRecord(tableID, r);
+
+            int[] attemptToInsert;
+            if (Catalog.instance.getIndexing() == 't') {
+                BPlusTree bpt = Catalog.instance.getBPlusTreeByTableID(tableID);
+                attemptToInsert = StorageManager.instance.indexedInsertRecord(bpt, r);
+            }
+            else {
+                attemptToInsert = StorageManager.instance.insertRecord(tableID, r);
+            }
+
+
             if (attemptToInsert.length > 1) {
                 int row = attemptToInsert[0];
                 if (r.getPkIndex() != attemptToInsert[1]) {
@@ -464,9 +483,11 @@ class CreateQuery extends Query {
         int availableId = Catalog.instance.getNextAvailableId();
         StorageManager.instance.createTable(availableId, tableName, columnNames, dataTypes);
         Catalog.instance.addTableSchema(availableId, tableName, attributeInfo);
-        //if(Main.indexing.equals("true")) {
-        //    BPlusTree.createBPlusTreeFile(availableId);
-        //}
+
+        if(Catalog.instance.getIndexing() == 't') {
+            BPlusTree.createBPlusTreeFile(availableId);
+        }
+
         System.out.println("SUCCESS\n");
     }
 }
