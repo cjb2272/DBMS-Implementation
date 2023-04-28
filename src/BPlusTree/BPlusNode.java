@@ -4,16 +4,14 @@ import java.nio.ByteBuffer;
 
 public class BPlusNode {
     public BPlusTree tree;
+    public int index;
     public Object value;
-//    public final boolean isInner; //TODO this will be replaced by a function
     public final int type;
     public int lessIndex = -1; //the leftmost node of this nodes LEFT child cluster
     public int greaterOrEqualIndex = -1; //the leftmost node of this nodes RIGHT child cluster
     public int parentIndex = -1; //
     public int leftSibIndex = -1;
     public int rightSibIndex = -1;
-//    public boolean hasLeft = false; // TODO replace with function
-//    public boolean hasRight = false; // TODO replace with function
 
     public int pageIndex; // location of the page that the search key is in
     public int recordIndex; // the index within the page that the search key's record is in
@@ -33,7 +31,7 @@ public class BPlusNode {
      * @param nodeInBytes A byte array that was read from disk and contains the data for the node object
      * @return The BPlusNode object created from the binary data
      */
-    public static BPlusNode parseBytes(BPlusTree tree, byte[] nodeInBytes) {
+    public static BPlusNode parseBytes(BPlusTree tree, byte[] nodeInBytes, int index) {
         /*
         The structure of the byte array is as follows:
         (Obj)   searchKeyValue      the value of the Node, being an int, double, bool, char(x), or varchar(x)
@@ -82,6 +80,7 @@ public class BPlusNode {
         int greaterOrEqualIndex = byteBuffer.getInt();
         boolean isInner = lessIndex != -1 && greaterOrEqualIndex != -1;
         BPlusNode node = new BPlusNode(tree, value, isInner, tree.dataType, pageIndex, recordIndex);
+        node.index = index;
         node.parentIndex = parentIndex;
         node.leftSibIndex = leftSiblingIndex;
         node.rightSibIndex = rightSiblingIndex;
@@ -289,6 +288,12 @@ public class BPlusNode {
     }
 
     //Getters and Setters
+    //NOTE: all setters also write to disk so the disk reflects what's in memory
+
+    public void setIndex(int index) {
+        this.index = index;
+        tree.writeNode(this, index);
+    }
 
     public boolean hasSiblings() {
         return this.hasLeft() || this.hasRight();
@@ -316,6 +321,7 @@ public class BPlusNode {
 
     public void setLessIndex(int lessIndex) {
         this.lessIndex = lessIndex;
+        tree.writeNode(this, index);
     }
 
     public BPlusNode getGreaterOrEqualNode() {
@@ -324,25 +330,28 @@ public class BPlusNode {
 
     public void setGreaterOrEqualIndex(int greaterOrEqualIndex) {
         this.greaterOrEqualIndex = greaterOrEqualIndex;
+        tree.writeNode(this, index);
     }
 
     public void setParentIndex(int parentIndex) {
         this.parentIndex = parentIndex;
+        tree.writeNode(this, index);
     }
 
-    public void setPageIndex( int pageIndex ) { this.pageIndex = pageIndex; }
-    public void setRecordIndex( int recordIndex ) { this.recordIndex = recordIndex; }
-
-    //TODO uncomment this when the variable by the same name is removed
+    public void setPageIndex( int pageIndex ) {
+        this.pageIndex = pageIndex;
+        tree.writeNode(this, index);
+    }
+    public void setRecordIndex( int recordIndex ) {
+        this.recordIndex = recordIndex;
+        tree.writeNode(this, index);
+    }
 
     /**
      * Determines if the node is an internal node or not
      * @return true if the node is internal, false if not
      */
     public boolean isInner() {
-        if (lessIndex != -1 && greaterOrEqualIndex != -1) {
-            return true;
-        }
-        return false;
+        return lessIndex != -1 && greaterOrEqualIndex != -1;
     }
 }
