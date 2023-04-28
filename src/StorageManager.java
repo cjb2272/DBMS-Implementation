@@ -5,6 +5,7 @@ package src;
  * @author(s) Charlie Baker, Austin Cepalia, Duncan Small (barely), Tristan Hoenninger
  */
 
+import src.BPlusTree.BPlusNode;
 import src.BPlusTree.BPlusTree;
 import src.ConditionalTreeNodes.ConditionTree;
 
@@ -228,13 +229,11 @@ public class StorageManager {
         Object searchKeyValue = recordToInsert.getRecordContents().get(indexOfPrimaryKeyColumn);
         //CALL B+TREE METHOD TO RETURN pageNumber & recordIndex & boolean of coming before or after that opening
             //some throw if search key already existed in b+tree cant have duplicate primary key
-        //int[] pageAndRecordIndices = bPlusTree.searchForOpening(typeOfSearchKey, searchKeyValue, true); todo
-        //int pageNumber = pageAndRecordIndices[0];
-        //int recordIndex = pageAndRecordIndices[1];
+        ArrayList<Object> pageAndRecordIndices = bPlusTree.searchForOpening(typeOfSearchKey, searchKeyValue);
+        int pageNumber = (int) pageAndRecordIndices.get(0);
+        int recordIndex = (int) pageAndRecordIndices.get(1);
         // boolean returned is true if greaterThan, or false if less
-        boolean greaterThan = true;
-        int pageNumber = 0;
-        int recordIndex = 0;
+        boolean greaterThan = (boolean) pageAndRecordIndices.get(2);
         if (greaterThan) {
             recordIndex = recordIndex + 1;
         } else {
@@ -313,6 +312,8 @@ public class StorageManager {
                 throw new RuntimeException(e);
             }
         }
+        //call add key after inserting into data, we do it afterwards so we know exactly where it is
+        // TODO insert search key value into b+tree
     }
 
     /**
@@ -418,11 +419,14 @@ public class StorageManager {
         int indexOfPrimaryKeyColumn = Catalog.instance.getTablePKIndex(tableID);
         int typeOfSearchKey = tableAttributes.get(indexOfPrimaryKeyColumn).getType();
         Object searchKeyValue = recordToDelete.getRecordContents().get(indexOfPrimaryKeyColumn);
-        //CALL B+TREE METHOD TO DELETE SEARCH KEY AND RETURN pageNumber & recordIndex
-            // some throw for Search Key for recordToDelete DOES NOT EXIST in B+Tree //todo
-        //int[] pageAndRecordIndices = bPlusTree.search(typeOfSearchKey, searchKeyValue, false);
-        int pageNumber = 0; //pageAndRecordIndices[0];
-        int recordIndex = 0; //pageAndRecordIndices[1];
+        //CALL B+TREE METHODS TO DELETE KEY AND RETURN pageNumber & recordIndex
+        BPlusNode nodeToDelete = bPlusTree.findNode(typeOfSearchKey, searchKeyValue);
+        boolean deleted = bPlusTree.deleteNode(typeOfSearchKey, searchKeyValue);
+        if (!deleted) {
+            // recordToDelete DOES NOT EXIST in B+Tree //todo
+        }
+        int pageNumber = nodeToDelete.getPageIndex();
+        int recordIndex = nodeToDelete.getRecordIndex();
         //DELETE THE RECORD
         try {
             Page pageReference = buffer.GetPage(tableID, pageNumber);
@@ -613,7 +617,7 @@ public class StorageManager {
      * @param tableID table intended to delete records from
      * @param whereCondition ConditionTree, 'null' if no where clause exists
      */
-    public void deleteFrom(ResultSet resultSet, int tableID, ConditionTree whereCondition) {
+    public void deleteFrom(ResultSet resultSet, int tableID, ConditionTree whereCondition, boolean fromIndexed, BPlusTree bPlusTree) {
         ArrayList<Record> allRecordsFromTable = resultSet.getRecords();
         for (Record curRecord : allRecordsFromTable) {
             boolean deleteRecord = true; //deleting all Records by default
@@ -622,57 +626,13 @@ public class StorageManager {
                 deleteRecord = whereCondition.validateTree(curRecord, resultSet);
             }
             if (deleteRecord) { //call deleteRecord on record if condition was met
-                deleteRecord(tableID, curRecord);
+                if (fromIndexed) {
+                    indexedDeleteRecord(bPlusTree, curRecord);
+                } else {
+                    deleteRecord(tableID, curRecord);
+                }
             }
         }
-    }
-
-
-    /**
-     * Pre-Condition: Search Key for record being updated should have been in b+tree- record to update exists
-     *
-     * "Updating a search key will involve inserting a new search key an deleting a the old one if
-     * the primary key or location changed"
-     * @param tableID .
-     * @param bPlusTree .
-     * @param recordToUpdate ??????
-     * @param columnName .
-     * @param data .
-     * @return forward along inserts return? what to do here
-     */
-    public int[] indexedUpdateRecord(int tableID, BPlusTree bPlusTree,
-                                     Record recordToUpdate, String columnName, List<Object> data) {
-        //TODO likely much of this is unneeded, need to determine,how update is initiated and what that involves
-
-        Record copyOfRecordToUpdate = null; //make a copy of the record
-        try {
-            copyOfRecordToUpdate = (Record) recordToUpdate.clone();
-
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
-        ArrayList<Object> copyOfRecordContents = new ArrayList<>(copyOfRecordToUpdate.getRecordContents());
-        indexedDeleteRecord(bPlusTree, recordToUpdate);
-
-        //find index of column to update
-        int indexOfColumnToUpdate = 0;
-        TableSchema table = Catalog.instance.getTableSchemaById(tableID);
-        ArrayList<AttributeSchema> tableColumns = table.getAttributes();
-        for (AttributeSchema attribute : tableColumns) {
-            if (Objects.equals(attribute.getName(), columnName)) {
-                break;
-            }
-            indexOfColumnToUpdate++;
-        }
-        //IF COLUMN TO UPDATE IS THE PRIMARY KEY COLUMN... TODO
-        //great changes to how we update b+tree
-
-        Object valueToSet = data.get(1); //value to update in column
-        //make change updating our copy of original record
-        copyOfRecordContents.set(indexOfColumnToUpdate, valueToSet);
-        copyOfRecordToUpdate.setRecordContents(copyOfRecordContents); //set content change
-        int[] insertReturn = indexedInsertRecord(bPlusTree, copyOfRecordToUpdate); //update
-        return insertReturn;
     }
 
     /**

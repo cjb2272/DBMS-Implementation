@@ -313,6 +313,8 @@ public class BPlusNode {
 
     public void setPageIndex( int pageIndex ) { this.pageIndex = pageIndex; }
     public void setRecordIndex( int recordIndex ) { this.recordIndex = recordIndex; }
+    public int getPageIndex() { return this.pageIndex; }
+    public int getRecordIndex() { return this.recordIndex; }
 
     //TODO uncomment this when the variable by the same name is removed
 
