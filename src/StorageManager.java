@@ -643,13 +643,16 @@ public class StorageManager {
      * sorting the updated record to its proper place among the records in the case
      * where the primarykey has been changed
      *
+     * TODO LOOK OVER GREATLY
+     *
      * @param tableID the table record in question belongs to
      * @param recordToUpdate the record to update
      * @param columnName column
      * @param data contains value we want to update column with
+     * @param bPlusTree Null if indexing turned off, tree if indexing on
      * @return receive return from insert and pass that up
      */
-    public int[] updateRecord(int tableID, Record recordToUpdate, String columnName, List<Object> data) {
+    public int[] updateRecord(int tableID, Record recordToUpdate, String columnName, List<Object> data, BPlusTree bPlusTree) {
         Record copyOfRecordToUpdate = null; //make a copy of the record
         try {
             copyOfRecordToUpdate = (Record) recordToUpdate.clone();
@@ -658,7 +661,11 @@ public class StorageManager {
             throw new RuntimeException(e);
         }
         ArrayList<Object> copyOfRecordContents = new ArrayList<>(copyOfRecordToUpdate.getRecordContents());
-        deleteRecord(tableID, recordToUpdate);
+        if (bPlusTree == null) {
+            deleteRecord(tableID, recordToUpdate);
+        } else {
+            indexedDeleteRecord(bPlusTree, recordToUpdate);
+        }
 
         //find index of column to update
         int indexOfColumnToUpdate = 0;
@@ -675,10 +682,19 @@ public class StorageManager {
         //make change updating our copy of original record
         copyOfRecordContents.set(indexOfColumnToUpdate, valueToSet);
         copyOfRecordToUpdate.setRecordContents(copyOfRecordContents); //set content change
-        int[] insertReturn = insertRecord(tableID, copyOfRecordToUpdate); //update
+        int[] insertReturn;
+        if (bPlusTree == null) {
+            insertReturn = insertRecord(tableID, copyOfRecordToUpdate); //update
+        } else {
+            insertReturn = indexedInsertRecord(bPlusTree, copyOfRecordToUpdate); //update
+        }
         if (insertReturn.length > 1) { //our record failed to insert
             //recordToUpdate.setRecordContents(originalRecordContents);
-            insertRecord(tableID, recordToUpdate); //add original, unchanged record back in
+            if (bPlusTree == null) {
+                insertRecord(tableID, recordToUpdate); //add original, unchanged record back in
+            } else {
+                indexedInsertRecord(bPlusTree, recordToUpdate); //update
+            }
         }
         return insertReturn;
     }
@@ -697,7 +713,7 @@ public class StorageManager {
      * @param whereCondition ConditionTree, 'null' if no where clause exists
      */
     public int[] updateTable(ResultSet resultSet, int tableID, String columnName, List<Object> data,
-                            ConditionTree whereCondition) {
+                            ConditionTree whereCondition, boolean fromIndexed, BPlusTree bPlusTree ) {
         ArrayList<Record> allRecordsFromTable = resultSet.getRecords();
         //should an update query indicate at command line if table has no records at all. none to update?
         for (Record curRecord : allRecordsFromTable) {
@@ -706,7 +722,12 @@ public class StorageManager {
                 updateRecord = whereCondition.validateTree(curRecord, resultSet);
             }
             if (updateRecord) {
-                int[] returnVal = updateRecord(tableID, curRecord, columnName, data);
+                int[] returnVal;
+                if (fromIndexed) {
+                    returnVal = updateRecord(tableID, curRecord, columnName, data, bPlusTree);
+                } else {
+                    returnVal = updateRecord(tableID, curRecord, columnName, data, null);
+                }
                 //if our insert failed, we want to stop our iteration of updates, and push error upwards,
                 // all changes prior to error remain valid
                 if (returnVal.length > 1) {
