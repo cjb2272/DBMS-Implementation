@@ -3,6 +3,8 @@
  */
 package src;
 
+import src.BPlusTree.BPlusTree;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -22,7 +24,10 @@ public class Catalog {
     // Integer representing size of pages in the database.
     private int pageSize;
 
+    // Character to represent if Indexing is turned on. t for true and f for false.
     private char indexing;
+
+    private ArrayList<BPlusTree> bPlusTrees;
 
     /**
      * Creates an instance of the Catalog object.
@@ -33,6 +38,7 @@ public class Catalog {
      */
     public Catalog(int pageSize, String rootPath, char indexing) {
         this.tableSchemas = new ArrayList<>();
+        this.bPlusTrees = new ArrayList<>();
         this.pageSize = pageSize;
         this.rootPath = rootPath;
         this.indexing = indexing;
@@ -71,6 +77,27 @@ public class Catalog {
                     (int) attributeInfo.get(i + 2), (boolean) attributeInfo.get(i + 3), (int) attributeInfo.get(i + 4));
         }
         tableSchemas.add(tableSchema);
+        if (Catalog.instance.indexing == 't') {
+            Catalog.instance.getTableSchemaById(tableId).setBPlusTreeMetaData(0,
+                    0, Catalog.instance.getPageSize(), Catalog.instance.getTablePKIndex(tableId));
+            this.bPlusTrees.add(new BPlusTree(tableSchema.getN(), tableSchema.getTableId()));
+        }
+    }
+
+    /**
+     *
+     * @param tableID
+     * @return
+     */
+    public BPlusTree getBPlusTreeByTableID(int tableID) {
+        BPlusTree tree = null;
+        for (BPlusTree bPlusTree: this.bPlusTrees) {
+            if (bPlusTree.getTableId() == tableID) {
+                tree = bPlusTree;
+                break;
+            }
+        }
+        return tree;
     }
 
     /**
@@ -429,6 +456,7 @@ public class Catalog {
             char indexChar = byteProcessor.readChar();
             Catalog catalog = new Catalog(pageSize, rootPath, indexChar);
             int numOfTables = byteProcessor.readInt();
+            int pkIndex = -1;
             for (int i = 0; i < numOfTables; i++) {
                 // Reads in the table id and table name
                 int tableId = byteProcessor.readInt();
@@ -446,6 +474,13 @@ public class Catalog {
                 }
                 TableSchema tableSchema = new TableSchema( tableName.toString(), tableId, pageOrder);
 
+                int rootOffset = -1;
+                int nextAvailableNodeIndex = -1;
+                if (indexChar == 't') {
+                    rootOffset = byteProcessor.readInt();
+                    nextAvailableNodeIndex = byteProcessor.readInt();
+                }
+
                 // Reads in number of attributes
                 int numOfAttributes = byteProcessor.readInt();
                 // Reads in an attribute and adds it to the table schema
@@ -460,10 +495,14 @@ public class Catalog {
                     char isPrimary = byteProcessor.readChar();
                     int constraints = byteProcessor.readInt();
                     if (isPrimary == 't') {
+                        pkIndex = j;
                         tableSchema.addAttribute( attrName.toString(), type, size, Boolean.TRUE, constraints);
                     } else {
                         tableSchema.addAttribute( attrName.toString(), type, size, Boolean.FALSE, constraints);
                     }
+                }
+                if (indexChar == 't') {
+                    tableSchema.setBPlusTreeMetaData(rootOffset, nextAvailableNodeIndex, pageSize, pkIndex);
                 }
                 catalog.tableSchemas.add(tableSchema);
             }
@@ -505,6 +544,10 @@ public class Catalog {
             buffer.putInt(numOfPages);
             for (int i = 0; i < numOfPages; i++) {
                 buffer.putInt(tableSchema.getPageOrder().get(i));
+            }
+            if (indexing == 't') {
+                buffer.putInt(tableSchema.getRootOffset());
+                buffer.putInt(tableSchema.getNextAvailableNodeIndex());
             }
             //
             buffer.putInt(tableSchema.getAttributes().size());

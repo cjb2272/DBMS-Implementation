@@ -40,11 +40,22 @@ public class TableSchema {
      */
     private ArrayList<Integer> pageDiskLocationsForReuse;
 
+     private int pkDataType;
+
+     private int pkDataTypeSize;
+
+     private int N;
+
+     private int rootOffset;
+
+     private int nextAvailableNodeIndex;
+
     /**
      * Creates an instance of the Table object.
      * 
      * @param tableName : table name
      * @param tableId   : table id number
+     * @param pageOrder : initial page order
      */
     public TableSchema(String tableName, int tableId, ArrayList<Integer> pageOrder) {
         this.tableName = tableName;
@@ -52,6 +63,80 @@ public class TableSchema {
         this.attributes = new ArrayList<>();
         this.pageOrder = pageOrder;
         this.pageDiskLocationsForReuse = new ArrayList<>();
+        this.pkDataType = -1;
+        this.pkDataTypeSize = -1;
+        this.rootOffset = -1;
+        this.nextAvailableNodeIndex = -1;
+        this.N = -1;
+    }
+
+    /**
+     * Offset index for root, -1 indicates there is no root set yet
+     * Integer Data Type
+     * Size of Data Type
+     * Next available free index
+     * The N of the bPlusTree
+     *
+     */
+    public void setBPlusTreeMetaData(int rootOffset, int nextAvailableNodeIndex, double pageSize, int tablePkIndex) {
+        ArrayList<AttributeSchema> tableAttributes = this.getAttributes();
+        int indexOfSearchKeyColumn = tablePkIndex;
+        this.pkDataType = tableAttributes.get(indexOfSearchKeyColumn).getType();
+        this.pkDataTypeSize = tableAttributes.get(indexOfSearchKeyColumn).getSize(); //gets size of attribute
+        double searchKeyPagePointerPairSize = pkDataTypeSize + 4; // +4 for page pointer size being int
+        this.N = ( (int) Math.floor((pageSize / searchKeyPagePointerPairSize)) ) - 1;
+        this.rootOffset = rootOffset;
+        this.nextAvailableNodeIndex = nextAvailableNodeIndex;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public int getN() {
+        return N;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public int getRootOffset() {
+        return rootOffset;
+    }
+
+    /**
+     *
+     * @param rootOffset
+     */
+    public void setRootOffset(int rootOffset) {
+        this.rootOffset = rootOffset;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public int getNextAvailableNodeIndex() {
+        int temp = nextAvailableNodeIndex;
+        nextAvailableNodeIndex += 1;
+        return temp;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public int getPkDataType() {
+        return pkDataType;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public int getPkDataTypeSize() {
+        return pkDataTypeSize;
     }
 
     /**
@@ -216,6 +301,9 @@ public class TableSchema {
     protected int getSizeInBytes() {
         int size = Integer.BYTES + Integer.BYTES + (tableName.length() * Character.BYTES) + Integer.BYTES +
                 (pageOrder.size() * Integer.BYTES) + Integer.BYTES;
+        if (Catalog.instance.getIndexing() == 't') {
+            size += (2 * Integer.BYTES);
+        }
         for (AttributeSchema attribute : attributes) {
             size += attribute.getSizeInBytes();
         }

@@ -22,7 +22,7 @@ public class TreeTester {
 
         int limit = 5;
 
-        BPlusTree tree = new BPlusTree( limit );
+        BPlusTree tree = new BPlusTree( limit, 1 );
 
         /*
         for ( int i = 1; i < 6; i++ ) {

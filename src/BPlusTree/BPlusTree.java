@@ -19,8 +19,9 @@ public class BPlusTree {
     public int dataSize;    // The size of the data. # of characters if a String, -1 otherwise
     public int tableId; // The table ID corresponding to this tree
 
-    public BPlusTree( int limit ) {
+    public BPlusTree( int limit, int tableId ) {
         this.limit = limit;
+        this.tableId = tableId;
     }
 
     /**
@@ -47,6 +48,7 @@ public class BPlusTree {
         File bPlusTreeFile = new File(bPlusTreePath);
         bPlusTreeFile.createNewFile();
 
+        /*
         double pageSize = Catalog.instance.getPageSize();
         TableSchema table = Catalog.instance.getTableSchemaById(tableId);
         ArrayList<AttributeSchema> tableAttributes = table.getAttributes();
@@ -70,6 +72,7 @@ public class BPlusTree {
         // The N of the bPlusTree
         byteProcessor.writeInt(N);
         byteProcessor.close();
+         */
         //BPlusTree bPlusTree = new BPlusTree(N);
 
 
