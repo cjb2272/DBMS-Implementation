@@ -45,7 +45,15 @@ class UpdateQuery extends Query{
         ResultSet resultSet = StorageManager.instance.generateFromResultSet(tableColumnDictionary);
         int tableId = Catalog.instance.getTableIdByName(this.table);
         TableSchema tableSch = Catalog.instance.getTableSchemaById(tableId);
-        int[] attemptToInsert = StorageManager.instance.updateTable(resultSet, tableId, this.colName, this.data, where);
+        int[] attemptToInsert;
+
+        if (Catalog.instance.getIndexing() == 't') {
+            BPlusTree bpt = Catalog.instance.getBPlusTreeByTableID(tableId);
+            attemptToInsert = StorageManager.instance.updateTable(resultSet, tableId, this.colName, this.data, where, true, bpt);
+        }
+        else {
+            attemptToInsert = StorageManager.instance.updateTable(resultSet, tableId, this.colName, this.data, where, false, null);
+        }
 
         if (attemptToInsert.length > 1) {
             int row = attemptToInsert[0];
