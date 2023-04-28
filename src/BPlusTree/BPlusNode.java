@@ -22,6 +22,7 @@ public class BPlusNode {
         this.type = type;       // data type int
         this.pageIndex = page;
         this.recordIndex = recordIndex;
+        this.tree = tree;
     }
 
     /**

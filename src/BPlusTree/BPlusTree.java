@@ -128,7 +128,7 @@ public class BPlusTree {
         File bPlusTreeFile = new File(bPlusTreePath);
         long amountToSeek = (long) calcNodeSize(dataType, dataSize) * nodeIndex;
         try {
-            RandomAccessFile byteProcessor = new RandomAccessFile(bPlusTreeFile, "w");
+            RandomAccessFile byteProcessor = new RandomAccessFile(bPlusTreeFile, "rw");
             // Seek ahead past the metadata and all the other nodes to the spot where we'll read
             byteProcessor.seek(amountToSeek);
             byte[] nodeBytes = BPlusNode.parseNode(node);
