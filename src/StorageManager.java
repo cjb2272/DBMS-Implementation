@@ -235,10 +235,13 @@ public class StorageManager {
         // boolean returned is true if greaterThan, or false if less
         boolean greaterThan = (boolean) pageAndRecordIndices.get(2);
         if (greaterThan) {
-            recordIndex = recordIndex + 1;
+            recordIndex = recordIndex + 1; //todo ensure this is working how intended in testing
         } else {
             recordIndex = recordIndex - 1;
         }
+        //insert search key into b+tree
+        //(ok that happens before insert into record data, because updates to all pointers on page will happen regardless )
+        bPlusTree.addKey(typeOfSearchKey, searchKeyValue, pageNumber, recordIndex);
         //INSERT RECORD INTO DATA
         ArrayList<Integer> pageOrder = table.getPageOrder();
         // If no pages exists for this table - case of very first insert into table/b+tree
@@ -312,8 +315,6 @@ public class StorageManager {
                 throw new RuntimeException(e);
             }
         }
-        //call add key after inserting into data, we do it afterwards so we know exactly where it is
-        // TODO insert search key value into b+tree
     }
 
     /**
@@ -409,7 +410,7 @@ public class StorageManager {
      * @param bPlusTree the B+Tree we are dealing with. Contains tableID
      * @param recordToDelete the Record with search key from B+Tree
      *
-     * @return int[]: int[0] contains: ....
+     * @return int[]: int[0] contains: 1 if record failed to be deleted from b+tree for some reason
      */
     public int[] indexedDeleteRecord(BPlusTree bPlusTree, Record recordToDelete) {
         int tableID = bPlusTree.getTableId();
@@ -423,7 +424,8 @@ public class StorageManager {
         BPlusNode nodeToDelete = bPlusTree.findNode(typeOfSearchKey, searchKeyValue);
         boolean deleted = bPlusTree.deleteNode(typeOfSearchKey, searchKeyValue);
         if (!deleted) {
-            // recordToDelete DOES NOT EXIST in B+Tree //todo
+            //if we fail to delete from tree, return and don't delete from data
+            return new int[1];
         }
         int pageNumber = nodeToDelete.getPageIndex();
         int recordIndex = nodeToDelete.getRecordIndex();
@@ -616,8 +618,10 @@ public class StorageManager {
      * @param resultSet contains ALL Records for table in question,
      * @param tableID table intended to delete records from
      * @param whereCondition ConditionTree, 'null' if no where clause exists
+     *
+     * @return int[]. should contain 1 at index 0 if delete failed
      */
-    public void deleteFrom(ResultSet resultSet, int tableID, ConditionTree whereCondition, boolean fromIndexed, BPlusTree bPlusTree) {
+    public int[] deleteFrom(ResultSet resultSet, int tableID, ConditionTree whereCondition, boolean fromIndexed, BPlusTree bPlusTree) {
         ArrayList<Record> allRecordsFromTable = resultSet.getRecords();
         for (Record curRecord : allRecordsFromTable) {
             boolean deleteRecord = true; //deleting all Records by default
@@ -627,12 +631,17 @@ public class StorageManager {
             }
             if (deleteRecord) { //call deleteRecord on record if condition was met
                 if (fromIndexed) {
-                    indexedDeleteRecord(bPlusTree, curRecord);
+                    int[] wasSuccess = indexedDeleteRecord(bPlusTree, curRecord);
+                    if (wasSuccess[0] == 1) {
+                        //RETURN we failed to delete a record, stop our iteration
+                        return wasSuccess;
+                    }
                 } else {
                     deleteRecord(tableID, curRecord);
                 }
             }
         }
+        return new int[0];
     }
 
     /**

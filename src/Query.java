@@ -95,7 +95,11 @@ class DeleteQuery extends Query{
 
         if (Catalog.instance.getIndexing() == 't') {
             BPlusTree bpt = Catalog.instance.getBPlusTreeByTableID(tableId);
-            StorageManager.instance.deleteFrom(resultSet, tableId, where, true, bpt);
+            int[] wasSuccess = StorageManager.instance.deleteFrom(resultSet, tableId, where, true, bpt);
+            if (wasSuccess[0] == 1) {
+                System.out.println("ERROR\n");
+                return;
+            }
         }
         else {
             StorageManager.instance.deleteFrom(resultSet, tableId, where, false, null);
