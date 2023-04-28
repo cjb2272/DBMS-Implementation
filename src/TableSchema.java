@@ -78,10 +78,9 @@ public class TableSchema {
      * The N of the bPlusTree
      *
      */
-    public void setBPlusTreeMetaData(int rootOffset, int nextAvailableNodeIndex) {
-        double pageSize = Catalog.instance.getPageSize();
+    public void setBPlusTreeMetaData(int rootOffset, int nextAvailableNodeIndex, double pageSize, int tablePkIndex) {
         ArrayList<AttributeSchema> tableAttributes = this.getAttributes();
-        int indexOfSearchKeyColumn = Catalog.instance.getTablePKIndex(tableId);
+        int indexOfSearchKeyColumn = tablePkIndex;
         this.pkDataType = tableAttributes.get(indexOfSearchKeyColumn).getType();
         this.pkDataTypeSize = tableAttributes.get(indexOfSearchKeyColumn).getSize(); //gets size of attribute
         double searchKeyPagePointerPairSize = pkDataTypeSize + 4; // +4 for page pointer size being int
