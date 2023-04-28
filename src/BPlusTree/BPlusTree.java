@@ -189,6 +189,11 @@ public class BPlusTree {
         }
     }
 */
+
+    public boolean addKey(int type, Object value, int pageIndex, int recordIndex){
+        return addNode( new BPlusNode( value, false, type,  pageIndex, recordIndex ) );
+    }
+
     /**
      * This is where the logic of adding a node to a tree is
      *
