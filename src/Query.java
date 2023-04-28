@@ -464,9 +464,9 @@ class CreateQuery extends Query {
         int availableId = Catalog.instance.getNextAvailableId();
         StorageManager.instance.createTable(availableId, tableName, columnNames, dataTypes);
         Catalog.instance.addTableSchema(availableId, tableName, attributeInfo);
-        //if(Main.indexing.equals("true")) {
-        //    BPlusTree.createBPlusTreeFile(availableId);
-        //}
+        if(Main.indexing.equals("true")) {
+            BPlusTree.createBPlusTreeFile(availableId);
+        }
         System.out.println("SUCCESS\n");
     }
 }
