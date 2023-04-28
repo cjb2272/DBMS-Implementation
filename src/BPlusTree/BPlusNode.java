@@ -311,6 +311,9 @@ public class BPlusNode {
         this.parent = parent;
     }
 
+    public void setPageIndex( int pageIndex ) { this.pageIndex = pageIndex; }
+    public void setRecordIndex( int recordIndex ) { this.recordIndex = recordIndex; }
+
     //TODO uncomment this when the variable by the same name is removed
 
     /**

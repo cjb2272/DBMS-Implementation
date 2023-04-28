@@ -206,12 +206,12 @@ public class StorageManager {
     /**
      * Method: This method is called with each record we intend to insert, given at the command line.
      *         First, we obtain the searchKey from this recordToInsert.
-     *         Second, call a method of bPlusTree, which will insert this search key into the bPlusTree,
-     *         and simultaneously return a pageNumber-recordIndex pair indicating directly where to insert
-     *         recordToInsert in data.
-     *         Third, insert record into data
+     *         Second, call a method of bPlusTree, which will return a pageNumber-recordIndex pair
+     *         indicating directly where recordToInsert should be inserted in data
+     *         Third, insert record into data, will also return boolean to left or right this space being pointed to
      *         Fourth, iterate through our records, whose search keys need updated pointer in our bPlusTree,
      *         by calling bPlusTree's update pointer method.
+     *         CURRENTLY, VERY REDUNDANT IN UPDATING POINTERS
      *
      * @param bPlusTree the B+Tree we are dealing with. Contains tableID for which record belongs
      * @param recordToInsert the Record to insert
@@ -219,16 +219,27 @@ public class StorageManager {
      * @return int[]: int[0] ...
      */
     public int[] indexedInsertRecord(BPlusTree bPlusTree, Record recordToInsert) {
-        int tableID = bPlusTree.tableId; //todo use getter here
+        int tableID = bPlusTree.getTableId();
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
         //OBTAIN SEARCH KEY
-
-
-        //CALL B+TREE METHOD TO INSERT SEARCH KEY AND RETURN pageNumber & recordIndex
+        ArrayList<AttributeSchema> tableAttributes = table.getAttributes();
+        int indexOfPrimaryKeyColumn = Catalog.instance.getTablePKIndex(tableID);
+        int typeOfSearchKey = tableAttributes.get(indexOfPrimaryKeyColumn).getType();
+        Object searchKeyValue = recordToInsert.getRecordContents().get(indexOfPrimaryKeyColumn);
+        //CALL B+TREE METHOD TO RETURN pageNumber & recordIndex & boolean of coming before or after that opening
             //some throw if search key already existed in b+tree cant have duplicate primary key
-
+        //int[] pageAndRecordIndices = bPlusTree.searchForOpening(typeOfSearchKey, searchKeyValue, true); todo
+        //int pageNumber = pageAndRecordIndices[0];
+        //int recordIndex = pageAndRecordIndices[1];
+        // boolean returned is true if greaterThan, or false if less
+        boolean greaterThan = true;
         int pageNumber = 0;
         int recordIndex = 0;
+        if (greaterThan) {
+            recordIndex = recordIndex + 1;
+        } else {
+            recordIndex = recordIndex - 1;
+        }
         //INSERT RECORD INTO DATA
         ArrayList<Integer> pageOrder = table.getPageOrder();
         // If no pages exists for this table - case of very first insert into table/b+tree
@@ -238,6 +249,10 @@ public class StorageManager {
                 // insert the record, no comparator needed here, because this is the
                 // first record of the table
                 emptyPageInbuffer.getRecordsInPage().add(recordToInsert);
+                //update the pointer, haven't thought through if this needs to occur
+                Record curRecord = emptyPageInbuffer.getRecordsInPage().get(0);
+                Object searchKeyVal = curRecord.getRecordContents().get(indexOfPrimaryKeyColumn);
+                bPlusTree.updatePointer(typeOfSearchKey, searchKeyVal, pageNumber, 0);
                 return new int[]{0};
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -252,25 +267,52 @@ public class StorageManager {
                     pageReference.getRecordsInPage().add(0, recordToInsert);
                     pageReference.setIsModified(true);
                     if (pageReference.computeSizeInBytes() > Main.pageSize) {
-                        buffer.PageSplit(pageReference, tableID);
-                        return new int[]{1};
+                        int pageNumOfNewlyCreatedPage = buffer.PageSplit(pageReference, tableID);
+                        // PAGE SPLIT: UPDATE POINTERS FOR THE BOTH TABLES, new table here, original table outside if
+                        Page newPageRef = buffer.GetPage(tableID, pageNumOfNewlyCreatedPage);
+                        int numRecordsNewPage = newPageRef.getRecordCount();
+                        for (int i = 0; i < numRecordsNewPage; i++) {
+                            Record curRec = newPageRef.getRecordsInPage().get(i);
+                            Object searchKeyVal = curRec.getRecordContents().get(indexOfPrimaryKeyColumn);
+                            bPlusTree.updatePointer(typeOfSearchKey, searchKeyVal, pageNumOfNewlyCreatedPage, i);
+                        }
+                    }
+                    //UPDATE POINTERS AFTER INSERT and return
+                    int numRecordsInPageAfterInsert = pageReference.getRecordCount();
+                    for (int idx = 0; idx < numRecordsInPageAfterInsert; idx++) {
+                        Record curRecord = pageReference.getRecordsInPage().get(idx);
+                        Object searchKeyVal = curRecord.getRecordContents().get(indexOfPrimaryKeyColumn);
+                        bPlusTree.updatePointer(typeOfSearchKey, searchKeyVal, pageNumber, idx);
                     }
                     return new int[]{0};
                 } else { //insert the record at its intended location
                     pageReference.getRecordsInPage().add(recordIndex, recordToInsert);
                     pageReference.setIsModified(true);
                     if (pageReference.computeSizeInBytes() > Main.pageSize) {
-                        buffer.PageSplit(pageReference, tableID);
-                        //TODO IF OUR PAGE SPLITS,.... update pointer changes
+                        int pageNumOfNewlyCreatedPage = buffer.PageSplit(pageReference, tableID);
+                        // PAGE SPLIT: UPDATE POINTERS FOR THE BOTH TABLES, new table here, original table outside if
+                        Page newPageRef = buffer.GetPage(tableID, pageNumOfNewlyCreatedPage);
+                        int numRecordsNewPage = newPageRef.getRecordCount();
+                        for (int i = 0; i < numRecordsNewPage; i++) {
+                            Record curRec = newPageRef.getRecordsInPage().get(i);
+                            Object searchKeyVal = curRec.getRecordContents().get(indexOfPrimaryKeyColumn);
+                            bPlusTree.updatePointer(typeOfSearchKey, searchKeyVal, pageNumOfNewlyCreatedPage, i);
+                        }
+                    }
+                    //UPDATE POINTERS AFTER INSERT and return
+                    int numRecordsInPageAfterInsert = pageReference.getRecordCount();
+                    for (int idx = 0; idx < numRecordsInPageAfterInsert; idx++) {
+                        Record curRecord = pageReference.getRecordsInPage().get(idx);
+                        Object searchKeyVal = curRecord.getRecordContents().get(indexOfPrimaryKeyColumn);
+                        bPlusTree.updatePointer(typeOfSearchKey, searchKeyVal, pageNumber, idx);
                     }
                     return new int[]{0};
                 }
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
-
-        //UPDATE POINTERS IN B+TREE TODO
     }
 
     /**
@@ -369,15 +411,19 @@ public class StorageManager {
      * @return int[]: int[0] contains: ....
      */
     public int[] indexedDeleteRecord(BPlusTree bPlusTree, Record recordToDelete) {
-        int tableID = bPlusTree.tableId; //todo use getter here
+        int tableID = bPlusTree.getTableId();
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
         //OBTAIN SEARCH KEY
-
+        ArrayList<AttributeSchema> tableAttributes = table.getAttributes();
+        int indexOfPrimaryKeyColumn = Catalog.instance.getTablePKIndex(tableID);
+        int typeOfSearchKey = tableAttributes.get(indexOfPrimaryKeyColumn).getType();
+        Object searchKeyValue = recordToDelete.getRecordContents().get(indexOfPrimaryKeyColumn);
         //CALL B+TREE METHOD TO DELETE SEARCH KEY AND RETURN pageNumber & recordIndex
-            // some throw for Search Key for recordToDelete DOES NOT EXIST in B+Tree
-
-        int pageNumber = 0;
-        int recordIndex = 0;
+            // some throw for Search Key for recordToDelete DOES NOT EXIST in B+Tree //todo
+        //int[] pageAndRecordIndices = bPlusTree.search(typeOfSearchKey, searchKeyValue, false);
+        int pageNumber = 0; //pageAndRecordIndices[0];
+        int recordIndex = 0; //pageAndRecordIndices[1];
+        //DELETE THE RECORD
         try {
             Page pageReference = buffer.GetPage(tableID, pageNumber);
             pageReference.getRecordsInPage().remove(recordIndex); //delete the record
@@ -388,12 +434,18 @@ public class StorageManager {
                 //remove the page from the buffer, our data will remain populated and outdated at that
                 //location on disk until a new page re-uses that page location and is wrote to disk
                 buffer.removeEmptyPageFromBuffer(tableID, pageNumber);
+                return new int[0];
+            }
+            //UPDATE POINTERS AFTER DELETE
+            int numRecordsInPageAfterDelete = pageReference.getRecordCount();
+            for (int idx = 0; idx < numRecordsInPageAfterDelete; idx++) {
+                Record curRecord = pageReference.getRecordsInPage().get(idx);
+                Object searchKeyVal = curRecord.getRecordContents().get(indexOfPrimaryKeyColumn);
+                bPlusTree.updatePointer(typeOfSearchKey, searchKeyVal, pageNumber, idx);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        //UPDATE POINTERS IN B+TREE TODO
 
         return new int[0];
     }
@@ -582,7 +634,7 @@ public class StorageManager {
      * "Updating a search key will involve inserting a new search key an deleting a the old one if
      * the primary key or location changed"
      * @param tableID .
-     * @param bPlusTree . 
+     * @param bPlusTree .
      * @param recordToUpdate ??????
      * @param columnName .
      * @param data .
@@ -983,8 +1035,9 @@ public class StorageManager {
          *                     No Return needed, because insertRecord method has
          *                     successfully handled insert
          *                     upon end of this method
+         * @return pageNumber of new page that was created as result of split
          */
-        public void PageSplit(Page overFullPage, int tableNumber) throws IOException {
+        public int PageSplit(Page overFullPage, int tableNumber) throws IOException {
             overFullPage.setIsModified(true);
             // create new page handles adding new page to buffer
             Page newEmptyPage = CreateNewPage(tableNumber, overFullPage.getPageNumberOnDisk());
@@ -1005,6 +1058,7 @@ public class StorageManager {
             }
             newEmptyPage.setRecordsInPage(secondPageRecords);
             // page has been split appropriately
+            return newEmptyPage.getPageNumberOnDisk();
         }
 
         /**
