@@ -70,6 +70,9 @@ public class Catalog {
             tableSchema.addAttribute((String) attributeInfo.get(i), (int) attributeInfo.get(i + 1),
                     (int) attributeInfo.get(i + 2), (boolean) attributeInfo.get(i + 3), (int) attributeInfo.get(i + 4));
         }
+        if (Catalog.instance.indexing == 't') {
+            tableSchema.setBPlusTreeMetaData(0, 0);
+        }
         tableSchemas.add(tableSchema);
     }
 
@@ -446,6 +449,13 @@ public class Catalog {
                 }
                 TableSchema tableSchema = new TableSchema( tableName.toString(), tableId, pageOrder);
 
+                int rootOffset = -1;
+                int nextAvailableNodeIndex = -1;
+                if (indexChar == 't') {
+                    rootOffset = byteProcessor.readInt();
+                    nextAvailableNodeIndex = byteProcessor.readInt();
+                }
+
                 // Reads in number of attributes
                 int numOfAttributes = byteProcessor.readInt();
                 // Reads in an attribute and adds it to the table schema
@@ -464,6 +474,9 @@ public class Catalog {
                     } else {
                         tableSchema.addAttribute( attrName.toString(), type, size, Boolean.FALSE, constraints);
                     }
+                }
+                if (indexChar == 't') {
+                    tableSchema.setBPlusTreeMetaData(rootOffset, nextAvailableNodeIndex);
                 }
                 catalog.tableSchemas.add(tableSchema);
             }
@@ -505,6 +518,10 @@ public class Catalog {
             buffer.putInt(numOfPages);
             for (int i = 0; i < numOfPages; i++) {
                 buffer.putInt(tableSchema.getPageOrder().get(i));
+            }
+            if (indexing == 't') {
+                buffer.putInt(tableSchema.getRootOffset());
+                buffer.putInt(tableSchema.getNextAvailableNodeIndex());
             }
             //
             buffer.putInt(tableSchema.getAttributes().size());

@@ -46,6 +46,7 @@ public class BPlusTree {
         File bPlusTreeFile = new File(bPlusTreePath);
         bPlusTreeFile.createNewFile();
 
+        /*
         double pageSize = Catalog.instance.getPageSize();
         TableSchema table = Catalog.instance.getTableSchemaById(tableId);
         ArrayList<AttributeSchema> tableAttributes = table.getAttributes();
@@ -69,6 +70,7 @@ public class BPlusTree {
         // The N of the bPlusTree
         byteProcessor.writeInt(N);
         byteProcessor.close();
+         */
         //BPlusTree bPlusTree = new BPlusTree(N);
 
 
