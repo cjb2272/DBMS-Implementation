@@ -3,23 +3,24 @@ package src.BPlusTree;
 import java.nio.ByteBuffer;
 
 public class BPlusNode {
+    public BPlusTree tree;
     public Object value;
-    public final boolean isInner; //TODO this will be replaced by a function
+//    public final boolean isInner; //TODO this will be replaced by a function
     public final int type;
-    public BPlusNode less = null; //the leftmost node of this nodes LEFT child cluster
-    public BPlusNode greaterOrEqual = null; //the leftmost node of this nodes RIGHT child cluster
-    public BPlusNode parent = null; //
-    public BPlusNode leftSib = null;
-    public BPlusNode rightSib = null;
-    public boolean hasLeft = false;
-    public boolean hasRight = false;
+    public int lessIndex = -1; //the leftmost node of this nodes LEFT child cluster
+    public int greaterOrEqualIndex = -1; //the leftmost node of this nodes RIGHT child cluster
+    public int parentIndex = -1; //
+    public int leftSibIndex = -1;
+    public int rightSibIndex = -1;
+//    public boolean hasLeft = false; // TODO replace with function
+//    public boolean hasRight = false; // TODO replace with function
 
     public int pageIndex; // location of the page that the search key is in
     public int recordIndex; // the index within the page that the search key's record is in
 
-    public BPlusNode( Object value, boolean isInner, int type, int page, int recordIndex ) {
+    public BPlusNode( BPlusTree tree, Object value, boolean isInner, int type, int page, int recordIndex ) {
         this.value = value;     // the Search Key value for this node
-        this.isInner = isInner; //
+//        this.isInner = isInner; //
         this.type = type;       // data type int
         this.pageIndex = page;
         this.recordIndex = recordIndex;
@@ -80,13 +81,12 @@ public class BPlusNode {
         int lessIndex = byteBuffer.getInt();
         int greaterOrEqualIndex = byteBuffer.getInt();
         boolean isInner = lessIndex != -1 && greaterOrEqualIndex != -1;
-        BPlusNode node = new BPlusNode(value, isInner, tree.dataType, pageIndex, recordIndex);
-        //TODO uncomment when File I/O becomes the method for accessing nodes
-//        node.parent = parentIndex;
-//        node.leftSib = leftSiblingIndex;
-//        node.rightSib = rightSiblingIndex;
-//        node.less = lessIndex;
-//        node.greaterOrEqual = greaterOrEqualIndex;
+        BPlusNode node = new BPlusNode(tree, value, isInner, tree.dataType, pageIndex, recordIndex);
+        node.parentIndex = parentIndex;
+        node.leftSibIndex = leftSiblingIndex;
+        node.rightSibIndex = rightSiblingIndex;
+        node.lessIndex = lessIndex;
+        node.greaterOrEqualIndex = greaterOrEqualIndex;
         return node;
     }
 
@@ -120,12 +120,11 @@ public class BPlusNode {
         }
         byteBuffer.putInt(node.pageIndex);
         byteBuffer.putInt(node.recordIndex);
-        //TODO uncomment when File I/O becomes the method for accessing nodes
-//        byteBuffer.putInt(node.parent);
-//        byteBuffer.putInt(node.leftSib);
-//        byteBuffer.putInt(node.rightSib);
-//        byteBuffer.putInt(node.less);
-//        byteBuffer.putInt(node.greaterOrEqual);
+        byteBuffer.putInt(node.parentIndex);
+        byteBuffer.putInt(node.leftSibIndex);
+        byteBuffer.putInt(node.rightSibIndex);
+        byteBuffer.putInt(node.lessIndex);
+        byteBuffer.putInt(node.greaterOrEqualIndex);
         return byteArray;
     }
 
@@ -201,15 +200,15 @@ public class BPlusNode {
         stringBuilder.append( this.value.toString() ).append( "\t" );
 
         BPlusNode current = this;
-        if ( this.less != null ) {
-            stringBuilder.append( this.getLess().printTree() );
-            stringBuilder.append( this.getGreaterOrEqual().printTree() );
+        if ( this.lessIndex != -1 ) {
+            stringBuilder.append( this.getLessNode().printTree() );
+            stringBuilder.append( this.getGreaterOrEqualNode().printTree() );
         }
-        while (current.hasRight) {
-            current = current.rightSib;
+        while (current.hasRight()) {
+            current = current.tree.readNode(rightSibIndex);
             stringBuilder.append( current.getValue().toString() ).append( "\t" );
-            if ( current.less != null ) {
-                stringBuilder.append( current.getGreaterOrEqual().printTree() );
+            if ( current.lessIndex != -1 ) {
+                stringBuilder.append( current.getGreaterOrEqualNode().printTree() );
             }
         }
 
@@ -238,7 +237,7 @@ public class BPlusNode {
         }
         BPlusNode BNode = (BPlusNode) B;
 
-        if ( this.isInner != BNode.isInner ) {
+        if ( this.isInner() != BNode.isInner() ) {
             return false;
         }
 
@@ -252,8 +251,8 @@ public class BPlusNode {
      */
     public BPlusNode getLeftMostSibling() {
         BPlusNode current = this;
-        while (current.hasLeft) {
-            current = current.leftSib;
+        while (current.hasLeft()) {
+            current = current.tree.readNode(leftSibIndex);
         }
         return current;
     }
@@ -265,8 +264,8 @@ public class BPlusNode {
      */
     public BPlusNode getRightMostSibling() {
         BPlusNode current = this;
-        while (current.hasRight) {
-            current = current.rightSib;
+        while (current.hasRight()) {
+            current = current.tree.readNode(rightSibIndex);
         }
         return current;
     }
@@ -274,41 +273,61 @@ public class BPlusNode {
     public int getNumOfSiblings(){
         BPlusNode start = this.getLeftMostSibling();
         int counter = 0;
-        while(start.hasRight){
-            start = start.rightSib;
+        while(start.hasRight()){
+            start = start.tree.readNode(rightSibIndex);
             counter++;
         }
         return counter;
     }
 
+    public boolean hasLeft() {
+        return leftSibIndex != -1;
+    }
+
+    public boolean hasRight() {
+        return  rightSibIndex != -1;
+    }
+
     //Getters and Setters
 
     public boolean hasSiblings() {
-        return this.hasLeft || this.hasRight;
+        return this.hasLeft() || this.hasRight();
     }
 
     public Object getValue() {
         return this.value;
     }
 
-    public BPlusNode getLess() {
-        return less;
+    public BPlusNode getParentNode() {
+        return tree.readNode(parentIndex);
     }
 
-    public void setLess( BPlusNode less ) {
-        this.less = less;
+    public BPlusNode getLeftSibNode() {
+        return tree.readNode(leftSibIndex);
     }
 
-    public BPlusNode getGreaterOrEqual() {
-        return greaterOrEqual;
+    public BPlusNode getRightSibNode() {
+        return tree.readNode(rightSibIndex);
     }
 
-    public void setGreaterOrEqual( BPlusNode greaterOrEqual ) {
-        this.greaterOrEqual = greaterOrEqual;
+    public BPlusNode getLessNode() {
+        return tree.readNode(lessIndex);
     }
 
-    public void setParent( BPlusNode parent ) {
-        this.parent = parent;
+    public void setLessIndex(int lessIndex) {
+        this.lessIndex = lessIndex;
+    }
+
+    public BPlusNode getGreaterOrEqualNode() {
+        return tree.readNode(greaterOrEqualIndex);
+    }
+
+    public void setGreaterOrEqualIndex(int greaterOrEqualIndex) {
+        this.greaterOrEqualIndex = greaterOrEqualIndex;
+    }
+
+    public void setParentIndex(int parentIndex) {
+        this.parentIndex = parentIndex;
     }
 
     public void setPageIndex( int pageIndex ) { this.pageIndex = pageIndex; }
@@ -320,10 +339,10 @@ public class BPlusNode {
      * Determines if the node is an internal node or not
      * @return true if the node is internal, false if not
      */
-//    public boolean isInner() {
-//        if (less != -1 && greaterOrEqual != -1) {
-//            return true;
-//        }
-//        return false;
-//    }
+    public boolean isInner() {
+        if (lessIndex != -1 && greaterOrEqualIndex != -1) {
+            return true;
+        }
+        return false;
+    }
 }
