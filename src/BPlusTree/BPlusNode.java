@@ -333,6 +333,16 @@ public class BPlusNode {
         tree.writeNode(this, index);
     }
 
+    public void setLeftSibIndex(int leftSibIndex) {
+        this.leftSibIndex = leftSibIndex;
+        tree.writeNode(this, index);
+    }
+
+    public void setRightSibIndex(int rightSibIndex) {
+        this.rightSibIndex = rightSibIndex;
+        tree.writeNode(this, index);
+    }
+
     public void setParentIndex(int parentIndex) {
         this.parentIndex = parentIndex;
         tree.writeNode(this, index);
