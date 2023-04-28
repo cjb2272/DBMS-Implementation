@@ -794,4 +794,25 @@ public class BPlusTree {
         }
         return root.printTree();
     }
+
+    public int getTableId() {
+        return this.tableId;
+    }
+
+    /**
+     * After changes to the b+tree are made, being inserts, deletes, or updates in the case
+     * of primaryKey values, a number of pointers within the tree need updates to their record
+     * pointer being the pageIndex, recordIndex pair.
+     * This method will be called repeatedly - this method finds a singular node that requires
+     * an update to the pointer, and makes that update.
+     * @param searchKeyType indicating data type of search key
+     * @param searchKey the search key value identifying node to update
+     * @param newPageIndex what page on disk the record of this node to update exists at
+     * @param newRecordIndex where the record of this node to update exists among the records of a page on disk
+     */
+    public void updatePointer(int searchKeyType, Object searchKey, int newPageIndex, int newRecordIndex) {
+        BPlusNode nodeToUpdate = findNode(searchKeyType, searchKey);
+        nodeToUpdate.setPageIndex(newPageIndex);
+        nodeToUpdate.setRecordIndex(newRecordIndex);
+    }
 }
