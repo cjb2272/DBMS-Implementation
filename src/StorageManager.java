@@ -243,8 +243,6 @@ public class StorageManager {
             boolean greaterThan = (boolean) pageAndRecordIndices.get(2);
             if (greaterThan) {
                 recordIndex = recordIndex + 1; //todo ensure this is working how intended in testing
-            } else {
-                recordIndex = recordIndex - 1;
             }
             //insert search key into b+tree
             //(ok that happens before insert into record data, because updates to all pointers on page will happen regardless )
