@@ -230,18 +230,28 @@ public class StorageManager {
         //CALL B+TREE METHOD TO RETURN pageNumber & recordIndex & boolean of coming before or after that opening
             //some throw if search key already existed in b+tree cant have duplicate primary key
         ArrayList<Object> pageAndRecordIndices = bPlusTree.searchForOpening(typeOfSearchKey, searchKeyValue);
-        int pageNumber = (int) pageAndRecordIndices.get(0);
-        int recordIndex = (int) pageAndRecordIndices.get(1);
-        // boolean returned is true if greaterThan, or false if less
-        boolean greaterThan = (boolean) pageAndRecordIndices.get(2);
-        if (greaterThan) {
-            recordIndex = recordIndex + 1; //todo ensure this is working how intended in testing
-        } else {
-            recordIndex = recordIndex - 1;
+
+        int pageNumber = 0;
+        int recordIndex = 0;
+        if (pageAndRecordIndices == null) {
+            bPlusTree.addKey(typeOfSearchKey, searchKeyValue, pageNumber, recordIndex);
         }
-        //insert search key into b+tree
-        //(ok that happens before insert into record data, because updates to all pointers on page will happen regardless )
-        bPlusTree.addKey(typeOfSearchKey, searchKeyValue, pageNumber, recordIndex);
+        else {
+            pageNumber = (int) pageAndRecordIndices.get(0);
+            recordIndex = (int) pageAndRecordIndices.get(1);
+            // boolean returned is true if greaterThan, or false if less
+            boolean greaterThan = (boolean) pageAndRecordIndices.get(2);
+            if (greaterThan) {
+                recordIndex = recordIndex + 1; //todo ensure this is working how intended in testing
+            } else {
+                recordIndex = recordIndex - 1;
+            }
+            //insert search key into b+tree
+            //(ok that happens before insert into record data, because updates to all pointers on page will happen regardless )
+            bPlusTree.addKey(typeOfSearchKey, searchKeyValue, pageNumber, recordIndex);
+        }
+
+
         //INSERT RECORD INTO DATA
         ArrayList<Integer> pageOrder = table.getPageOrder();
         // If no pages exists for this table - case of very first insert into table/b+tree

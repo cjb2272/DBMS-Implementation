@@ -745,7 +745,7 @@ public class BPlusTree {
      */
     public ArrayList<Object> searchForOpening(int type, Object target ){
         if ( root == null ) {
-            System.out.println( "The tree is empty." );
+//            System.out.println( "The tree is empty." );
             return null;
         }
 
