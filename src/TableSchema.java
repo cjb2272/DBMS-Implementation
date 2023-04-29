@@ -82,7 +82,14 @@ public class TableSchema {
         ArrayList<AttributeSchema> tableAttributes = this.getAttributes();
         int indexOfSearchKeyColumn = tablePkIndex;
         this.pkDataType = tableAttributes.get(indexOfSearchKeyColumn).getType();
-        this.pkDataTypeSize = tableAttributes.get(indexOfSearchKeyColumn).getSize(); //gets size of attribute
+        if (this.pkDataType == 1 || this.pkDataType == 2) {
+            //getSize returns 32 bits for an integeer, pkDataTypeSize should always be in bytes here TODO check double assume same as int
+            this.pkDataTypeSize = tableAttributes.get(indexOfSearchKeyColumn).getSize() / 8; //gets size of attribute
+        } else if (this.pkDataType == 4 || this.pkDataType == 5) { //for chars varchars getSize returns num chars so multiply by 2 for bytes
+            this.pkDataTypeSize = tableAttributes.get(indexOfSearchKeyColumn).getSize() * 2; //gets size of attribute
+        } else { //boolean case but boolean should never be primarykey!
+            this.pkDataTypeSize = tableAttributes.get(indexOfSearchKeyColumn).getSize();
+        }
         double searchKeyPagePointerPairSize = pkDataTypeSize + 4; // +4 for page pointer size being int
         this.N = ( (int) Math.floor((pageSize / searchKeyPagePointerPairSize)) ) - 1;
         this.rootOffset = rootOffset;
