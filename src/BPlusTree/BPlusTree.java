@@ -1,5 +1,6 @@
 package src.BPlusTree;
 
+import src.Catalog;
 import src.Main;
 
 import java.io.File;
@@ -12,12 +13,15 @@ import java.util.Arrays;
 public class BPlusTree {
     private final int limit;
     public BPlusNode root = null;
+    public boolean hasRoot;
     public int dataType;    // The type int corresponding to this tree's search keys
     public int dataSize;    // The size of the data. # of characters if a String, -1 otherwise
     public int tableId; // The table ID corresponding to this tree
 
-    public BPlusTree( int limit ) {
+    public BPlusTree( int limit, int tableId ) {
         this.limit = limit;
+        this.tableId = tableId;
+        hasRoot = false;
     }
 
     /**
@@ -86,9 +90,10 @@ public class BPlusTree {
      * @return          The BPlusNode created from the data on file
      */
     public BPlusNode readNode(int nodeIndex) {
-        if (nodeIndex == -1)
+        if (nodeIndex <= -1 || Catalog.instance.getTableSchemaById(tableId).getRootOffset() == -1)
             return null;
-        String bPlusTreeFolderPath = Main.db_loc + File.separatorChar + "bPlusTrees";
+        //String bPlusTreeFolderPath = Main.db_loc + File.separatorChar + "bPlusTrees";
+        String bPlusTreeFolderPath = TreeTester.db_loc + File.separatorChar + "bPlusTrees";
         String bPlusTreePath = bPlusTreeFolderPath + File.separatorChar + tableId + ".bPlusTree";
         File bPlusTreeFile = new File(bPlusTreePath);
         int sizeOfNode = calcNodeSize(dataType, dataSize); // The size of the node in bytes
@@ -123,7 +128,8 @@ public class BPlusTree {
             System.err.println("What are you trying to do rn, that node is null and you want to write it? or that index is -1? stop");
             return;
         }
-        String bPlusTreeFolderPath = Main.db_loc + File.separatorChar + "bPlusTrees";
+        //String bPlusTreeFolderPath = Main.db_loc + File.separatorChar + "bPlusTrees";
+        String bPlusTreeFolderPath = TreeTester.db_loc + File.separatorChar + "bPlusTrees";
         String bPlusTreePath = bPlusTreeFolderPath + File.separatorChar + tableId + ".bPlusTree";
         File bPlusTreeFile = new File(bPlusTreePath);
         long amountToSeek = (long) calcNodeSize(dataType, dataSize) * nodeIndex;
@@ -169,31 +175,16 @@ public class BPlusTree {
             }
         }
         // add on the size of all the connected node's indices, and the page and record locations for the contained key
-        sizeOfNode += Integer.BYTES * 7;
+        sizeOfNode += Integer.BYTES * 8;
         return sizeOfNode;
     }
 
-/*
-    public int[] getIndex(Object pkValue, int tableID) {
-        try {
-            String bPlusTreePath = Main.db_loc + File.separatorChar + tableID + ".bPlusTree";
-            File bPlusTreeFile = new File(bPlusTreePath);
-            RandomAccessFile byteProcessor = new RandomAccessFile(bPlusTreeFile, "rw");
-            int rootOffset = byteProcessor.readInt();
-            int dataType = byteProcessor.readInt();
-            int dataTypeSize = byteProcessor.readInt();
-            int nextAvailableNodeIndex = byteProcessor.readInt();
-
-            if (rootOffset == -1) {
-                BPlusNode root = new BPlusNode(pkValue, false, dataType, 0, )
-            }
-
-            return null;
-        } catch (Exception e) {
-            return null;
-        }
+    public boolean addKey(int type, Object value, int pageIndex, int recordIndex){
+        BPlusNode node = new BPlusNode(this,  value, false, type,  pageIndex, recordIndex );
+        node.setNodeIndex(Catalog.instance.getTableSchemaById(tableId).getNextAvailableNodeIndex());
+        return addNode( node );
     }
-*/
+
     /**
      * This is where the logic of adding a node to a tree is
      *
@@ -201,10 +192,16 @@ public class BPlusTree {
      * @return True if success and False if failed
      */
     public boolean addNode( BPlusNode newNode ) {
-        if ( root == null ) {
-            root = newNode;
+        //BPlusNode rootNodeTime = readNode(Catalog.instance.getTableSchemaById(tableId).getRootOffset());
+        if ( !hasRoot ) {
+            //root = newNode;
+            hasRoot = true;
+            writeNode(newNode, newNode.getNodeIndex());
+            Catalog.instance.getTableSchemaById(tableId).incrementNextAvailableNodeIndex();
+            Catalog.instance.getTableSchemaById(tableId).setRootOffset(newNode.getNodeIndex());
             return true;
         } else {
+            BPlusNode root = readNode(Catalog.instance.getTableSchemaById(tableId).getRootOffset());
             if ( newNode.type != root.type ) {
                 System.out.println( "ERROR: new node must have this type code: " + root.type );
                 return false;
@@ -218,29 +215,39 @@ public class BPlusTree {
                         return false;
                     } else if ( comparison > 0 ) { //newNode/value belongs as left sibling of root
                         addSibling( newNode, root );
-                        this.root = newNode; // our root, leftmost value is now newNode
+                        //this.root = newNode; // our root, leftmost value is now newNode
+                        Catalog.instance.getTableSchemaById(tableId).setRootOffset(newNode.getNodeIndex());
+                        Catalog.instance.getTableSchemaById(tableId).incrementNextAvailableNodeIndex();
                         return true;
                     } else {
                         addSibling( root, newNode ); //newNode/value belongs as right sibling of root
+                        Catalog.instance.getTableSchemaById(tableId).incrementNextAvailableNodeIndex();
                         return true;
                     }
                 } else { // Root has Siblings
                     insertSibling( root, newNode ); //root is leftmost node of this 'root row', newNode is node being added to row
                     BPlusNode start = newNode.getLeftMostSibling();
                     if ( checkDegree( start ) ) {
-                        this.root = split( start );
+                        BPlusNode newRoot = split(start);
+                        //this.root = split( start );
+                        Catalog.instance.getTableSchemaById(tableId).setRootOffset(newRoot.getNodeIndex());
                     }
+                    Catalog.instance.getTableSchemaById(tableId).incrementNextAvailableNodeIndex();
                     return true;
                 }
             } else {
                 //Need to traverse tree
-                BPlusNode current = root;
+                //BPlusNode current = this.root;
+                BPlusNode current = readNode(Catalog.instance.getTableSchemaById(tableId).getRootOffset());
 
                 while (current.isInner()) {
                     int comparison = current.compare( newNode.getValue() );
                     if ( comparison > 0 ) {
                         current = current.getLessNode();
-                    } else {
+                    } else if (comparison == 0){
+                        System.out.println( "Error, cannot have duplicate keys in B+ Tree." );
+                        return false;
+                    }else {
                         if ( current.hasRight() ) {
                             current = current.getRightSibNode();
                         } else {
@@ -255,7 +262,11 @@ public class BPlusTree {
                 while (checkDegree( start )) {
                     start = split( start ).getLeftMostSibling();
                 }
-                this.root = findRoot( start.getLeftMostSibling() );
+                BPlusNode rootNode = findRoot(current);
+                writeNode(rootNode, rootNode.getNodeIndex());
+                Catalog.instance.getTableSchemaById(tableId).setRootOffset(rootNode.getNodeIndex());
+                //this.root = findRoot( start.getLeftMostSibling() );
+                Catalog.instance.getTableSchemaById(tableId).incrementNextAvailableNodeIndex();
                 return true;
             }
         }
@@ -267,6 +278,7 @@ public class BPlusTree {
      *      borrow a node from the other side before reducing the num of layers
      */
     public void balanceTree(){
+        BPlusNode root = readNode(Catalog.instance.getTableSchemaById(tableId).getRootOffset());
         if(!root.isInner()){
             return;
         }
@@ -284,6 +296,7 @@ public class BPlusTree {
             return;
         } else if (root.getGreaterOrEqualNode() == null){
             root = root.getLessNode();
+            Catalog.instance.getTableSchemaById(tableId).setRootOffset(root.getNodeIndex());
             BPlusNode current = root;
             while(current.hasRight()){
                 current.setParentIndex( -1 );
@@ -298,6 +311,7 @@ public class BPlusTree {
             //2 layers becomes one
             addSibling( root.getLessNode().getRightMostSibling(), root.getGreaterOrEqualNode().getLeftMostSibling() );
             root = root.getLessNode();
+            Catalog.instance.getTableSchemaById(tableId).setRootOffset(root.getNodeIndex());
             BPlusNode current = root;
             while(current.hasRight()){
                 current.setParentIndex( -1 );
@@ -322,7 +336,7 @@ public class BPlusTree {
                 G1.value = root.getValue();
                 root.value = newRootValue;
 
-                root.setGreaterOrEqualIndex( G2.index );
+                root.setGreaterOrEqualIndex( G2.nodeIndex);
 
                 removeSibling( G1, G2 );
                 addSibling( root.getLessNode().getRightMostSibling(), G1 );
@@ -330,14 +344,19 @@ public class BPlusTree {
 
                 BPlusNode current = G2.getLessNode();
                 while(current.hasRight()){
-                    current.setParentIndex( G2.index );
+                    current.setParentIndex( G2.nodeIndex);
+                    writeNode(current, current.getNodeIndex());
                     current = current.getRightSibNode();
                 }
-                current.setParentIndex( G2.index );
+                current.setParentIndex( G2.nodeIndex);
 
                 //move the overlapping leaf node to follow the root
                 G1.setGreaterOrEqualIndex( G1.lessIndex );
                 G1.setLessIndex( L.greaterOrEqualIndex );
+                writeNode(root, root.getNodeIndex());
+                writeNode(G1, G1.getNodeIndex());
+                writeNode(G2, G2.getNodeIndex());
+                writeNode(current, current.getNodeIndex());
                 return;
             }
         } else if (root.getGreaterOrEqualNode().getNumOfSiblings() <  Math.ceil( this.limit / 2.0 ) - 1){
@@ -353,21 +372,26 @@ public class BPlusTree {
                 L1.value = root.getValue();
                 root.value = newRootValue;
 
-                root.setGreaterOrEqualIndex( L1.index );
+                root.setGreaterOrEqualIndex( L1.nodeIndex);
 
                 removeSibling( L2, L1 );
                 addSibling( L1, G );
 
                 BPlusNode current = G.getLessNode();
                 while(current.hasRight()){
-                    current.setParentIndex( L1.index );
+                    current.setParentIndex( L1.nodeIndex);
+                    writeNode(current, current.getNodeIndex());
                     current = current.getRightSibNode();
                 }
-                current.setParentIndex( L1.index );
+                current.setParentIndex( L1.nodeIndex);
 
                 //move the overlapping leaf node to follow the root
                 L1.setLessIndex( L1.greaterOrEqualIndex );
                 L1.setGreaterOrEqualIndex( G.lessIndex );
+                writeNode(L1, L1.getNodeIndex());
+                writeNode(L2, L2.getNodeIndex());
+                writeNode(current, current.getNodeIndex());
+                writeNode(root, root.getNodeIndex());
                 return;
             }
         }
@@ -380,13 +404,18 @@ public class BPlusTree {
         addSibling( root, G );
         root.setGreaterOrEqualIndex( G.lessIndex );
         root.setLessIndex( L.greaterOrEqualIndex );
+        writeNode(root, root.getNodeIndex());
         root = L.getLeftMostSibling();
+        Catalog.instance.getTableSchemaById(tableId).setRootOffset(root.getNodeIndex());
+        writeNode(root, root.getNodeIndex());
         BPlusNode current = root;
         while(current.hasRight()){
             current.setParentIndex( -1 );
+            writeNode(current, current.getNodeIndex());
             current = current.getRightSibNode();
         }
         current.setParentIndex( -1 );
+        writeNode(current, current.getNodeIndex());
     }
 
     /**
@@ -396,6 +425,7 @@ public class BPlusTree {
      * @return True if it worked, false if it failed
      */
     public boolean deleteNode(int type, Object value){
+        BPlusNode root = readNode(Catalog.instance.getTableSchemaById(tableId).getRootOffset());
         if(root.type != type){
             System.out.println("ERROR: Must enter the correct data type.");
             return false;
@@ -426,10 +456,14 @@ public class BPlusTree {
                     }
                 } else{
                     if(nodeToDelete.hasRight()){
-                        this.root = nodeToDelete.getRightSibNode();
+                        root = nodeToDelete.getRightSibNode();
+                        Catalog.instance.getTableSchemaById(tableId).setRootOffset(root.getNodeIndex());
+
                         removeSibling( nodeToDelete, nodeToDelete.getRightSibNode());
                     } else{
-                        this.root = null;
+                        //this.root = null;
+                        Catalog.instance.getTableSchemaById(tableId).setRootOffset(
+                                Catalog.instance.getTableSchemaById(tableId).getNextAvailableNodeIndex());
                     }
                 }
             }
@@ -445,6 +479,7 @@ public class BPlusTree {
      * @return True if the tree stayed balanced, false if it needs to be balanced
      */
     public boolean removeAndMerge(BPlusNode nodeToDelete){
+        BPlusNode root = readNode(Catalog.instance.getTableSchemaById(tableId).getRootOffset());
         BPlusNode parent = nodeToDelete.getParentNode();
         boolean isLess = parent.getLessNode().equals( nodeToDelete.getLeftMostSibling() );
 
@@ -470,6 +505,7 @@ public class BPlusTree {
                         removeSibling( nodeToDelete, nodeToDelete.getRightSibNode());
                     }
                 }
+                writeNode(parent, parent.getNodeIndex());
                 return true;
             }
         } else{
@@ -493,6 +529,7 @@ public class BPlusTree {
                         removeSibling( nodeToDelete, nodeToDelete.getRightSibNode());
                     }
                 }
+                writeNode(parent, parent.getNodeIndex());
                 return true;
             }
         }
@@ -518,18 +555,21 @@ public class BPlusTree {
                 if ( parent.getLeftSibNode().equals( parent.getLeftMostSibling() ) && parent.getParentNode() != null ) {
                     //connect upwards
                     if ( parent.getParentNode().getGreaterOrEqualNode().equals( parent.getLeftSibNode()) ) {
-                        parent.getParentNode().setGreaterOrEqualIndex( parent.index );
+                        parent.getParentNode().setGreaterOrEqualIndex( parent.nodeIndex);
                     } else {
-                        parent.getParentNode().setLessIndex( parent.index );
+                        parent.getParentNode().setLessIndex( parent.nodeIndex);
                     }
+                    writeNode(parent, parent.getNodeIndex());
                 }
 
                 //set the correct parents for the moved nodes
                 BPlusNode current = parent.getLeftSibNode().getLessNode().getLeftMostSibling();
                 current.setParentIndex( parent.leftSibIndex);
+                writeNode(current, current.getNodeIndex());
                 while (current.hasLeft()) {
                     current = current.getLeftSibNode();
-                    current.setParentIndex( parent.index );
+                    current.setParentIndex( parent.nodeIndex);
+                    writeNode(current, current.getNodeIndex());
                 }
 
                 //remove the parent node that was deleted through merging
@@ -553,14 +593,17 @@ public class BPlusTree {
                         } else{
                             parent.getParentNode().setGreaterOrEqualIndex( parent.rightSibIndex);
                         }
+                        writeNode(parent, parent.getNodeIndex());
                     }
-                    parent.getRightSibNode().setLessIndex( parent.getRightSibNode().getLessNode().getLeftMostSibling().index );
+                    parent.getRightSibNode().setLessIndex( parent.getRightSibNode().getLessNode().getLeftMostSibling().nodeIndex);
 
                     //set the correct parents for the moved nodes
                     BPlusNode current = parent.getRightSibNode().getLessNode().getLeftMostSibling();
                     current.setParentIndex( parent.rightSibIndex);
+                    writeNode(current, current.getNodeIndex());
                     while(current.hasRight()){
                         current.setParentIndex( parent.rightSibIndex);
+                        writeNode(current, current.getNodeIndex());
                         current = current.getRightSibNode();
                     }
 
@@ -585,9 +628,11 @@ public class BPlusTree {
                 BPlusNode current = parent.getRightSibNode().getGreaterOrEqualNode().getLeftMostSibling();
                 while(current.hasRight()){
                     current.setParentIndex( parent.rightSibIndex);
+                    writeNode(current, current.getNodeIndex());
                     current = current.getRightSibNode();
                 }
                 current.setParentIndex( parent.rightSibIndex);
+                writeNode(current, current.getNodeIndex());
 
                 //remove the parent node that was deleted through merging
                 removeSibling( parent, parent.getRightSibNode());
@@ -611,15 +656,18 @@ public class BPlusTree {
                         } else{
                             parent.getParentNode().setGreaterOrEqualIndex( parent.rightSibIndex);
                         }
+                        writeNode(parent, parent.getNodeIndex());
                     }
 
                     //set the correct parents for the moved nodes
                     BPlusNode current = parent.getLessNode().getLeftMostSibling();
                     while(current.hasRight()){
                         current.setParentIndex( parent.leftSibIndex);
+                        writeNode(current, current.getNodeIndex());
                         current = current.getRightSibNode();
                     }
                     current.setParentIndex( parent.leftSibIndex);
+                    writeNode(current, current.getNodeIndex());
 
                     //remove the parent node that was deleted through merging
                     removeSibling( parent.getLeftSibNode(), parent );
@@ -640,6 +688,7 @@ public class BPlusTree {
             } else{
                 parent.setGreaterOrEqualIndex( nodeToDelete.rightSibIndex);
             }
+            writeNode(parent, parent.getNodeIndex());
             removeSibling( nodeToDelete, nodeToDelete.getRightSibNode());
         } else{
             if(isLess){
@@ -647,6 +696,7 @@ public class BPlusTree {
             } else{
                 parent.setGreaterOrEqualIndex( -1 );
             }
+            writeNode(parent, parent.getNodeIndex());
         }
 
         return false;
@@ -666,6 +716,7 @@ public class BPlusTree {
             } else{
                 child.getParentNode().setGreaterOrEqualIndex( child.rightSibIndex);
             }
+            writeNode(child.getParentNode(), child.getParentNode().getNodeIndex());
             removeSibling( child, child.getRightSibNode());
         }
     }
@@ -691,6 +742,7 @@ public class BPlusTree {
      * @return The BPlusLeafNode with the key given, null otherwise
      */
     public BPlusNode findNode( int type, Object target ) {
+        BPlusNode root  = readNode(Catalog.instance.getTableSchemaById(tableId).getRootOffset());
         if ( root == null ) {
             System.out.println( "The tree is empty." );
             return null;
@@ -741,9 +793,11 @@ public class BPlusTree {
      *          than the closest node, else false
      */
     public ArrayList<Object> searchForOpening(int type, Object target ){
+        BPlusNode root  = readNode(Catalog.instance.getTableSchemaById(tableId).getRootOffset());
+
         if ( root == null ) {
             System.out.println( "The tree is empty." );
-            return null;
+            return new ArrayList<>( Arrays.asList(0, 0, false ));
         }
 
         if ( type != root.type ) {
@@ -806,67 +860,82 @@ public class BPlusTree {
 
         //TODO change 0 to mem location
         BPlusNode newRoot = new BPlusNode( this, R1.getValue(), true, current.type, 0, 0 );
+        newRoot.setNodeIndex(Catalog.instance.getTableSchemaById(tableId).getNextAvailableNodeIndex());
+        Catalog.instance.getTableSchemaById(tableId).incrementNextAvailableNodeIndex();
         if ( !start.isInner() ) {
             //if leaf nodes splitting then middle node is kept
-            newRoot.setLessIndex( L.index );
-            newRoot.setGreaterOrEqualIndex( R1.index );
+            newRoot.setLessIndex( L.nodeIndex);
+            newRoot.setGreaterOrEqualIndex( R1.nodeIndex);
             if ( L.getParentNode() != null  && L.getParentNode().compare( newRoot.getValue() ) < 0) {
                 addSibling( L.getParentNode(), newRoot );
             }
             if ( R1.getParentNode() != null && R1.getParentNode().compare( newRoot.getValue() ) > 0 ) {
                 addSibling( newRoot, R1.getParentNode());
             }
-            L.setParentIndex( newRoot.index );
-            R1.setParentIndex( newRoot.index );
+            L.setParentIndex( newRoot.nodeIndex);
+            R1.setParentIndex( newRoot.nodeIndex);
 
             removeSibling( left.get( left.size() - 1 ), R1 );
             for(BPlusNode c : left){
                 if(c.getParentNode() == null) {
-                    c.setParentIndex( newRoot.index );
+                    c.setParentIndex( newRoot.nodeIndex);
+                    writeNode(c, c.getNodeIndex());
                 }
             }
             for(BPlusNode c : right){
                 if(c.getParentNode() == null) {
-                    c.setParentIndex( newRoot.index );
+                    c.setParentIndex( newRoot.nodeIndex);
+                    writeNode(c, c.getNodeIndex());
                 }
             }
+            writeNode(L, L.getNodeIndex());
+            writeNode(R1, R1.getNodeIndex());
         } else {
             //If inner then middle node is removed and set up a level (we split an internal node)
             BPlusNode R2 = right.get( 1 );
-            newRoot.setLessIndex( L.index );
-            newRoot.setGreaterOrEqualIndex( R2.index );
+            newRoot.setLessIndex( L.nodeIndex);
+            newRoot.setGreaterOrEqualIndex( R2.nodeIndex);
             if ( L.getParentNode() != null  && L.getParentNode().compare( newRoot.getValue() ) < 0) {
                 addSibling( L.getParentNode(), newRoot );
             }
             if ( R2.getParentNode() != null && R2.getParentNode().compare( newRoot.getValue() ) > 0 ) {
                 addSibling( newRoot, R2.getParentNode());
             }
-            L.setParentIndex( newRoot.index );
-            R2.setParentIndex( newRoot.index );
+            L.setParentIndex( newRoot.nodeIndex);
+            R2.setParentIndex( newRoot.nodeIndex);
             //separating nodes that split
             removeSibling( left.get( left.size() - 1 ), R1 );
             removeSibling( R1, R2 );
 
             BPlusNode leftChild =  left.get( left.size() - 1 ).getGreaterOrEqualNode();
-            leftChild.setParentIndex( left.get( left.size() - 1 ).index );
+            leftChild.setParentIndex( left.get( left.size() - 1 ).nodeIndex);
+            writeNode(leftChild, leftChild.getNodeIndex());
             while(leftChild.hasRight()){
                 leftChild = leftChild.getRightSibNode();
-                leftChild.setParentIndex( left.get( left.size() - 1 ).index );
+                leftChild.setParentIndex( left.get( left.size() - 1 ).nodeIndex);
+                writeNode(leftChild, leftChild.getNodeIndex());
             }
 
             BPlusNode rightChild = R2.getLessNode();
-            rightChild.setParentIndex( R2.index );
+            rightChild.setParentIndex( R2.nodeIndex);
+            writeNode(rightChild, rightChild.getNodeIndex());
             while(rightChild.hasRight()){
                 rightChild = rightChild.getRightSibNode();
-                rightChild.setParentIndex( R2.index );
+                rightChild.setParentIndex( R2.nodeIndex);
+                writeNode(rightChild, rightChild.getNodeIndex());
             }
 
             for(BPlusNode c : left){
-                c.setParentIndex( newRoot.index );
+                c.setParentIndex( newRoot.nodeIndex);
+                writeNode(c, c.getNodeIndex());
             }
             for(BPlusNode c : right){
-                c.setParentIndex( newRoot.index );
+                c.setParentIndex( newRoot.nodeIndex);
+                writeNode(c, c.getNodeIndex());
             }
+            writeNode(L, L.getNodeIndex());
+            writeNode(R1, R1.getNodeIndex());
+            writeNode(R2, R2.getNodeIndex());
         }
         return newRoot;
     }
@@ -892,6 +961,7 @@ public class BPlusTree {
         }
         if(current.getParentNode() != null){
             addition.setParentIndex( current.parentIndex);
+            writeNode(addition, addition.getNodeIndex());
         }
     }
 
@@ -921,6 +991,8 @@ public class BPlusTree {
     public void removeSibling( BPlusNode L, BPlusNode R ) {
         L.setRightSibIndex(-1);
         R.setLeftSibIndex(-1);
+        writeNode(L, L.getNodeIndex());
+        writeNode(R, R.getNodeIndex());
     }
 
     /**
@@ -930,11 +1002,17 @@ public class BPlusTree {
      * @param R Right node
      */
     public void addSibling( BPlusNode L, BPlusNode R ) {
-        L.setRightSibIndex(R.index);
-        R.setLeftSibIndex(L.index);
+        L.setRightSibIndex(R.nodeIndex);
+        R.setLeftSibIndex(L.nodeIndex);
+        writeNode(L, L.getNodeIndex());
+        writeNode(R, R.getNodeIndex());
     }
 
 
+    /**
+     * prints the bPlusTree in string format.
+     * @return
+     */
     public String toString() {
         if(root == null){
             return "Empty Tree";
@@ -942,6 +1020,10 @@ public class BPlusTree {
         return root.printTree();
     }
 
+    /**
+     * Returns the tableId of this BplusTree
+     * @return
+     */
     public int getTableId() {
         return this.tableId;
     }
@@ -961,5 +1043,6 @@ public class BPlusTree {
         BPlusNode nodeToUpdate = findNode(searchKeyType, searchKey);
         nodeToUpdate.setPageIndex(newPageIndex);
         nodeToUpdate.setRecordIndex(newRecordIndex);
+        writeNode(nodeToUpdate, nodeToUpdate.getNodeIndex());
     }
 }

@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 
 public class BPlusNode {
     public BPlusTree tree;
-    public int index;
+    public int nodeIndex;
     public Object value;
     public final int type;
     public int lessIndex = -1; //the leftmost node of this nodes LEFT child cluster
@@ -12,6 +12,7 @@ public class BPlusNode {
     public int parentIndex = -1; //
     public int leftSibIndex = -1;
     public int rightSibIndex = -1;
+    public int nodeIndex1;
 
     public int pageIndex; // location of the page that the search key is in
     public int recordIndex; // the index within the page that the search key's record is in
@@ -23,6 +24,23 @@ public class BPlusNode {
         this.pageIndex = page;
         this.recordIndex = recordIndex;
         this.tree = tree;
+        this.nodeIndex1 = -1;
+    }
+
+    /**
+     *
+     * @param nodeIndex1
+     */
+    public void setNodeIndex1(int nodeIndex1) {
+        this.nodeIndex1 = nodeIndex1;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public int getNodeIndex() {
+        return nodeIndex;
     }
 
     /**
@@ -72,6 +90,7 @@ public class BPlusNode {
                 return null;
             }
         }
+        int nodeIndex = byteBuffer.getInt();
         int pageIndex = byteBuffer.getInt();
         int recordIndex = byteBuffer.getInt();
         int parentIndex = byteBuffer.getInt();
@@ -81,7 +100,7 @@ public class BPlusNode {
         int greaterOrEqualIndex = byteBuffer.getInt();
         boolean isInner = lessIndex != -1 && greaterOrEqualIndex != -1;
         BPlusNode node = new BPlusNode(tree, value, isInner, tree.dataType, pageIndex, recordIndex);
-        node.index = index;
+        node.nodeIndex = nodeIndex;
         node.parentIndex = parentIndex;
         node.leftSibIndex = leftSiblingIndex;
         node.rightSibIndex = rightSiblingIndex;
@@ -118,6 +137,7 @@ public class BPlusNode {
                 }
             }
         }
+        byteBuffer.putInt(node.nodeIndex);
         byteBuffer.putInt(node.pageIndex);
         byteBuffer.putInt(node.recordIndex);
         byteBuffer.putInt(node.parentIndex);
@@ -150,7 +170,7 @@ public class BPlusNode {
             int charBytes = numCharsInString * Character.BYTES;
             size += charBytes;
         }
-        size += Integer.BYTES * 7; // Nodes have 7 indexes to store
+        size += Integer.BYTES * 8; // Nodes have 7 indexes to store
         return size;
     }
 
@@ -291,9 +311,9 @@ public class BPlusNode {
     //Getters and Setters
     //NOTE: all setters also write to disk so the disk reflects what's in memory
 
-    public void setIndex(int index) {
-        this.index = index;
-        tree.writeNode(this, index);
+    public void setNodeIndex(int nodeIndex) {
+        this.nodeIndex = nodeIndex;
+        //tree.writeNode(this, nodeIndex);
     }
 
     public boolean hasSiblings() {
@@ -322,7 +342,7 @@ public class BPlusNode {
 
     public void setLessIndex(int lessIndex) {
         this.lessIndex = lessIndex;
-        tree.writeNode(this, index);
+        tree.writeNode(this, nodeIndex);
     }
 
     public BPlusNode getGreaterOrEqualNode() {
@@ -331,31 +351,31 @@ public class BPlusNode {
 
     public void setGreaterOrEqualIndex(int greaterOrEqualIndex) {
         this.greaterOrEqualIndex = greaterOrEqualIndex;
-        tree.writeNode(this, index);
+        tree.writeNode(this, nodeIndex);
     }
 
     public void setLeftSibIndex(int leftSibIndex) {
         this.leftSibIndex = leftSibIndex;
-        tree.writeNode(this, index);
+        tree.writeNode(this, nodeIndex);
     }
 
     public void setRightSibIndex(int rightSibIndex) {
         this.rightSibIndex = rightSibIndex;
-        tree.writeNode(this, index);
+        tree.writeNode(this, nodeIndex);
     }
 
     public void setParentIndex(int parentIndex) {
         this.parentIndex = parentIndex;
-        tree.writeNode(this, index);
+        tree.writeNode(this, nodeIndex);
     }
 
     public void setPageIndex( int pageIndex ) {
         this.pageIndex = pageIndex;
-        tree.writeNode(this, index);
+        tree.writeNode(this, nodeIndex);
     }
     public void setRecordIndex( int recordIndex ) {
         this.recordIndex = recordIndex;
-        tree.writeNode(this, index);
+        tree.writeNode(this, nodeIndex);
     }
 
     /**

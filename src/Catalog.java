@@ -3,6 +3,8 @@
  */
 package src;
 
+import src.BPlusTree.BPlusTree;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -22,7 +24,10 @@ public class Catalog {
     // Integer representing size of pages in the database.
     private int pageSize;
 
+    // Character to represent if Indexing is turned on. t for true and f for false.
     private char indexing;
+
+    private ArrayList<BPlusTree> bPlusTrees;
 
     /**
      * Creates an instance of the Catalog object.
@@ -33,6 +38,7 @@ public class Catalog {
      */
     public Catalog(int pageSize, String rootPath, char indexing) {
         this.tableSchemas = new ArrayList<>();
+        this.bPlusTrees = new ArrayList<>();
         this.pageSize = pageSize;
         this.rootPath = rootPath;
         this.indexing = indexing;
@@ -72,9 +78,26 @@ public class Catalog {
         }
         tableSchemas.add(tableSchema);
         if (Catalog.instance.indexing == 't') {
-            tableSchema.setBPlusTreeMetaData(0, 0, Catalog.instance.getPageSize(),
-                    Catalog.instance.getTablePKIndex(tableId));
+            Catalog.instance.getTableSchemaById(tableId).setBPlusTreeMetaData(-1,
+                    0, Catalog.instance.getPageSize(), Catalog.instance.getTablePKIndex(tableId));
+            this.bPlusTrees.add(new BPlusTree(tableSchema.getN(), tableSchema.getTableId()));
         }
+    }
+
+    /**
+     *
+     * @param tableID
+     * @return
+     */
+    public BPlusTree getBPlusTreeByTableID(int tableID) {
+        BPlusTree tree = null;
+        for (BPlusTree bPlusTree: this.bPlusTrees) {
+            if (bPlusTree.getTableId() == tableID) {
+                tree = bPlusTree;
+                break;
+            }
+        }
+        return tree;
     }
 
     /**

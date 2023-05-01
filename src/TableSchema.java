@@ -118,9 +118,11 @@ public class TableSchema {
      * @return
      */
     public int getNextAvailableNodeIndex() {
-        int temp = nextAvailableNodeIndex;
-        nextAvailableNodeIndex += 1;
-        return temp;
+        return this.nextAvailableNodeIndex;
+    }
+
+    public void incrementNextAvailableNodeIndex() {
+        this.nextAvailableNodeIndex += 1;
     }
 
     /**
@@ -300,7 +302,10 @@ public class TableSchema {
      */
     protected int getSizeInBytes() {
         int size = Integer.BYTES + Integer.BYTES + (tableName.length() * Character.BYTES) + Integer.BYTES +
-                (pageOrder.size() * Integer.BYTES) + (5 * Integer.BYTES) + Integer.BYTES;
+                (pageOrder.size() * Integer.BYTES) + Integer.BYTES;
+        if (Catalog.instance.getIndexing() == 't') {
+            size += (2 * Integer.BYTES);
+        }
         for (AttributeSchema attribute : attributes) {
             size += attribute.getSizeInBytes();
         }

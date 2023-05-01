@@ -1,9 +1,13 @@
 package src.BPlusTree;
 
+import src.Catalog;
+import src.Main;
+
 import java.util.Arrays;
 import java.util.ArrayList;
 public class TreeTester {
 
+    public static String db_loc;
 
     public static void main( String[] args ) {
 
@@ -22,7 +26,7 @@ public class TreeTester {
 
         int limit = 5;
 
-        BPlusTree tree = new BPlusTree( limit );
+        BPlusTree tree = new BPlusTree( limit, 1 );
 
         /*
         for ( int i = 1; i < 6; i++ ) {
@@ -43,14 +47,24 @@ public class TreeTester {
         */
 
         //CODE FOR TESTING ALONG WITH EXAMPLE FROM CLASS ACTIVITY
+        db_loc = args[0]; // this is expected to be a folder path. No empty folder is created.
+        Catalog.instance = Catalog.readCatalogFromFile(db_loc);
 
-        ArrayList<Integer> testcase = new ArrayList<>( Arrays.asList(1,4,7,10,17,19,20,22,45,50,70,73,75,80));
+        ArrayList<Integer> testcase = new ArrayList<>( Arrays.asList(4,7,10,17,19,20,22,45,50,70,73,75,80));
         for(int i : testcase){
-            tree.addNode( new BPlusNode( i, false, 1, 0, 0 ) );
-            System.out.println(tree.toString());
+            ArrayList<Object> pageAndRecordIndices = tree.searchForOpening(0, i);
+            int pageNumber = (int) pageAndRecordIndices.get(0);
+            int recordIndex = (int) pageAndRecordIndices.get(1);
+            tree.addKey(1, i, pageNumber, recordIndex);
+            //tree.addNode( new BPlusNode( i, false, 1, 0, 0 ) );
+            //System.out.println(tree.toString());
         }
 
-        tree.addNode( new BPlusNode( 18, false, 1, 0,0 ) );
+        ArrayList<Object> pageAndRecordIndices = tree.searchForOpening(0, 18);
+        int pageNumber = (int) pageAndRecordIndices.get(0);
+        int recordIndex = (int) pageAndRecordIndices.get(1);
+        tree.addKey(1, 18, pageNumber, recordIndex);
+        //tree.addNode( new BPlusNode( 18, false, 1, 0,0 ) );
 
         System.out.println(tree.toString());
         tree.deleteNode(1, 17);
