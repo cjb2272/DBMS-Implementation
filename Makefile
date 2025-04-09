@@ -7,6 +7,6 @@ clean:
 	rm -R ./src/src/
 
 test:
-	java src.Main "db" 1024 35
+	java src.Main "db" 1024 35 false
 
 all: build test

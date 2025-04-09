@@ -69,15 +69,17 @@ public class Main {
             System.out.println("Error: Cannot change index setting from original setting at database creation.");
             return;
         }
-        /*else {
-            char indexChar;
-            if (indexing.equals("true")) {
-                indexChar = 't';
-            } else {
-                indexChar = 'f';
-            }
-            Catalog.instance.setIndexing(indexChar);
-        }*/
+        /*
+         * else {
+         * char indexChar;
+         * if (indexing.equals("true")) {
+         * indexChar = 't';
+         * } else {
+         * indexChar = 'f';
+         * }
+         * Catalog.instance.setIndexing(indexChar);
+         * }
+         */
 
         src.StorageManager.instance = new StorageManager(db_loc);
 
@@ -121,7 +123,7 @@ public class Main {
 
         }
 
-        long endTime   = System.currentTimeMillis();
+        long endTime = System.currentTimeMillis();
         NumberFormat formatter = new DecimalFormat("#0.00000");
         System.out.print("Execution time was " + formatter.format((endTime - startTime) / 1000d) + " seconds");
     }

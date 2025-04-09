@@ -39,10 +39,11 @@ public class StorageManager {
      * The Table object is returned as a convenience, but since everything is
      * page-based (and the Table object is never
      * directly in the buffer), this isn't strictly needed.
-     * @param ID .
-     * @param name .
+     * 
+     * @param ID          .
+     * @param name        .
      * @param columnNames .
-     * @param dataTypes .
+     * @param dataTypes   .
      */
     public void createTable(int ID, String name, ArrayList<String> columnNames, ArrayList<Integer> dataTypes) {
 
@@ -78,7 +79,9 @@ public class StorageManager {
     }
 
     /**
-     * Drops the table with given table id, purges its pages from the buffer and deletes the related tableschema.
+     * Drops the table with given table id, purges its pages from the buffer and
+     * deletes the related tableschema.
+     * 
      * @param ID : Id of table to drop
      * @return True if dropped successfully, False if unsuccessful.
      */
@@ -105,24 +108,24 @@ public class StorageManager {
         int pageCount = arrayOfPageLocationsOnDisk.size();
         ArrayList<Record> results = new ArrayList<>();
 
-        for ( int locationOnDisk : arrayOfPageLocationsOnDisk ) {
+        for (int locationOnDisk : arrayOfPageLocationsOnDisk) {
             try {
-                Page page = buffer.GetPage( tableID, locationOnDisk ); // the buffer will read from disk if it doesn't
+                Page page = buffer.GetPage(tableID, locationOnDisk); // the buffer will read from disk if it doesn't
                 // have the page
                 ArrayList<Record> records = page.getRecordsInPage();
 
-                if ( colNames.size() == 1 && colNames.get( 0 ).equals( "*" ) ) {
-                    results.addAll( records );
+                if (colNames.size() == 1 && colNames.get(0).equals("*")) {
+                    results.addAll(records);
                     continue;
                 }
 
-                ArrayList<AttributeSchema> columns = Catalog.instance.getTableSchemaById( tableID ).getAttributes();
+                ArrayList<AttributeSchema> columns = Catalog.instance.getTableSchemaById(tableID).getAttributes();
 
                 ArrayList<Integer> indexes = new ArrayList<>();
 
                 for (String colName : colNames) {
                     int index = 0;
-                    for (AttributeSchema column: columns) {
+                    for (AttributeSchema column : columns) {
                         if (column.getName().equals(colName)) {
                             indexes.add(index);
                         }
@@ -130,35 +133,34 @@ public class StorageManager {
                     }
                 }
 
-
                 int[] colIdxs = new int[indexes.size()];
                 int i = 0;
-                for ( Integer index : indexes ) {
+                for (Integer index : indexes) {
                     colIdxs[i] = index;
                     i++;
                 }
 
-                int pkIndex = Catalog.instance.getTablePKIndex( tableID );
+                int pkIndex = Catalog.instance.getTablePKIndex(tableID);
 
-                for ( Record record : records ) {
+                for (Record record : records) {
 
                     ArrayList<Object> originalRecordData = record.getRecordContents();
 
                     ArrayList<Object> filteredRecordData = new ArrayList<>();
-                    for ( int idx : colIdxs ) {
-                        filteredRecordData.add( originalRecordData.get( idx ) );
+                    for (int idx : colIdxs) {
+                        filteredRecordData.add(originalRecordData.get(idx));
                     }
 
                     Record newRecord = new Record();
-                    newRecord.setRecordContents( filteredRecordData );
-                    newRecord.setPkIndex( pkIndex );
-                    results.add( newRecord );
+                    newRecord.setRecordContents(filteredRecordData);
+                    newRecord.setPkIndex(pkIndex);
+                    results.add(newRecord);
                 }
 
                 return results;
 
             } catch (IOException e) {
-                throw new RuntimeException( e );
+                throw new RuntimeException(e);
             }
         }
 
@@ -167,13 +169,18 @@ public class StorageManager {
     }
 
     /**
-     * Compares value in the given index in the record contents of two given records.
-     * @param a : Given record
-     * @param b : Given record
+     * Compares value in the given index in the record contents of two given
+     * records.
+     * 
+     * @param a     : Given record
+     * @param b     : Given record
      * @param index : given index
-     * @return -1 if record contents of record A at index is greater than record contents of record B at index.
-     *          1 if record contents of record B at index is greater than record contents of record A at index.
-     *          0 record contents of record A at index is equal to record contents of record B at index.
+     * @return -1 if record contents of record A at index is greater than record
+     *         contents of record B at index.
+     *         1 if record contents of record B at index is greater than record
+     *         contents of record A at index.
+     *         0 record contents of record A at index is equal to record contents of
+     *         record B at index.
      */
     private int compareOnIndex(Object a, Object b, int index) {
         if (a.equals(b)) {
@@ -205,16 +212,21 @@ public class StorageManager {
     }
 
     /**
-     * Method: This method is called with each record we intend to insert, given at the command line.
-     *         First, we obtain the searchKey from this recordToInsert.
-     *         Second, call a method of bPlusTree, which will return a pageNumber-recordIndex pair
-     *         indicating directly where recordToInsert should be inserted in data
-     *         Third, insert record into data, will also return boolean to left or right this space being pointed to
-     *         Fourth, iterate through our records, whose search keys need updated pointer in our bPlusTree,
-     *         by calling bPlusTree's update pointer method.
-     *         CURRENTLY, VERY REDUNDANT IN UPDATING POINTERS
+     * Method: This method is called with each record we intend to insert, given at
+     * the command line.
+     * First, we obtain the searchKey from this recordToInsert.
+     * Second, call a method of bPlusTree, which will return a
+     * pageNumber-recordIndex pair
+     * indicating directly where recordToInsert should be inserted in data
+     * Third, insert record into data, will also return boolean to left or right
+     * this space being pointed to
+     * Fourth, iterate through our records, whose search keys need updated pointer
+     * in our bPlusTree,
+     * by calling bPlusTree's update pointer method.
+     * CURRENTLY, VERY REDUNDANT IN UPDATING POINTERS
      *
-     * @param bPlusTree the B+Tree we are dealing with. Contains tableID for which record belongs
+     * @param bPlusTree      the B+Tree we are dealing with. Contains tableID for
+     *                       which record belongs
      * @param recordToInsert the Record to insert
      *
      * @return int[]: int[0] ...
@@ -222,63 +234,66 @@ public class StorageManager {
     public int[] indexedInsertRecord(BPlusTree bPlusTree, Record recordToInsert) {
         int tableID = bPlusTree.getTableId();
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
-        //OBTAIN SEARCH KEY
+        // OBTAIN SEARCH KEY
         ArrayList<AttributeSchema> tableAttributes = table.getAttributes();
         int indexOfPrimaryKeyColumn = Catalog.instance.getTablePKIndex(tableID);
         int typeOfSearchKey = tableAttributes.get(indexOfPrimaryKeyColumn).getType();
         Object searchKeyValue = recordToInsert.getRecordContents().get(indexOfPrimaryKeyColumn);
-        //CALL B+TREE METHOD TO RETURN pageNumber & recordIndex & boolean of coming before or after that opening
-            //some throw if search key already existed in b+tree cant have duplicate primary key
+        // CALL B+TREE METHOD TO RETURN pageNumber & recordIndex & boolean of coming
+        // before or after that opening
+        // some throw if search key already existed in b+tree cant have duplicate
+        // primary key
         ArrayList<Object> pageAndRecordIndices = bPlusTree.searchForOpening(typeOfSearchKey, searchKeyValue);
 
         int pageNumber = 0;
         int recordIndex = 0;
         if (pageAndRecordIndices == null) {
             bPlusTree.addKey(typeOfSearchKey, searchKeyValue, pageNumber, recordIndex);
-        }
-        else {
+        } else {
             pageNumber = (int) pageAndRecordIndices.get(0);
             recordIndex = (int) pageAndRecordIndices.get(1);
             // boolean returned is true if greaterThan, or false if less
             boolean greaterThan = (boolean) pageAndRecordIndices.get(2);
             if (greaterThan) {
-                recordIndex = recordIndex + 1; //todo ensure this is working how intended in testing
+                recordIndex = recordIndex + 1; // todo ensure this is working how intended in testing
             }
-            //insert search key into b+tree
-            //(ok that happens before insert into record data, because updates to all pointers on page will happen regardless )
+            // insert search key into b+tree
+            // (ok that happens before insert into record data, because updates to all
+            // pointers on page will happen regardless )
             bPlusTree.addKey(typeOfSearchKey, searchKeyValue, pageNumber, recordIndex);
         }
 
-
-        //INSERT RECORD INTO DATA
+        // INSERT RECORD INTO DATA
         ArrayList<Integer> pageOrder = table.getPageOrder();
-        // If no pages exists for this table - case of very first insert into table/b+tree
+        // If no pages exists for this table - case of very first insert into
+        // table/b+tree
         if (0 == pageOrder.size()) {
             try {
                 Page emptyPageInbuffer = buffer.CreateNewPage(tableID, 0);
                 // insert the record, no comparator needed here, because this is the
                 // first record of the table
                 emptyPageInbuffer.getRecordsInPage().add(recordToInsert);
-                //update the pointer, haven't thought through if this needs to occur
+                // update the pointer, haven't thought through if this needs to occur
                 Record curRecord = emptyPageInbuffer.getRecordsInPage().get(0);
                 Object searchKeyVal = curRecord.getRecordContents().get(indexOfPrimaryKeyColumn);
                 bPlusTree.updatePointer(typeOfSearchKey, searchKeyVal, pageNumber, 0);
-                return new int[]{0};
+                return new int[] { 0 };
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         } else {
             try {
-                //get the page for which we intend for record to belong
+                // get the page for which we intend for record to belong
                 Page pageReference = buffer.GetPage(tableID, pageNumber);
                 int numRecordsInPage = pageReference.getRecordCount();
-                //if the page has zero records
+                // if the page has zero records
                 if (numRecordsInPage == 0) {
                     pageReference.getRecordsInPage().add(0, recordToInsert);
                     pageReference.setIsModified(true);
                     if (pageReference.computeSizeInBytes() > Main.pageSize) {
                         int pageNumOfNewlyCreatedPage = buffer.PageSplit(pageReference, tableID);
-                        // PAGE SPLIT: UPDATE POINTERS FOR THE BOTH TABLES, new table here, original table outside if
+                        // PAGE SPLIT: UPDATE POINTERS FOR THE BOTH TABLES, new table here, original
+                        // table outside if
                         Page newPageRef = buffer.GetPage(tableID, pageNumOfNewlyCreatedPage);
                         int numRecordsNewPage = newPageRef.getRecordCount();
                         for (int i = 0; i < numRecordsNewPage; i++) {
@@ -287,20 +302,21 @@ public class StorageManager {
                             bPlusTree.updatePointer(typeOfSearchKey, searchKeyVal, pageNumOfNewlyCreatedPage, i);
                         }
                     }
-                    //UPDATE POINTERS AFTER INSERT and return
+                    // UPDATE POINTERS AFTER INSERT and return
                     int numRecordsInPageAfterInsert = pageReference.getRecordCount();
                     for (int idx = 0; idx < numRecordsInPageAfterInsert; idx++) {
                         Record curRecord = pageReference.getRecordsInPage().get(idx);
                         Object searchKeyVal = curRecord.getRecordContents().get(indexOfPrimaryKeyColumn);
                         bPlusTree.updatePointer(typeOfSearchKey, searchKeyVal, pageNumber, idx);
                     }
-                    return new int[]{0};
-                } else { //insert the record at its intended location
+                    return new int[] { 0 };
+                } else { // insert the record at its intended location
                     pageReference.getRecordsInPage().add(recordIndex, recordToInsert);
                     pageReference.setIsModified(true);
                     if (pageReference.computeSizeInBytes() > Main.pageSize) {
                         int pageNumOfNewlyCreatedPage = buffer.PageSplit(pageReference, tableID);
-                        // PAGE SPLIT: UPDATE POINTERS FOR THE BOTH TABLES, new table here, original table outside if
+                        // PAGE SPLIT: UPDATE POINTERS FOR THE BOTH TABLES, new table here, original
+                        // table outside if
                         Page newPageRef = buffer.GetPage(tableID, pageNumOfNewlyCreatedPage);
                         int numRecordsNewPage = newPageRef.getRecordCount();
                         for (int i = 0; i < numRecordsNewPage; i++) {
@@ -309,14 +325,14 @@ public class StorageManager {
                             bPlusTree.updatePointer(typeOfSearchKey, searchKeyVal, pageNumOfNewlyCreatedPage, i);
                         }
                     }
-                    //UPDATE POINTERS AFTER INSERT and return
+                    // UPDATE POINTERS AFTER INSERT and return
                     int numRecordsInPageAfterInsert = pageReference.getRecordCount();
                     for (int idx = 0; idx < numRecordsInPageAfterInsert; idx++) {
                         Record curRecord = pageReference.getRecordsInPage().get(idx);
                         Object searchKeyVal = curRecord.getRecordContents().get(indexOfPrimaryKeyColumn);
                         bPlusTree.updatePointer(typeOfSearchKey, searchKeyVal, pageNumber, idx);
                     }
-                    return new int[]{0};
+                    return new int[] { 0 };
                 }
 
             } catch (IOException e) {
@@ -326,14 +342,19 @@ public class StorageManager {
     }
 
     /**
-     * Inserts the given record into the given table. Returns a length one int array to show if it succeeded, int array[1],
-     * or a length two int array with the row the insert failed on and the column that holds the value it failed on.
+     * Inserts the given record into the given table. Returns a length one int array
+     * to show if it succeeded, int array[1],
+     * or a length two int array with the row the insert failed on and the column
+     * that holds the value it failed on.
+     * 
      * @param tableID        the table for which we want to insert a record into its
      *                       pages
      * @param recordToInsert the record to insert
      *
-     * @return int[1] or int[2]. len 1 on succeed, len 2 with row insert failed on and column^
-     *         of int[3] on failure as well with a placeholder value at last index, 2
+     * @return int[1] or int[2]. len 1 on succeed, len 2 with row insert failed on
+     *         and column^
+     *         of int[3] on failure as well with a placeholder value at last index,
+     *         2
      */
     public int[] insertRecord(int tableID, Record recordToInsert) {
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
@@ -345,7 +366,7 @@ public class StorageManager {
                 // insert the record, no comparator needed here, because this is the
                 // first record of the table
                 emptyPageInbuffer.getRecordsInPage().add(recordToInsert);
-                return new int[]{1};
+                return new int[] { 1 };
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -371,15 +392,15 @@ public class StorageManager {
                         Record curRecord = pageReference.getRecordsInPage().get(idx);
                         int comparison = sorter.compare(recordToInsert, curRecord);
                         if (comparison == 0) {
-                            //if primary keys are equal, this insert should not occur
-                            return new int[]{totalRecords, curRecord.getPkIndex(), 0}; //third value is placeholder,
-                        }                                                              //passed up for use in update
+                            // if primary keys are equal, this insert should not occur
+                            return new int[] { totalRecords, curRecord.getPkIndex(), 0 }; // third value is placeholder,
+                        } // passed up for use in update
                         for (int i = 0; i < table.getAttributes().size(); i++) {
                             AttributeSchema attribute = table.getAttributes().get(i);
                             if ((attribute.getConstraints() == 1 || attribute.getConstraints() == 3)
                                     && i != Catalog.instance.getTablePKIndex(tableID)) {
                                 if (compareOnIndex(recordToInsert, curRecord, i) == 0) {
-                                    return new int[]{totalRecords, i, 0};
+                                    return new int[] { totalRecords, i, 0 };
                                 }
                             }
                         }
@@ -407,50 +428,55 @@ public class StorageManager {
                 throw new RuntimeException(e);
             }
 
-            return new int[]{1};
+            return new int[] { 1 };
         }
     }
 
     /**
-     * Method: This method deletes the record with a given search key value in the B+Tree.
-     *         REQUIRES updates to record pointers in B+Tree.
+     * Method: This method deletes the record with a given search key value in the
+     * B+Tree.
+     * REQUIRES updates to record pointers in B+Tree.
      *
-     * @param bPlusTree the B+Tree we are dealing with. Contains tableID
+     * @param bPlusTree      the B+Tree we are dealing with. Contains tableID
      * @param recordToDelete the Record with search key from B+Tree
      *
-     * @return int[]: int[0] contains: 1 if record failed to be deleted from b+tree for some reason
+     * @return int[]: int[0] contains: 1 if record failed to be deleted from b+tree
+     *         for some reason
      */
     public int[] indexedDeleteRecord(BPlusTree bPlusTree, Record recordToDelete) {
         int tableID = bPlusTree.getTableId();
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
-        //OBTAIN SEARCH KEY
+        // OBTAIN SEARCH KEY
         ArrayList<AttributeSchema> tableAttributes = table.getAttributes();
         int indexOfPrimaryKeyColumn = Catalog.instance.getTablePKIndex(tableID);
         int typeOfSearchKey = tableAttributes.get(indexOfPrimaryKeyColumn).getType();
         Object searchKeyValue = recordToDelete.getRecordContents().get(indexOfPrimaryKeyColumn);
-        //CALL B+TREE METHODS TO DELETE KEY AND RETURN pageNumber & recordIndex
+        // CALL B+TREE METHODS TO DELETE KEY AND RETURN pageNumber & recordIndex
         BPlusNode nodeToDelete = bPlusTree.findNode(typeOfSearchKey, searchKeyValue);
         boolean deleted = bPlusTree.deleteNode(typeOfSearchKey, searchKeyValue);
         if (!deleted) {
-            //if we fail to delete from tree, return and don't delete from data
+            // if we fail to delete from tree, return and don't delete from data
             return new int[1];
         }
         int pageNumber = nodeToDelete.getPageIndex();
         int recordIndex = nodeToDelete.getRecordIndex();
-        //DELETE THE RECORD
+        // DELETE THE RECORD
         try {
             Page pageReference = buffer.GetPage(tableID, pageNumber);
-            pageReference.getRecordsInPage().remove(recordIndex); //delete the record
+            pageReference.getRecordsInPage().remove(recordIndex); // delete the record
             pageReference.setIsModified(true);
-            if (pageReference.getRecordCount() == 0) { //if page is empty as a result of delete
-                // label this page as EMPTY (reusable) even though this is not reflected on the disk
+            if (pageReference.getRecordCount() == 0) { // if page is empty as a result of delete
+                // label this page as EMPTY (reusable) even though this is not reflected on the
+                // disk
                 table.removePageFromPageOrdering(pageNumber);
-                //remove the page from the buffer, our data will remain populated and outdated at that
-                //location on disk until a new page re-uses that page location and is wrote to disk
+                // remove the page from the buffer, our data will remain populated and outdated
+                // at that
+                // location on disk until a new page re-uses that page location and is wrote to
+                // disk
                 buffer.removeEmptyPageFromBuffer(tableID, pageNumber);
                 return new int[0];
             }
-            //UPDATE POINTERS AFTER DELETE
+            // UPDATE POINTERS AFTER DELETE
             int numRecordsInPageAfterDelete = pageReference.getRecordCount();
             for (int idx = 0; idx < numRecordsInPageAfterDelete; idx++) {
                 Record curRecord = pageReference.getRecordsInPage().get(idx);
@@ -470,7 +496,7 @@ public class StorageManager {
      * is used in both the 'delete from' statement and the 'update' statement
      * should re-use portions of code from insertRecord
      *
-     * @param tableID table for which we want to delete the record
+     * @param tableID        table for which we want to delete the record
      * @param recordToDelete record to be deleted/removed from table
      * @return .
      */
@@ -479,63 +505,74 @@ public class StorageManager {
         ArrayList<Integer> pageOrder = table.getPageOrder();
         int numPagesInTable = pageOrder.size();
         boolean recordWasDeleted = false;
-        for (int index = 0; index < numPagesInTable; index++) { //for each page in table
-            if (recordWasDeleted) { break; }
+        for (int index = 0; index < numPagesInTable; index++) { // for each page in table
+            if (recordWasDeleted) {
+                break;
+            }
             try {
                 int pageNumber = pageOrder.get(index);
                 Page pageReference = buffer.GetPage(tableID, pageNumber);
                 int numRecordsInPage = pageReference.getRecordCount();
                 if (numRecordsInPage == 0) {
-                    //throw error, try to delete table with no records?
+                    // throw error, try to delete table with no records?
                 }
                 RecordSort sorter = new RecordSort();
                 for (int idx = 0; idx < numRecordsInPage; idx++) {
                     Record curRecord = pageReference.getRecordsInPage().get(idx);
                     int comparison = sorter.compare(recordToDelete, curRecord);
-                    //if records are equal (if curRecord's pk equals recordToDelete's pk)
+                    // if records are equal (if curRecord's pk equals recordToDelete's pk)
                     if (comparison == 0) {
-                        pageReference.getRecordsInPage().remove(idx); //delete the record
+                        pageReference.getRecordsInPage().remove(idx); // delete the record
                         pageReference.setIsModified(true);
-                        //"move all other records up to cover empty space" should be handled auto
-                        if (pageReference.getRecordCount() == 0) { //if page is empty as a result of delete
-                            // label this page as EMPTY (reusable) even though this is not reflected on the disk
+                        // "move all other records up to cover empty space" should be handled auto
+                        if (pageReference.getRecordCount() == 0) { // if page is empty as a result of delete
+                            // label this page as EMPTY (reusable) even though this is not reflected on the
+                            // disk
                             table.removePageFromPageOrdering(pageNumber);
-                            //remove the page from the buffer, our data will remain populated and outdated at that
-                            //location on disk until a new page re-uses that page location and is wrote to disk
+                            // remove the page from the buffer, our data will remain populated and outdated
+                            // at that
+                            // location on disk until a new page re-uses that page location and is wrote to
+                            // disk
                             buffer.removeEmptyPageFromBuffer(tableID, pageNumber);
                         }
                         recordWasDeleted = true;
                         break;
                     }
-                    //if curRecord's pk > recordToDelete's pk
+                    // if curRecord's pk > recordToDelete's pk
                     if (comparison < 0) {
-                        //record to delete does not exist, stop our search
-                        return new int[]{1};
+                        // record to delete does not exist, stop our search
+                        return new int[] { 1 };
                     }
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
-        return new int[]{1};
+        return new int[] { 1 };
     }
 
     /**
-     * Generates a resultSet from the given tables. If tableColumnDict includes more than one table
+     * Generates a resultSet from the given tables. If tableColumnDict includes more
+     * than one table
      * the cartesian product of the tables is created and put into the resultSet.
-     * @param tableColumnDict - linked hashmap containing the table name as key and the names of its columns as
+     * 
+     * @param tableColumnDict - linked hashmap containing the table name as key and
+     *                        the names of its columns as
      *                        its value.
-     * @return a resultSet including the records, array of column names, array of column names that distinguishes
-     *          duplicate column names, array of types for the columns, and array of the table each column belongs to.
+     * @return a resultSet including the records, array of column names, array of
+     *         column names that distinguishes
+     *         duplicate column names, array of types for the columns, and array of
+     *         the table each column belongs to.
      */
     public ResultSet generateFromResultSet(LinkedHashMap<String, ArrayList<String>> tableColumnDict) {
         // ask the storage manager for this data. It will in turn ask the buffer first,
         // but that's abstracted away from this point in the code
 
+        // NOTE: checking for valid names of tables and attributes should be done in the
+        // parse method upstream.
 
-        // NOTE: checking for valid names of tables and attributes should be done in the parse method upstream.
-
-        // Load all the tables into memory (with unneeded column names already filtered out)
+        // Load all the tables into memory (with unneeded column names already filtered
+        // out)
         ArrayList<Table> tables = new ArrayList<>();
 
         ArrayList<String> displayedColNames = new ArrayList<>();
@@ -552,7 +589,8 @@ public class StorageManager {
             tables.add(new Table(tableName, columnNames, records));
         }
 
-        // Build the final record output by performing a cross-product on all the loaded tables
+        // Build the final record output by performing a cross-product on all the loaded
+        // tables
         ArrayList<Record> finalRecordOutput = new ArrayList<>();
 
         ArrayList<String> tableNamesForColumns = new ArrayList<>();
@@ -563,7 +601,7 @@ public class StorageManager {
 
         if (numberOfTables == 1) {
             finalRecordOutput = tables.get(0).getRecords();
-//            displayedColNames = tables.get(0).getColNames();
+            // displayedColNames = tables.get(0).getColNames();
         } else {
 
             for (int tableIndex = 0; tableIndex < tableCount - 1; tableIndex++) {
@@ -618,30 +656,33 @@ public class StorageManager {
             cloneRecordOutput.add(r);
         }
 
-    return new ResultSet(cloneRecordOutput, displayedColNames, typesForColumns, tableNamesForColumns);
+        return new ResultSet(cloneRecordOutput, displayedColNames, typesForColumns, tableNamesForColumns);
     }
 
     /**
-     * should take in table we are working with as well as the tokens for where condition
-     * @param resultSet contains ALL Records for table in question,
-     * @param tableID table intended to delete records from
+     * should take in table we are working with as well as the tokens for where
+     * condition
+     * 
+     * @param resultSet      contains ALL Records for table in question,
+     * @param tableID        table intended to delete records from
      * @param whereCondition ConditionTree, 'null' if no where clause exists
      *
      * @return int[]. should contain 1 at index 0 if delete failed
      */
-    public int[] deleteFrom(ResultSet resultSet, int tableID, ConditionTree whereCondition, boolean fromIndexed, BPlusTree bPlusTree) {
+    public int[] deleteFrom(ResultSet resultSet, int tableID, ConditionTree whereCondition, boolean fromIndexed,
+            BPlusTree bPlusTree) {
         ArrayList<Record> allRecordsFromTable = resultSet.getRecords();
         for (Record curRecord : allRecordsFromTable) {
-            boolean deleteRecord = true; //deleting all Records by default
+            boolean deleteRecord = true; // deleting all Records by default
             if (whereCondition != null) {
-                //call method(s) to evaluate a single tuple for meeting where condition
+                // call method(s) to evaluate a single tuple for meeting where condition
                 deleteRecord = whereCondition.validateTree(curRecord, resultSet);
             }
-            if (deleteRecord) { //call deleteRecord on record if condition was met
+            if (deleteRecord) { // call deleteRecord on record if condition was met
                 if (fromIndexed) {
                     int[] wasSuccess = indexedDeleteRecord(bPlusTree, curRecord);
                     if (wasSuccess[0] == 1) {
-                        //RETURN we failed to delete a record, stop our iteration
+                        // RETURN we failed to delete a record, stop our iteration
                         return wasSuccess;
                     }
                 } else {
@@ -655,22 +696,22 @@ public class StorageManager {
     /**
      * This Method updates a record, by first deleting the existing record, and then
      * inserting the updated version of that record. The insertRecord method
-     * handled recomputation of page size when the updated record is added, indicating
+     * handled recomputation of page size when the updated record is added,
+     * indicating
      * if a page split is needed- additionally the insertRecord method also handled
      * sorting the updated record to its proper place among the records in the case
      * where the primarykey has been changed
      *
-     * TODO LOOK OVER GREATLY
-     *
-     * @param tableID the table record in question belongs to
+     * @param tableID        the table record in question belongs to
      * @param recordToUpdate the record to update
-     * @param columnName column
-     * @param data contains value we want to update column with
-     * @param bPlusTree Null if indexing turned off, tree if indexing on
+     * @param columnName     column
+     * @param data           contains value we want to update column with
+     * @param bPlusTree      Null if indexing turned off, tree if indexing on
      * @return receive return from insert and pass that up
      */
-    public int[] updateRecord(int tableID, Record recordToUpdate, String columnName, List<Object> data, BPlusTree bPlusTree) {
-        Record copyOfRecordToUpdate = null; //make a copy of the record
+    public int[] updateRecord(int tableID, Record recordToUpdate, String columnName, List<Object> data,
+            BPlusTree bPlusTree) {
+        Record copyOfRecordToUpdate = null; // make a copy of the record
         try {
             copyOfRecordToUpdate = (Record) recordToUpdate.clone();
 
@@ -684,7 +725,7 @@ public class StorageManager {
             indexedDeleteRecord(bPlusTree, recordToUpdate);
         }
 
-        //find index of column to update
+        // find index of column to update
         int indexOfColumnToUpdate = 0;
         TableSchema table = Catalog.instance.getTableSchemaById(tableID);
         ArrayList<AttributeSchema> tableColumns = table.getAttributes();
@@ -695,22 +736,21 @@ public class StorageManager {
             indexOfColumnToUpdate++;
         }
 
-        Object valueToSet = data.get(1); //value to update in column
-        //make change updating our copy of original record
+        Object valueToSet = data.get(1); // value to update in column
+        // make change updating our copy of original record
         copyOfRecordContents.set(indexOfColumnToUpdate, valueToSet);
-        copyOfRecordToUpdate.setRecordContents(copyOfRecordContents); //set content change
+        copyOfRecordToUpdate.setRecordContents(copyOfRecordContents); // set content change
         int[] insertReturn;
         if (bPlusTree == null) {
-            insertReturn = insertRecord(tableID, copyOfRecordToUpdate); //update
+            insertReturn = insertRecord(tableID, copyOfRecordToUpdate); // update
         } else {
-            insertReturn = indexedInsertRecord(bPlusTree, copyOfRecordToUpdate); //update
+            insertReturn = indexedInsertRecord(bPlusTree, copyOfRecordToUpdate); // update
         }
-        if (insertReturn.length > 1) { //our record failed to insert
-            //recordToUpdate.setRecordContents(originalRecordContents);
+        if (insertReturn.length > 1) { // our record failed to insert
             if (bPlusTree == null) {
-                insertRecord(tableID, recordToUpdate); //add original, unchanged record back in
+                insertRecord(tableID, recordToUpdate); // add original, unchanged record back in
             } else {
-                indexedInsertRecord(bPlusTree, recordToUpdate); //update
+                indexedInsertRecord(bPlusTree, recordToUpdate); // update
             }
         }
         return insertReturn;
@@ -718,24 +758,24 @@ public class StorageManager {
 
     /**
      * Called by UpdateQuery's execute.
-     * -- What of this belong in execute and what belongs here????
+     * 
      * This Method iterates through all records for a given table, calling
      * updateRecord on the records that meet the condition specified in the
      * 'where' clause of the update statement
      *
-     * @param resultSet contains ALL Records for table in question, ...
-     * @param tableID table in question
-     * @param columnName column to update
-     * @param data       includes value to update in column, "" empty string if null
+     * @param resultSet      contains ALL Records for table in question, ...
+     * @param tableID        table in question
+     * @param columnName     column to update
+     * @param data           includes value to update in column, "" empty string if
+     *                       null
      * @param whereCondition ConditionTree, 'null' if no where clause exists
      */
     public int[] updateTable(ResultSet resultSet, int tableID, String columnName, List<Object> data,
-                            ConditionTree whereCondition, boolean fromIndexed, BPlusTree bPlusTree ) {
+            ConditionTree whereCondition, boolean fromIndexed, BPlusTree bPlusTree) {
         ArrayList<Record> allRecordsFromTable = resultSet.getRecords();
-        //should an update query indicate at command line if table has no records at all. none to update?
         for (Record curRecord : allRecordsFromTable) {
-            boolean updateRecord = true; //default to updating ALL COLUMNS
-            if (whereCondition != null) { //if where condition exists
+            boolean updateRecord = true; // default to updating ALL COLUMNS
+            if (whereCondition != null) { // if where condition exists
                 updateRecord = whereCondition.validateTree(curRecord, resultSet);
             }
             if (updateRecord) {
@@ -745,7 +785,8 @@ public class StorageManager {
                 } else {
                     returnVal = updateRecord(tableID, curRecord, columnName, data, null);
                 }
-                //if our insert failed, we want to stop our iteration of updates, and push error upwards,
+                // if our insert failed, we want to stop our iteration of updates, and push
+                // error upwards,
                 // all changes prior to error remain valid
                 if (returnVal.length > 1) {
                     int pkIndex = curRecord.getPkIndex();
@@ -754,38 +795,45 @@ public class StorageManager {
                 }
             }
         }
-        return new int[]{1}; //not sure if this needs to be specified some other way
+        return new int[] { 1 }; // not sure if this needs to be specified some other way
     }
 
     /**
      * This method handles all alter table commands (adding and removing columns)
-     * Pre: In alter table query's execute, we have created the new table for which we are
-     *      copying records over toos here (now including/discluding value to be added, dropped),
-     *      which actual adding/removing of value is done in this method.
+     * Pre: In alter table query's execute, we have created the new table for which
+     * we are
+     * copying records over toos here (now including/discluding value to be added,
+     * dropped),
+     * which actual adding/removing of value is done in this method.
+     * 
      * @param newTableID id of new table we want to copy records over too
-     * @param tableID id of table 'alter' requested on
-     * @param defaultVal null if not specified or dropping, value if default provided or
+     * @param tableID    id of table 'alter' requested on
+     * @param defaultVal null if not specified or dropping, value if default
+     *                   provided or
      *                   empty string "" on no default provided for added column
      * @return some integer indicating success
      */
     public int alterTable(int newTableID, int tableID, String defaultVal) throws IOException {
         TableSchema oldTable = Catalog.instance.getTableSchemaById(tableID);
         TableSchema newTable = Catalog.instance.getTableSchemaById(newTableID);
-        //at this point, newTable has NO PAGES
+        // at this point, newTable has NO PAGES
         ArrayList<Integer> oldTablePageOrder = oldTable.getPageOrder();
         ArrayList<AttributeSchema> newTableAttributes = newTable.getAttributes();
         ArrayList<AttributeSchema> oldTableAttributes = oldTable.getAttributes();
         int indexOfColumnToDrop = -1; // if this value remains -1 then we are adding a column since not dropping
-        //if we are dropping column, find out which column
-        // ... this could probably be done in schema much easier somehow
+        // if we are dropping column, find out which column
         if (newTableAttributes.size() < oldTableAttributes.size()) {
             for (int attrIndex = 0; attrIndex < newTableAttributes.size(); attrIndex++) {
-                //if the attribute name is different for this attribute then we dropped column at that index
-                if (!Objects.equals(newTableAttributes.get(attrIndex).getName(), oldTableAttributes.get(attrIndex).getName())) {
+                // if the attribute name is different for this attribute then we dropped column
+                // at that index
+                if (!Objects.equals(newTableAttributes.get(attrIndex).getName(),
+                        oldTableAttributes.get(attrIndex).getName())) {
                     indexOfColumnToDrop = attrIndex;
                 }
-            } //if this checks out, we are dropping last column in old table
-            if (indexOfColumnToDrop == -1) { indexOfColumnToDrop = newTableAttributes.size();}
+            } // if this checks out, we are dropping last column in old table
+            if (indexOfColumnToDrop == -1) {
+                indexOfColumnToDrop = newTableAttributes.size();
+            }
         }
         ArrayList<String> all = new ArrayList<>();
         all.add("*");
@@ -793,19 +841,19 @@ public class StorageManager {
         for (Record recordToCopyOver : allRecordInOldTable) {
             Record newRecord = new Record();
             ArrayList<Object> oldRecordContents = recordToCopyOver.getRecordContents();
-            if (indexOfColumnToDrop != -1) { //if we are dropping a column
-                //remove the attribute value for column we are dropping
+            if (indexOfColumnToDrop != -1) { // if we are dropping a column
+                // remove the attribute value for column we are dropping
                 oldRecordContents.remove(indexOfColumnToDrop);
                 newRecord.setRecordContents(oldRecordContents);
                 newRecord.setPkIndex(Catalog.instance.getTablePKIndex(newTableID));
                 insertRecord(newTableID, newRecord);
-            } else { //we are adding a column
-                //add the default value being null or some value
+            } else { // we are adding a column
+                // add the default value being null or some value
                 if (defaultVal == "") {
                     oldRecordContents.add(null);
                     newRecord.setRecordContents(oldRecordContents);
                 } else {
-                    //determining type of default value
+                    // determining type of default value
                     int indexOfLastColumn = newTableAttributes.size() - 1;
                     int typeInt = newTableAttributes.get(indexOfLastColumn).getType();
                     switch (typeInt) {
@@ -832,7 +880,7 @@ public class StorageManager {
                 insertRecord(newTableID, newRecord);
             }
         }
-        //WE HAVE SUCCESS! so purge all pages for the tableID still in buffer
+        // WE HAVE SUCCESS! so purge all pages for the tableID still in buffer
         return 1;
     }
 
@@ -849,16 +897,17 @@ public class StorageManager {
 
     /**
      * Returns the record count of table with given table id.
+     * 
      * @param tableID : Given table id.
      * @return integer - number of records in table.
      */
     public int getRecordCountForTable(int tableID) {
         ArrayList<Integer> arrayOfPageLocationsOnDisk = Catalog.instance.getTableSchemaById(tableID).getPageOrder();
         int sum = 0;
-        for ( Integer integer : arrayOfPageLocationsOnDisk ) {
+        for (Integer integer : arrayOfPageLocationsOnDisk) {
             try {
                 int locationOnDisk = integer;
-                sum += buffer.GetPage( tableID, locationOnDisk ).getRecordCount();
+                sum += buffer.GetPage(tableID, locationOnDisk).getRecordCount();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -872,6 +921,7 @@ public class StorageManager {
 
     /**
      * Returns the number of tableschemas.
+     * 
      * @return integer - number of tableschemas.
      */
     public int getNumberOfTables() {
@@ -895,6 +945,8 @@ public class StorageManager {
      * Has Four Public Methods, GetPage(), createNewPage(), pageSplit(),
      * and PurgeBuffer().
      * The Buffer is in place to ideally reduce read/writes to file system
+     * 
+     * author: Charlie Baker
      */
     private class BufferManager {
         // will be THE NEXT value to assign when page is accessed
@@ -977,12 +1029,10 @@ public class StorageManager {
                         indexOfLRU = curPageIndex;
                     }
                 }
-                // write the LRU page to hardware/disk
-                // (if it has been modified bc if it hasn't, copy on disk already same)
-                // (commented out if) for now we will write to disk regardless - just to be safe
-                // if (PageBuffer.get(indexOfLRU).getisModified()) {
+                // write the LRU page to hardware/disk. Dont need to write out here if no change
+                // to update on disk
                 WritePageToDisk(PageBuffer.get(indexOfLRU));
-                // } //there is now room in the buffer
+                // there is now room in the buffer
                 if (createNew) {
                     Page newPage = new Page();
                     ArrayList<Record> records = new ArrayList<>();
@@ -1044,8 +1094,10 @@ public class StorageManager {
             ArrayList<Record> secondPageRecords = new ArrayList<>();
             ArrayList<Record> overFullPageRecords = overFullPage.getRecordsInPage();
             int numberOfRecordsInPage = overFullPageRecords.size();
-            // if even number of records then divide by two, if odd number then divide by two and round up
-            int numRecordsToCopy = ((numberOfRecordsInPage % 2) == 0) ? numberOfRecordsInPage / 2: (int) Math.ceil(numberOfRecordsInPage / 2);
+            // if even number of records then divide by two, if odd number then divide by
+            // two and round up
+            int numRecordsToCopy = ((numberOfRecordsInPage % 2) == 0) ? numberOfRecordsInPage / 2
+                    : (int) Math.ceil(numberOfRecordsInPage / 2);
 
             for (int rec = 0; rec < numRecordsToCopy; rec++) {
                 firstPageRecords.add(overFullPageRecords.get(rec));
@@ -1110,7 +1162,8 @@ public class StorageManager {
          * Called by
          * the Page that we are writing out has an empty Arraylist<Record>,
          * the page has no records,
-         * @param tableId table
+         * 
+         * @param tableId    table
          * @param pageNumber location of page on disk
          * @throws IOException
          */
@@ -1130,12 +1183,13 @@ public class StorageManager {
         /**
          * We DO NOT want to write the records for this table that are
          * present to disk, because our records are different now
+         * 
          * @param tableId the table to remove all corresponding pages
          *                from the buffer
          * @throws IOException
          */
         public void PurgeTableFromBuffer(int tableId) throws IOException {
-            //an arraylist of all the buffer indexes where a page needs to be removed from
+            // an arraylist of all the buffer indexes where a page needs to be removed from
             ArrayList<Integer> indexesofpagestoremove = new ArrayList<>();
             int numPagesInBuffer = PageBuffer.size();
             for (int pageIndex = 0; pageIndex < numPagesInBuffer; pageIndex++) {
@@ -1145,10 +1199,12 @@ public class StorageManager {
                 }
             }
             int numpagestoremove = indexesofpagestoremove.size();
-            for (int i = numpagestoremove-1; i >= 0; i--) {
+            for (int i = numpagestoremove - 1; i >= 0; i--) {
                 int value = indexesofpagestoremove.get(i);
                 PageBuffer.remove(value);
-                if (PageBuffer.isEmpty()) {return;}
+                if (PageBuffer.isEmpty()) {
+                    return;
+                }
             }
         }
 

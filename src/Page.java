@@ -11,7 +11,7 @@ import src.*;
 /**
  * representative of an individual Page
  * 
- * @author Kevin Martin, Charlie Baker
+ * @author Charlie Baker, Kevin Martin
  */
 class Page {
 
@@ -115,23 +115,14 @@ class Page {
         Page returnPage = new Page();
         ByteBuffer byteBuffer = ByteBuffer.wrap(pageInBytes);
         // Read first portions of page coming before records
-        int sizeOfPageInBytes = byteBuffer.getInt(); // read first 4 bytes
         int numRecords = byteBuffer.getInt(); // read second 4 bytes
         ArrayList<Integer> typeIntegers = Catalog.instance.getSolelyTableAttributeTypes(tableNumber);
         ArrayList<Record> records = new ArrayList<>();
         for (int rcrd = 0; rcrd < numRecords; rcrd++) {
-            //gets the byte array of null/not null flags and passes it to record
-            //byte[] nullBytes = new byte[typeIntegers.size()]; //the size of typeints is the num of attributes
             char[] nullBytes = new char[typeIntegers.size()];
-            //wrap in buffer
-            //for (int i = 0; i < nullBytes.length; i++) {
-            //    nullBytes[i] = byteBuffer.get();
-            //}
             for (int i = 0; i < nullBytes.length; i++) {
                 nullBytes[i] = byteBuffer.getChar();
             }
-            //ByteBuffer nullBytesBuffer = ByteBuffer.wrap(nullBytes);
-            //Record record = Record.parseRecordBytes(tableNumber, nullBytesBuffer, byteBuffer);
             Record record = Record.parseRecordBytes(tableNumber, nullBytes, byteBuffer);
             records.add(record);
         }

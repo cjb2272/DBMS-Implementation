@@ -11,7 +11,7 @@ import src.*;
  *
  * @author Charlie Baker, Duncan Small, Kevin Martin
  */
-public class Record implements Cloneable{
+public class Record implements Cloneable {
 
     /**
      * important to note that attribute values for a record must be stored
@@ -50,7 +50,7 @@ public class Record implements Cloneable{
     }
 
     public Record clone() throws CloneNotSupportedException {
-        return new Record( this );
+        return new Record(this);
     }
 
     public void setRecordContents(ArrayList<Object> recordContents) {
@@ -67,18 +67,19 @@ public class Record implements Cloneable{
      * Also Called by Page's parse_bytes
      *
      * @return How many bytes this record consists of.
-     * Size returned includes the bytes used to represent ints
-     * telling how many chars are in a varchar or char
+     *         Size returned includes the bytes used to represent ints
+     *         telling how many chars are in a varchar or char
      */
     int compute_size(Boolean includeNullChars) {
         int sizeOfRecordInBytes = 0;
         for (Object obj : this.recordContents) {
-            //sizeOfRecordInBytes += 1; //for each attribute, a byte is needed to signify if it's null or not
+            // sizeOfRecordInBytes += 1; //for each attribute, a byte is needed to signify
+            // if it's null or not
             if (includeNullChars) {
                 sizeOfRecordInBytes = sizeOfRecordInBytes + Character.BYTES;
             }
             if (obj == null)
-                continue; //do nothing, null does not add to size
+                continue; // do nothing, null does not add to size
             else if (obj instanceof Integer) {
                 sizeOfRecordInBytes = sizeOfRecordInBytes + Integer.BYTES;
             } else if (obj instanceof Double) {
@@ -106,9 +107,10 @@ public class Record implements Cloneable{
      * @param recordInBytes the Page's ByteBuffer with the pointer at the beginning
      *                      of this record's data
      * @return a complete Record object that represents the parsed data as an
-     * ArrayList of Objects
+     *         ArrayList of Objects
      */
-    //public static Record parseRecordBytes(int tableNumber, ByteBuffer nullBytes, ByteBuffer recordInBytes) {
+    // public static Record parseRecordBytes(int tableNumber, ByteBuffer nullBytes,
+    // ByteBuffer recordInBytes) {
     public static Record parseRecordBytes(int tableId, char[] nullBytes, ByteBuffer recordInBytes) {
         // Iterate through Bytes, getting varying data types and appending to
         // returnRecord
@@ -121,19 +123,17 @@ public class Record implements Cloneable{
         ArrayList<Integer> typeIntegers = Catalog.instance.getSolelyTableAttributeTypes(tableId);
         int counter = 0;
         for (int typeInt : typeIntegers) {
-            //byte isNull = nullBytes.get();
             char isNull = nullBytes[counter];
             counter++;
             if (isNull == 'f') {
-                //if (isNull == (byte) 0) {
                 returnRecord.recordContents.add(null);
                 continue;
             }
             switch (typeInt) {
                 case 1 -> // Integer
-                        returnRecord.recordContents.add(recordInBytes.getInt()); // get next 4 BYTES
+                    returnRecord.recordContents.add(recordInBytes.getInt()); // get next 4 BYTES
                 case 2 -> // Double
-                        returnRecord.recordContents.add(recordInBytes.getDouble()); // get next 8 BYTES
+                    returnRecord.recordContents.add(recordInBytes.getDouble()); // get next 8 BYTES
                 case 3 -> { // Boolean
                     char boolChar = recordInBytes.getChar(); // A Boolean is either 't' or 'f' on disk
                     if (boolChar == 't')
@@ -159,7 +159,7 @@ public class Record implements Cloneable{
                     returnRecord.recordContents.add(chars.toString());
                 }
             }
-        } // END LOOP
+        }
         return returnRecord;
     }
 
@@ -179,18 +179,16 @@ public class Record implements Cloneable{
         int i = 0;
         for (int typeInt : typeIntegers) {
             if (this.recordContents.get(i) == null) {
-                //bytesBuffer.put((byte) 0);
                 bytesBuffer.putChar('f');
                 ++i;
                 continue;
             }
-            //bytesBuffer.put((byte) 1);
             bytesBuffer.putChar('t');
             switch (typeInt) {
                 case 1 -> // Integer
-                        attrBytesBuffer.putInt((Integer) this.recordContents.get(i)); // get next 4 BYTES
+                    attrBytesBuffer.putInt((Integer) this.recordContents.get(i)); // get next 4 BYTES
                 case 2 -> // Double
-                        attrBytesBuffer.putDouble((Double) this.recordContents.get(i)); // get next 8 BYTES
+                    attrBytesBuffer.putDouble((Double) this.recordContents.get(i)); // get next 8 BYTES
                 case 3 -> { // Boolean
                     boolean val = (boolean) this.recordContents.get(i);
                     if (val) // A Boolean is either 't' or 'f' on disk
@@ -214,8 +212,8 @@ public class Record implements Cloneable{
                 }
             }
             ++i;
-        } // END LOOP
-        bytesBuffer.put(attrBytes); //Take the arr of attr values and append it to the arr of null flags
+        }
+        bytesBuffer.put(attrBytes); // Take the arr of attr values and append it to the arr of null flags
         return bytes;
     }
 
@@ -237,11 +235,10 @@ public class Record implements Cloneable{
         return this.recordContents.equals(rec.recordContents);
     }
 
-
-    public String displayRecords(int padLen){
+    public String displayRecords(int padLen) {
         StringBuilder result = new StringBuilder();
 
-        String padding = " ".repeat( padLen );
+        String padding = " ".repeat(padLen);
 
         for (Object obj : this.recordContents) {
             String temp;
@@ -251,10 +248,10 @@ public class Record implements Cloneable{
             } else {
                 temp = obj.toString();
             }
-            if(temp.length() >= padding.length()){
-                result.append( " |" ).append( temp );
+            if (temp.length() >= padding.length()) {
+                result.append(" |").append(temp);
             } else {
-                result.append( " |" ).append( padding, 0, padLen - temp.length() ).append( temp );
+                result.append(" |").append(padding, 0, padLen - temp.length()).append(temp);
             }
         }
 
